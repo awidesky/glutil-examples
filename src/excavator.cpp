@@ -60,64 +60,73 @@ float g_makeError = false, g_makeErrorPressedLastFrame = false;
 * obj파일에서 읽어온 버텍스 값과 gl buffer를 저장한다.
 */
 struct modelData {
-    std::vector<glm::vec3> vertices;
-    GLuint vao, vertexbuffer, uvbuffer, normalbuffer;
+    GLuint vao = 0, vbo = 0, ebo = 0;
+    GLsizei indexCount = 0;
+
     modelData(const char * path) {
-        std::vector<glm::vec2> uvs;
-        std::vector<glm::vec3> normals;
-        loadOBJ(path, vertices, uvs, normals);
+        glutil::ModelData model = glutil::ModelLoader::loadOBJ(path);
 
-        // VBO 생성
-        glGenBuffers(1, &vertexbuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+        if (!model.ok) {
+            std::cerr << model.error << std::endl;
+            return;
+        }
 
-        glGenBuffers(1, &uvbuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-        glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
-        
-        glGenBuffers(1, &normalbuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-        glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+        const glutil::MeshData& mesh = model.meshes[0];
+        indexCount = static_cast<GLsizei>(mesh.indexCount());
 
-        // VAO 생성
+        // VAO
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
 
-        // vertices
+        // VBO (VertexPNT interleaved)
+        glGenBuffers(1, &vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(
+            GL_ARRAY_BUFFER,
+            mesh.vertexCount() * sizeof(glutil::VertexPNT),
+            mesh.vertexData(),
+            GL_STATIC_DRAW
+        );
+
+        // EBO
+        glGenBuffers(1, &ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER,
+            mesh.indexCount() * sizeof(unsigned int),
+            mesh.indexData(),
+            GL_STATIC_DRAW
+        );
+
+        // position
         glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
         glVertexAttribPointer(
-            0,          // attribute. No particular reason for 0, but must match the layout in the shader.
-            3,          // size
-            GL_FLOAT, // type
-            GL_FALSE, // normalized?
-            0,          // stride
-            (void*)0 // array buffer offset
+            0, 3, GL_FLOAT, GL_FALSE,
+            sizeof(glutil::VertexPNT),
+            (void*)offsetof(glutil::VertexPNT, x)
+        );
+
+        // normal
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(
+            1, 3, GL_FLOAT, GL_FALSE,
+            sizeof(glutil::VertexPNT),
+            (void*)offsetof(glutil::VertexPNT, nx)
         );
 
         // uv
-        glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-        // normal
         glEnableVertexAttribArray(2);
-        glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
         glVertexAttribPointer(
-            2,              // layout(location = 2)
-            3,
-            GL_FLOAT,
-            GL_FALSE,
-            0,
-            (void*)0
+            2, 2, GL_FLOAT, GL_FALSE,
+            sizeof(glutil::VertexPNT),
+            (void*)offsetof(glutil::VertexPNT, u)
         );
+
         glBindVertexArray(0);
     }
     ~modelData() {
-        glDeleteBuffers(1, &vertexbuffer);
-        glDeleteBuffers(1, &uvbuffer);
-        glDeleteBuffers(1, &normalbuffer);
+        glDeleteBuffers(1, &vbo);
+        glDeleteBuffers(1, &ebo);
         glDeleteVertexArrays(1, &vao);
     }
 };
@@ -177,7 +186,7 @@ struct object {
 
         // Draw the model !
         glBindVertexArray(model.vao);
-        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.vertices.size());
+        glDrawElements(GL_TRIANGLES, model.indexCount, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
     }
 };
@@ -204,24 +213,64 @@ double lastFrameTime = -1;
 const float keyframe = 3.0f;
 // 3인칭 뷰인가?
 bool thirdView = true;
+static GLuint loadBMP(const char* path);
 
-void start()
-{
+static void start() {
     //모델 객체를 만든다.
-    modelData cube{ "models/cube.obj" };
-    modelData plane{ "models/plane.obj" };
-    modelData torus{ "models/torus.obj" };
+    modelData cube{ "model/cube.obj" };
+    modelData plane{ "model/plane.obj" };
+    modelData torus{ "model/torus.obj" };
 
     // Create and compile our GLSL program from the shaders
-    GLuint programID = LoadShaders("TransformVertexShader.vertexshader", "ColorFragmentShader.fragmentshader");
+    glutil::ShaderLoadResult vsSrc = glutil::ShaderLoader::loadFile("shader/excvator.vert");
+    if (!vsSrc.ok) return;
+    glutil::ShaderLoadResult fsSrc = glutil::ShaderLoader::loadFile("shader/excvator.frag");
+    if (!fsSrc.ok) return;
+
+    const GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vs, 1, vsSrc.string(), vsSrc.lengthPtr());
+    glCompileShader(vs);
+
+    const auto r1 = glutil::Inspector::shaderCompileResult(vs);
+    if (!r1.ok) {
+        std::cerr << "Shader Compile Failed! Log:\n" << r1.message << std::endl;
+        glDeleteShader(vs);
+        return;
+    }
+
+    const GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fs, 1, fsSrc.string(), fsSrc.lengthPtr());
+    glCompileShader(fs);
+
+    const auto r2 = glutil::Inspector::shaderCompileResult(fs);
+    if (!r2.ok) {
+        std::cerr << "Shader Compile Failed! Log:\n" << r2.message << std::endl;
+        glDeleteShader(fs);
+        return;
+    }
+
+    const GLuint programID = glCreateProgram();
+    glAttachShader(programID, vs);
+    glAttachShader(programID, fs);
+    glLinkProgram(programID);
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    const auto r3 = glutil::Inspector::programLinkResult(programID);
+    if (!r3.ok) {
+        std::cerr << "Program Link Failed! Log:\n" << r3.message << std::endl;
+        glDeleteProgram(programID);
+        return;
+    }
 
     // 각 오브젝트에 맞는 텍스쳐를 가져온다.
-    defaultTexture = loadBMP_custom("textures/default.bmp");
-    GLuint groundTexture = loadBMP_custom("textures/grid.bmp");
-    GLuint trackTexture = loadBMP_custom("textures/track.bmp");
-    GLuint scoopTexture = loadBMP_custom("textures/scoop.bmp");
-    GLuint cabinTexture = loadBMP_custom("textures/cabin.bmp");
-    GLuint bodyTexture = loadBMP_custom("textures/body.bmp");
+    defaultTexture = loadBMP("texture/default.bmp");
+    GLuint groundTexture = loadBMP("texture/grid.bmp");
+    GLuint trackTexture = loadBMP("texture/track.bmp");
+    GLuint scoopTexture = loadBMP("texture/scoop.bmp");
+    GLuint cabinTexture = loadBMP("texture/cabin.bmp");
+    GLuint bodyTexture = loadBMP("texture/body.bmp");
 
     // 모든 유니폼 변수 ID를 가져온다
     TextureUniformID = glGetUniformLocation(programID, "myTextureSampler");
@@ -286,19 +335,16 @@ void start()
     //glBindTexture(9999, 9999);
 
     // ---------------렌더링 루프---------------//
-    do
-    {
-        checkGLerror("Loop start point"); // 에러가 있는지 체크한다.
-
+    do {
         // ---------------애니메이션 처리---------------//
         if (animationStartTime > 0.0) { //애니메이션이 시작했다면..
             double currentTime = glfwGetTime();
             // 프레임 간 시간 차이
-            double deltaTime = currentTime - lastFrameTime;
+            float deltaTime = float(currentTime - lastFrameTime);;
             lastFrameTime = currentTime;
 
             // 애니메이션 시작으로부터 몇 초 지났는가?
-            float timeInterval = currentTime - animationStartTime;
+            float timeInterval = float(currentTime - animationStartTime);
 
             // 애니메이션 시작 후 keyframe초 동안 총 animationRotate도 돌아간다.
             if (timeInterval < keyframe) {
@@ -329,11 +375,11 @@ void start()
 
         // 크기에 맞게 스케일 후, 이동한다.
         body.modelMatrix = world;
-        body.Scale(0.7, 0.6, 1.0);
+        body.Scale(0.7f, 0.6f, 1.0f);
         body.MoveToPosition();
 
         cabin.modelMatrix = world;
-        cabin.Scale(0.4, 0.8, 0.6);
+        cabin.Scale(0.4f, 0.8f, 0.6f);
         cabin.MoveToPosition();
 
         track[0].modelMatrix = track[1].modelMatrix = world;
@@ -353,8 +399,8 @@ void start()
         track[1].Scale(0.32f, 0.8f, 0.9f);
         // Q, E키를 누르면 트랙터가 앞으로 간다, 이에 맞춰서 바퀴도 굴려 주면,
         // 텍스쳐가 줄무늬 모양이므로 무한궤도가 돌아가는 것처럼 보이게 된다.
-        track[0].Rotate(fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
-        track[1].Rotate(fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
+        track[0].Rotate((float)fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
+        track[1].Rotate((float)fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
 
 
         // 월드 기준 (tractorPosition)
@@ -740,3 +786,30 @@ static int glinit()
     return 0;
 }
 
+static GLuint loadBMP(const char* path) {
+    const glutil::TextureImage& image = glutil::ImageLoader::loadImage(path, false);
+    if (!image.ok)
+        return 0;
+
+    GLuint tex = 0;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 image.internalFormat(),
+                 image.width(),
+                 image.height(),
+                 0,
+                 image.format(),
+                 GL_UNSIGNED_BYTE,
+                 image.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return tex;
+}
