@@ -604,6 +604,7 @@ static GLFWwindow* initGLFWAndContext() {
     }
 
     glutil::debug::init();
+    glutil::debug::printRuntimeInfo();
 
     glfwSwapInterval(1);
     glfwSetInputMode(ret, GLFW_STICKY_KEYS, GL_TRUE);

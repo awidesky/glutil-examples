@@ -5,8 +5,8 @@
 #include <vector>
 
 
-// Include GLEW
-#include <GL/glew.h>
+// Include GLAD
+#include <glad/gl.h>
 
 // Include GLFW
 #include <GLFW/glfw3.h>
@@ -22,17 +22,13 @@ GLFWwindow *window;
 #include <glm/gtx/norm.hpp>
 using namespace glm;
 
-#include <common/shader.hpp>
-#include <common/objloader.hpp>
-#include <common/texture.hpp>
+// Include glutil
+#include <glutil/glutil.hpp>
 
 // 키보드와 마우스 입력 처리
 static void processKeyboardMouseInput(glm::mat4& mat, glm::vec3& tractorPosition);
 //opengl 초기화
 static int glinit();
-
-// 에러 체크
-void checkGLerror(const char*);
 
 // 디폴트 텍스쳐는 오브젝트가 단색이 아닌 텍스쳐를 쓰기로 되어 있으나(colorcheck < 0),
 // 텍스쳐가 주어져 있지 않은 경우 쓴다.
@@ -75,11 +71,11 @@ struct modelData {
         glGenBuffers(1, &vertexbuffer);
         glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
-        
+
         glGenBuffers(1, &uvbuffer);
         glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-        glBufferData(GL_ARRAY_BUFFER,uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
-
+        glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
+        
         glGenBuffers(1, &normalbuffer);
         glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
         glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
@@ -635,7 +631,7 @@ static void computeKeyboardTranslates(glm::mat4& view, glm::vec3& tractorPositio
             translateFactor += forward * deltaTime * speed;
         }
         if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-[O            translateFactor -= forward * deltaTime * speed;
+            translateFactor -= forward * deltaTime * speed;
         }
         if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
             translateFactor += right * deltaTime * speed;
@@ -663,13 +659,6 @@ static void computeKeyboardTranslates(glm::mat4& view, glm::vec3& tractorPositio
 
     // For the next frame, the "last time" will be "now"
     lastTime = currentTime;
-}
-
-void checkGLerror(const char* msg) {
-    GLenum err;
-    while ((err = glGetError()) != GL_NO_ERROR) {
-        fprintf(stderr, "GL ERROR %d : %s\n", err, msg);
-    }
 }
 
 static void processKeyboardMouseInput(glm::mat4& view, glm::vec3& tractorPosition)
@@ -721,19 +710,17 @@ static int glinit()
     }
     glfwMakeContextCurrent(window);
 
-    // Initialize GLEW
-    glewExperimental = true; // Needed for core profile
-    if (glewInit() != GLEW_OK)
+    // Initialize GLAD
+    if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress))
     {
-        fprintf(stderr, "Failed to initialize GLEW\n");
+        fprintf(stderr, "Failed to initialize GLAD\n");
         (void)getchar();
         glfwTerminate();
         return -1;
     }
-    printf("OpenGL Version: %s\n", glGetString(GL_VERSION));
 
-    glGetError(); // 처음에 1280 에러 발생하긴 하지만, 별로 중요한 오류 같진 않음
-    checkGLerror("GL init");
+    glutil::debug::init();
+    glutil::debug::printRuntimeInfo();
 
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
