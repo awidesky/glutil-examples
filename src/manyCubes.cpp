@@ -133,12 +133,12 @@ int main(int argc, char** argv) {
     }
     glfwSetKeyCallback(window, keyCallback);
 
-    const fs::path shaderDir = glutil::getProjectRootDirectory() / "shader";
-    const fs::path vsPath = shaderDir / "manyCubes.vert";
-    const fs::path fsPath = shaderDir / "manyCubes.frag";
+    const fs::path vsPath = "shader/manyCubes.vert";
+    const fs::path fsPath = "shader/manyCubes.frag";
 
     const GLuint program = createProgramFromFiles(vsPath, fsPath);
     if (program == 0) {
+        std::cerr << "Failed to create opengl program!" << std::endl;
         glfwDestroyWindow(window);
         glfwTerminate();
         return 1;
@@ -234,84 +234,68 @@ int main(int argc, char** argv) {
     glBindVertexArray(0);
 
 
-    const fs::path textureDir = glutil::EXAMPLE_ASSET_DIR / "texture";
-    const fs::path diffusePath = textureDir / "diffuse.DDS";
-    const fs::path normalPath = textureDir / "normal.bmp";
-    const fs::path specularPath = textureDir / "specular.DDS";
-    const fs::path planePath = textureDir / "grid.bmp";
+    const fs::path diffusePath = "texture/diffuse.DDS";
+    const fs::path normalPath = "texture/normal.bmp";
+    const fs::path specularPath = "texture/specular.DDS";
+    const fs::path planePath = "texture/grid.bmp";
 
     GLuint diffuseTex = 0;
     GLuint normalTex = 0;
     GLuint specularTex = 0;
     GLuint planeTex = 0;
 
-    if (fs::exists(diffusePath)) {
-        if (glutil::ImageLoader::isDDS(diffusePath)) {
-            glutil::TextureDDS dds = glutil::ImageLoader::loadDDS(diffusePath);
-            if (dds.ok) {
-                diffuseTex = uploadDDS2D(dds);
-            } else {
-                std::cerr << "[ManyCubes] Diffuse DDS load failed: " << diffusePath
-                          << "\n  reason: " << dds.error << std::endl;
-            }
+    if (glutil::ImageLoader::isDDS(diffusePath)) {
+        glutil::TextureDDS dds = glutil::ImageLoader::loadDDS(diffusePath);
+        if (dds.ok) {
+            diffuseTex = uploadDDS2D(dds);
         } else {
-            glutil::TextureImage img = glutil::ImageLoader::loadImage(diffusePath);
-            if (img.ok) {
-                diffuseTex = uploadStandard2D(img);
-            } else {
-                std::cerr << "[ManyCubes] Diffuse texture load failed: " << diffusePath
-                          << "\n  reason: " << img.error << std::endl;
-            }
+            std::cerr << "[ManyCubes] Diffuse DDS load failed: " << diffusePath
+                        << "\n  reason: " << dds.error << std::endl;
         }
     } else {
-        std::cerr << "[ManyCubes] Diffuse texture not found: " << diffusePath << std::endl;
-    }
-
-    if (fs::exists(normalPath)) {
-        glutil::TextureImage img = glutil::ImageLoader::loadImage(normalPath);
+        glutil::TextureImage img = glutil::ImageLoader::loadImage(diffusePath);
         if (img.ok) {
-            normalTex = uploadStandard2D(img);
+            diffuseTex = uploadStandard2D(img);
         } else {
-            std::cerr << "[ManyCubes] Normal texture load failed: " << normalPath
-                      << "\n  reason: " << img.error << std::endl;
-        }
-    } else {
-        std::cerr << "[ManyCubes] Normal texture not found: " << normalPath << std::endl;
-    }
-
-    if (fs::exists(specularPath)) {
-        if (glutil::ImageLoader::isDDS(specularPath)) {
-            glutil::TextureDDS dds = glutil::ImageLoader::loadDDS(specularPath);
-            if (dds.ok) {
-                specularTex = uploadDDS2D(dds);
-            } else {
-                std::cerr << "[ManyCubes] Specular DDS load failed: " << specularPath
-                          << "\n  reason: " << dds.error << std::endl;
-            }
-        } else {
-            glutil::TextureImage img = glutil::ImageLoader::loadImage(specularPath);
-            if (img.ok) {
-                specularTex = uploadStandard2D(img);
-            } else {
-                std::cerr << "[ManyCubes] Specular texture load failed: " << specularPath
-                          << "\n  reason: " << img.error << std::endl;
-            }
-        }
-    } else {
-        std::cerr << "[ManyCubes] Specular texture not found: " << specularPath << std::endl;
-    }
-    
-    if (fs::exists(planePath)) {
-        glutil::TextureImage img = glutil::ImageLoader::loadImage(planePath);
-        if (img.ok) {
-            planeTex = uploadStandard2D(img);
-        } else {
-            std::cerr << "[ManyCubes] Plain texture load failed: " << planePath
+            std::cerr << "[ManyCubes] Diffuse texture load failed: " << diffusePath
                         << "\n  reason: " << img.error << std::endl;
         }
-    } else {
-        std::cerr << "[ManyCubes] Plain texture not found: " << planePath << std::endl;
     }
+
+    glutil::TextureImage normal_img = glutil::ImageLoader::loadImage(normalPath);
+    if (normal_img.ok) {
+        normalTex = uploadStandard2D(normal_img);
+    } else {
+        std::cerr << "[ManyCubes] Normal texture load failed: " << normalPath
+                    << "\n  reason: " << normal_img.error << std::endl;
+    }
+
+    if (glutil::ImageLoader::isDDS(specularPath)) {
+        glutil::TextureDDS dds = glutil::ImageLoader::loadDDS(specularPath);
+        if (dds.ok) {
+            specularTex = uploadDDS2D(dds);
+        } else {
+            std::cerr << "[ManyCubes] Specular DDS load failed: " << specularPath
+                        << "\n  reason: " << dds.error << std::endl;
+        }
+    } else {
+        glutil::TextureImage img = glutil::ImageLoader::loadImage(specularPath);
+        if (img.ok) {
+            specularTex = uploadStandard2D(img);
+        } else {
+            std::cerr << "[ManyCubes] Specular texture load failed: " << specularPath
+                        << "\n  reason: " << img.error << std::endl;
+        }
+    }
+    
+    glutil::TextureImage plain_img = glutil::ImageLoader::loadImage(planePath);
+    if (plain_img.ok) {
+        planeTex = uploadStandard2D(plain_img);
+    } else {
+        std::cerr << "[ManyCubes] Plain texture load failed: " << planePath
+                    << "\n  reason: " << plain_img.error << std::endl;
+    }
+
 
     const bool normalMapReady = (diffuseTex != 0 && normalTex != 0 && specularTex != 0);
     if (!normalMapReady) {
@@ -644,13 +628,13 @@ static GLuint compileShader(GLenum type, const GLchar* src, GLint len) {
 static GLuint createProgramFromFiles(const fs::path& vsPath, const fs::path& fsPath) {
     glutil::ShaderLoadResult vsSrc = glutil::ShaderLoader::loadFile(vsPath);
     if (!vsSrc.ok) {
-        std::cerr << "Vertex shader load failed: " << vsPath << "\n  reason: " << vsSrc.error << std::endl;
+        std::cerr << "Vertex shader load failed: " << vsPath << "\n" << vsSrc.error << std::endl;
         return 0;
     }
 
     glutil::ShaderLoadResult fsSrc = glutil::ShaderLoader::loadFile(fsPath);
     if (!fsSrc.ok) {
-        std::cerr << "Fragment shader load failed: " << fsPath << "\n  reason: " << fsSrc.error << std::endl;
+        std::cerr << "Fragment shader load failed: " << fsPath << "\n" << fsSrc.error << std::endl;
         return 0;
     }
 
@@ -806,6 +790,7 @@ static std::vector<glm::vec3> computeBitangents(
 }
 
 static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    (void)window; (void)scancode; (void)mods;
     const bool down = (action == GLFW_PRESS || action == GLFW_REPEAT);
     switch (key) {
         case GLFW_KEY_W: g_input.w = down; break;
