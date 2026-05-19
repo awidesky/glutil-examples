@@ -92,6 +92,9 @@ endfunction()
 add_gdm_example(01_ManyCubes
     src/manyCubes.cpp
 )
-add_gdm_example(02_Excavator
-    src/excavator.cpp
+add_gdm_example(02_Excavator_bad
+    src/excavator_bad.cpp
+)
+add_gdm_example(03_Excavator_good
+    src/excavator_good.cpp
 )
