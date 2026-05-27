@@ -100,4 +100,6 @@ add_gdm_example(03_Excavator_good
 )
 add_gdm_example(AIMLAB
 src/AIMLAB_main.cpp
+src/Engine.hpp
 )
+
