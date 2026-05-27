@@ -120,6 +120,10 @@ public:
 		return { m_dX, m_dY };
 	}
 
+	void Reset()
+	{
+		m_dX = m_dY = 0;
+	}
 private:
 	InputManager() = default;
 	double m_lastX = 0, m_lastY = 0;
