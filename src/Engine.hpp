@@ -94,8 +94,9 @@ public:
 	InputManager(const InputManager&) = delete;
 	InputManager& operator=(const InputManager&) = delete;
 
-	void Init(GLFWwindow* window)
+	void Init()
 	{
+		GLFWwindow* window = GraphicsContext::Get().GetWindow();
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		glfwSetCursorPosCallback(window, MouseCallback);
 	}
@@ -123,6 +124,14 @@ public:
 	void Reset()
 	{
 		m_dX = m_dY = 0;
+	}
+
+	bool IsKeyDown(int key) const {
+		return glfwGetKey(GraphicsContext::Get().GetWindow(), key) == GLFW_PRESS;
+	}
+
+	bool IsMouseDown(int button) const {
+		return glfwGetMouseButton(GraphicsContext::Get().GetWindow(), button) == GLFW_PRESS;
 	}
 private:
 	InputManager() = default;
