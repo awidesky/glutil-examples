@@ -4,6 +4,11 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <vector>
+#include <GLFW/glfw3.h>
+
+class Camera;       // 전방 선언
+class InputManager; // 전방 선언
 
 struct Transform {
     glm::vec3 position{0, 0, 0};
@@ -77,5 +82,19 @@ private:
     std::vector<Component*> m_components;
 };
 
+class TargetLogic : public Component {
+public:
+    float radius = 0.5f;
+    bool isAlive = true;
+    float spawnTime = 0.f;
 
+    void Start() override { spawnTime = (float)glfwGetTime(); }
+
+    void OnHit() {
+        isAlive = false;
+        pOwner->active = false;
+    }
+
+    float GetReactionTime() const { return (float)glfwGetTime() - spawnTime; }
+};
 #endif // COMPONENT_HPP
