@@ -98,8 +98,8 @@ add_gdm_example(02_Excavator_bad
 add_gdm_example(03_Excavator_good
     src/excavator_good.cpp
 )
-add_gdm_example(AIMLAB
-src/AIMLAB_main.cpp
-src/Engine.hpp
+add_gdm_example(04_AIMLAB
+    src/AIMLAB_main.cpp
+    src/Engine.hpp
 )
 
