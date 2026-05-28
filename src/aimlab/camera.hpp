@@ -10,8 +10,7 @@
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "graphicsContext.hpp"
-#include "inputManager.hpp"
+#include "engine.hpp"
 
 class Camera {
 public:
