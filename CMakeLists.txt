@@ -16,7 +16,7 @@ set(GDM_DIR "${EXTERNAL_DIR}/gdm")
 if(NOT EXISTS "${GDM_DIR}/CMakeLists.txt")
     message(STATUS "[${PROJECT_NAME}] Fetching gdm...")
 
-    set(GDM_URL "https://github.com/awidesky/gdm/archive/refs/heads/debug.tar.gz")
+    set(GDM_URL "https://github.com/awidesky/gdm/archive/refs/heads/label.tar.gz")
     set(GDM_ARCHIVE "${CMAKE_BINARY_DIR}/gdm.tar.gz")
     set(GDM_EXTRACT_DIR "${CMAKE_BINARY_DIR}/gdm_extract")
 
@@ -91,17 +91,31 @@ endfunction()
 
 add_gdm_example(01_ManyCubes
     src/manyCubes.cpp
+
+    shader/manyCubes.vert
+    shader/manyCubes.frag
 )
 add_gdm_example(02_Excavator_bad
     src/excavator_bad.cpp
+
+    shader/excvator.vert
+    shader/excvator.frag
 )
 add_gdm_example(03_Excavator_good
     src/excavator_good.cpp
+
+    shader/excvator.vert
+    shader/excvator.frag
 )
 add_gdm_example(04_AIMLAB
     src/aimlab/AIMLAB_main.cpp
     src/aimlab/camera.hpp
-    src/aimlab/graphicsContext.hpp
-    src/aimlab/inputManager.hpp
+    src/aimlab/engine.hpp
+
+    shader/aimlab.vert
+    shader/aimlab.frag
 )
 
+source_group("Shaders"
+    REGULAR_EXPRESSION ".*\\.(frag|vert)$"
+)

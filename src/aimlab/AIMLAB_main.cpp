@@ -733,8 +733,7 @@
 //	return 0;
 //}
 
-#include "inputManager.hpp"
-#include "graphicsContext.hpp"
+#include "engine.hpp"
 #include "camera.hpp"
 
 int main() {
