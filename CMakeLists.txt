@@ -99,7 +99,9 @@ add_gdm_example(03_Excavator_good
     src/excavator_good.cpp
 )
 add_gdm_example(04_AIMLAB
-    src/AIMLAB_main.cpp
-    src/Engine.hpp
+    src/aimlab/AIMLAB_main.cpp
+    src/aimlab/camera.hpp
+    src/aimlab/graphicsContext.hpp
+    src/aimlab/inputManager.hpp
 )
 
