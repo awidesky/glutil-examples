@@ -6,6 +6,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include <GLFW/glfw3.h>
+#include "engine.hpp"
+#include "physics.hpp"
+#include "camera.hpp"
 
 struct Transform {
     glm::vec3 position{0, 0, 0};
@@ -93,7 +96,57 @@ public:
     }
 
     float GetReactionTime() const { return (float)glfwGetTime() - spawnTime; }
+};
 
+class WeaponSystem : public Component {
+public:
+    int maxAmmo = 30;
+    int currentAmmo = 30;
+    bool isReloading = false;
+    float reloadTime = 1.5f;
+    float reloadTimer = 0.f;
+    Camera* camera = nullptr;
+    std::vector<GameObject*>* targets = nullptr;
 
+    void Update(float dt) override {
+        if (isReloading) {
+            reloadTimer -= dt;
+            if (reloadTimer <= 0.f) {
+                currentAmmo = maxAmmo;
+                isReloading = false;
+            }
+        }
+        if (InputManager::Get().IsMouseDown(GLFW_MOUSE_BUTTON_LEFT))
+            Fire();
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_R))
+            Reload();
+    }
+
+    void Fire() {
+        if (currentAmmo <= 0 || isReloading || !targets || !camera)
+            return;
+        currentAmmo--;
+
+        PhysicsSystem::Ray ray = {camera->GetPosition(), camera->GetForward()};
+        float t;
+        for (auto* obj : *targets) {
+            if (!obj->active)
+                continue;
+            auto* logic = obj->GetComponent<TargetLogic>();
+            if (!logic || !logic->isAlive)
+                continue;
+            if (PhysicsSystem::Get().RaySphereIntersect(ray, obj->transform.position, logic->radius, t)) {
+                logic->OnHit();
+                break;
+            }
+        }
+    }
+
+    void Reload() {
+        if (!isReloading && currentAmmo < maxAmmo) {
+            isReloading = true;
+            reloadTimer = reloadTime;
+        }
+    }
 };
 #endif // COMPONENT_HPP
