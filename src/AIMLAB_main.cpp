@@ -732,3 +732,9 @@
 //	glfwTerminate();
 //	return 0;
 //}
+
+#include "Engine.hpp"
+
+int main() {
+	return 1;
+}
