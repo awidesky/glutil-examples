@@ -7,9 +7,6 @@
 #include <vector>
 #include <GLFW/glfw3.h>
 
-class Camera;       // 전방 선언
-class InputManager; // 전방 선언
-
 struct Transform {
     glm::vec3 position{0, 0, 0};
     glm::vec3 rotation{0, 0, 0};
@@ -96,5 +93,7 @@ public:
     }
 
     float GetReactionTime() const { return (float)glfwGetTime() - spawnTime; }
+
+
 };
 #endif // COMPONENT_HPP
