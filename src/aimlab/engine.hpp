@@ -1,4 +1,4 @@
-#ifndef ENGINE_HPP
+﻿#ifndef ENGINE_HPP
 #define ENGINE_HPP
 
 #include <glutil/glutil.hpp>
@@ -106,7 +106,7 @@ public:
         m_lastY = y;
     }
 
-    std::pair<double, double> GetMouseDelta() const { return {m_dX, m_dY}; }
+    std::pair<float, float> GetMouseDelta() const { return {float(m_dX), float(m_dY)}; }
 
     void ResetMouseDelta() { m_dX = m_dY = 0; }
 
