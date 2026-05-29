@@ -1,4 +1,4 @@
-#ifndef CAMERA_HPP
+﻿#ifndef CAMERA_HPP
 #define CAMERA_HPP
 
 // Include GLM
@@ -23,8 +23,8 @@ public:
 
     glm::mat4 GetViewMatrix() { return glm::lookAt(m_pos, m_pos + GetForward(), m_up); }
 
-    glm::mat4 GetProjectionMatrix() {
-        return glm::perspective(glm::radians(m_fov), GraphicsContext::Get().GetWindowSize(), 0.1f, 100.f);
+    glm::mat4 GetProjectionMatrix(float fov) {
+        return glm::perspective(glm::radians(fov), GraphicsContext::Get().GetWindowSize(), 0.1f, 100.f);
     }
 
     void ProcessMouseMove(float dx, float dy) {
@@ -50,7 +50,7 @@ public:
         if (InputManager::Get().IsKeyDown(GLFW_KEY_D))
             m_pos += right * m_speed * dt;
 
-        m_pos.y = 0.0f;
+        //m_pos.y = 0.0f;
     }
 
     glm::vec3 GetPosition() const { return m_pos; }
@@ -60,8 +60,7 @@ private:
     glm::vec3 m_up = glm::vec3(0.f);
     float m_yaw = -90.0f;
     float m_pitch = 0.0f;
-    float m_fov = 45.0f;
     float m_speed = 5.0f;
-    float m_sensitivity = 0.05f;
+    float m_sensitivity = 0.1f;
 };
 #endif // CAMERA_HPP
