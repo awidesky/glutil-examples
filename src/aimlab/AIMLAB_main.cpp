@@ -1,62 +1,62 @@
-﻿//#include <glad/gl.h>
-//#include <GLFW/glfw3.h>
+﻿// #include <glad/gl.h>
+// #include <GLFW/glfw3.h>
 //
-//#define GLM_ENABLE_EXPERIMENTAL
-//#include <glm/glm.hpp>
-//#include <glm/gtc/matrix_transform.hpp>
-//#include <glm/gtc/quaternion.hpp>
-//#include <glm/gtx/quaternion.hpp>
-//#include <glm/gtx/euler_angles.hpp>
-//#include <glm/gtx/norm.hpp>
+// #define GLM_ENABLE_EXPERIMENTAL
+// #include <glm/glm.hpp>
+// #include <glm/gtc/matrix_transform.hpp>
+// #include <glm/gtc/quaternion.hpp>
+// #include <glm/gtx/quaternion.hpp>
+// #include <glm/gtx/euler_angles.hpp>
+// #include <glm/gtx/norm.hpp>
 //
-//#include <glutil/glutil.hpp>
+// #include <glutil/glutil.hpp>
 //
-//#define STB_IMAGE_IMPLEMENTATION
-//#include "stb_image.h"
-//#include <glm/gtc/type_ptr.hpp>
+// #define STB_IMAGE_IMPLEMENTATION
+// #include "stb_image.h"
+// #include <glm/gtc/type_ptr.hpp>
 //
-//float keyVal = 0.2f;
-//float camSpeed = 0.1f;
-//float lastX = 400, lastY = 300;
-//glm::vec3 camDir = glm::vec3(0.0f, 0.0f, -1.0f);
-//glm::vec3 camUp = glm::vec3(0.0f, 1.0f, 0.0f);
-//glm::vec3 camPos = glm::vec3(0.0f, 0.0f, 3.0f);
-//glm::mat4 view = glm::lookAt(
+// float keyVal = 0.2f;
+// float camSpeed = 0.1f;
+// float lastX = 400, lastY = 300;
+// glm::vec3 camDir = glm::vec3(0.0f, 0.0f, -1.0f);
+// glm::vec3 camUp = glm::vec3(0.0f, 1.0f, 0.0f);
+// glm::vec3 camPos = glm::vec3(0.0f, 0.0f, 3.0f);
+// glm::mat4 view = glm::lookAt(
 //	glm::vec3(0.0f, 0.0f, 3.0f),
 //	glm::vec3(0.0f, 0.0f, 0.0f),
 //	glm::vec3(0.0f, 1.0f, 0.0f)
 //);
-//bool firstMouse = true;
-//float pitch = 0.f;
-//float yaw = 0.f;
+// bool firstMouse = true;
+// float pitch = 0.f;
+// float yaw = 0.f;
 //
 //
-//struct Material
+// struct Material
 //{
 //	glm::vec3 ambient;
 //	glm::vec3 diffuse;
 //	glm::vec3 specular;
 //	float shiness;
-//};
-//Material material;
+// };
+// Material material;
 //
-//struct Light
+// struct Light
 //{
 //	glm::vec3 pos;
 //	glm::vec3 ambient;
 //	glm::vec3 diffuse;
 //	glm::vec3 specular;
-//};
-//Light light;
+// };
+// Light light;
 //
 //
 //
-//void framebuffer_size_callback(GLFWwindow* window, int w, int h)
+// void framebuffer_size_callback(GLFWwindow* window, int w, int h)
 //{
 //	glViewport(0, 0, w, h);
-//}
+// }
 //
-//void processInput(GLFWwindow* window)
+// void processInput(GLFWwindow* window)
 //{
 //	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 //	{
@@ -85,9 +85,9 @@
 //		camPos += glm::normalize(glm::cross(camDir, camUp)) * camSpeed;
 //
 //	camPos = glm::vec3(camPos.x, 0.f, camPos.z);
-//}
+// }
 //
-//glm::mat4 myLookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
+// glm::mat4 myLookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
 //{
 //	glm::vec3 zAxis = glm::normalize(pos - target);
 //
@@ -106,12 +106,12 @@
 //	tran[3][2] = -pos.z;
 //
 //	return rotation * tran;
-//}
+// }
 //
 //
-//void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+// void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 //{
-//	
+//
 //	if (firstMouse)
 //	{
 //		lastX = xpos;
@@ -143,9 +143,9 @@
 //	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 //
 //	camDir = glm::normalize(front);
-//}
+// }
 //
-//int main()
+// int main()
 //{
 //	// glfw : Graphics Library FrameWork (창 생성, 입력 처리, 시간 측정, 버퍼 스왑, 이벤트 처리 등등)
 //	glfwInit();
@@ -187,16 +187,16 @@
 //	float vertices[] = {
 //		// positions          // normals           // texture coords
 //-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-// 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-// 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-// 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+//  0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
+//  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+//  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
 //-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
 //-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
 //
 //-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-// 0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
-// 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-// 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
+//  0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
+//  0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
+//  0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
 //-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
 //-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
 //
@@ -207,24 +207,24 @@
 //-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
 //-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 //
-// 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-// 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-// 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-// 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-// 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-// 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+//  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+//  0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+//  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+//  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+//  0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+//  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 //
 //-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-// 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-// 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-// 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+//  0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
+//  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+//  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
 //-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
 //-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
 //
 //-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-// 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
-// 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-// 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+//  0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
+//  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+//  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
 //-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
 //-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 //	};
@@ -265,7 +265,8 @@
 //	//	"uniform float alpha;"
 //	//	"out vec4 frag_colour;"
 //	//	"void main() {"
-//	//	"  frag_colour = mix(texture(myTexture, TexCoord),texture(myTexture1, vec2(TexCoord.x, 1 - TexCoord.y)), alpha);"
+//	//	"  frag_colour = mix(texture(myTexture, TexCoord),texture(myTexture1, vec2(TexCoord.x, 1 - TexCoord.y)),
+//alpha);"
 //	//	"}";
 //	const char* vs =
 //		"#version 410 core\n"
@@ -366,14 +367,11 @@
 //		"    vec3 reflectDir = reflect(-lightDir, normal);"
 //		"    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);"
 //		"    float distance = length(light.position - fragPos);"
-//		"    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));"
-//		"    vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, TexCoords));"
-//		"    vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.diffuse, TexCoords));"
-//		"    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));"
-//		"    ambient  *= attenuation;"
-//		"    diffuse  *= attenuation;"
-//		"    specular *= attenuation;"
-//		"    return (ambient + diffuse + specular);"
+//		"    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance *
+//distance));" 		"    vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, TexCoords));" 		"    vec3 diffuse  =
+//light.diffuse  * diff * vec3(texture(material.diffuse, TexCoords));" 		"    vec3 specular = light.specular * spec *
+//vec3(texture(material.specular, TexCoords));" 		"    ambient  *= attenuation;" 		"    diffuse  *= attenuation;" 		" specular
+//*= attenuation;" 		"    return (ambient + diffuse + specular);"
 //		"}"
 //
 //		"vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {"
@@ -382,17 +380,13 @@
 //		"    vec3 reflectDir = reflect(-lightDir, normal);"
 //		"    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);"
 //		"    float distance = length(light.position - fragPos);"
-//		"    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));"
-//		"    float theta = dot(lightDir, normalize(-light.direction));"
-//		"    float epsilon = light.cutOff - light.outerCutOff;"
-//		"    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);"
-//		"    vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, TexCoords));"
-//		"    vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.diffuse, TexCoords));"
-//		"    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));"
-//		"    ambient  *= attenuation * intensity;"
-//		"    diffuse  *= attenuation * intensity;"
-//		"    specular *= attenuation * intensity;"
-//		"    return (ambient + diffuse + specular);"
+//		"    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance *
+//distance));" 		"    float theta = dot(lightDir, normalize(-light.direction));" 		"    float epsilon = light.cutOff -
+//light.outerCutOff;" 		"    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);" 		"    vec3 ambient
+//= light.ambient  * vec3(texture(material.diffuse, TexCoords));" 		"    vec3 diffuse  = light.diffuse  * diff *
+//vec3(texture(material.diffuse, TexCoords));" 		"    vec3 specular = light.specular * spec *
+//vec3(texture(material.specular, TexCoords));" 		"    ambient  *= attenuation * intensity;" 		"    diffuse  *= attenuation
+//* intensity;" 		"    specular *= attenuation * intensity;" 		"    return (ambient + diffuse + specular);"
 //		"}";
 //
 //	const char* lampVs =
@@ -667,8 +661,8 @@
 //
 //		for (int i = 0; i < 4; i++) {
 //			std::string idx = "pointLights[" + std::to_string(i) + "]";
-//			glUniform3fv(glGetUniformLocation(p, (idx + ".position").c_str()), 1, glm::value_ptr(pointLightPositions[i]));
-//			glUniform1f(glGetUniformLocation(p, (idx + ".constant").c_str()), 1.0f);
+//			glUniform3fv(glGetUniformLocation(p, (idx + ".position").c_str()), 1,
+//glm::value_ptr(pointLightPositions[i])); 			glUniform1f(glGetUniformLocation(p, (idx + ".constant").c_str()), 1.0f);
 //			glUniform1f(glGetUniformLocation(p, (idx + ".linear").c_str()), 0.09f);
 //			glUniform1f(glGetUniformLocation(p, (idx + ".quadratic").c_str()), 0.032f);
 //			glUniform3f(glGetUniformLocation(p, (idx + ".ambient").c_str()), 0.0f, 0.0f, 0.0f);
@@ -731,11 +725,126 @@
 //
 //	glfwTerminate();
 //	return 0;
-//}
+// }
 
-#include "engine.hpp"
 #include "camera.hpp"
-
+#include "component.hpp"
+#include "engine.hpp"
+#include <filesystem>
+#include <glm/gtc/type_ptr.hpp>
+#include <glutil/glutil.hpp>
 int main() {
-	return 1;
+
+    bool ok = GraphicsContext::Get().Init(800, 800, "AIMLAB");
+    if (!ok)
+        return -1;
+    InputManager::Get().Init();
+
+    glutil::GLProgram p = glutil::ShaderLoader::loadProgramToGL("shader/aimlab.vert", "shader/aimlab.frag");
+    if (!p.ok) {
+        std::cout << p.error;
+    }
+
+    glutil::GLTexture2D img = glutil::ImageLoader::loadImageToGL("texture/grid.bmp");
+    if (!img.ok) {
+        std::cout << img.error;
+    }
+
+    float planePositions[] = {
+      -0.5f, 0.0f, -0.5f, 0.5f, 0.0f, -0.5f, 0.5f, 0.0f, 0.5f, 0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, -0.5f,
+    };
+
+    float planeNormals[] = {
+      0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+    };
+
+    float planeUVs[] = {
+      0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+    };
+
+    GLuint vao;
+    GLuint vbo[3];
+
+    //  정점 계산
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(3, vbo);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(planePositions), planePositions, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(planeNormals), planeNormals, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(planeUVs), planeUVs, GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
+
+
+
+    // Model 계산
+    Transform transform;
+    transform.scale = glm::vec3(10.f, 1.f, 10.f);
+
+    // View / Projection 계산
+    Camera* camera = new Camera(glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
+
+
+    // Uniform 계산
+    glUseProgram(p.id);
+    
+    // Model
+    glUniformMatrix4fv(glGetUniformLocation(p.id, "uModel"), 1, GL_FALSE, glm::value_ptr(transform.GetWorldMatrix()));
+    // Projection
+    glUniformMatrix4fv(glGetUniformLocation(p.id, "uProjection"), 1, GL_FALSE,
+                       glm::value_ptr(camera->GetProjectionMatrix(75.f)));
+
+    // 조명 계산 
+    glUniform3f(glGetUniformLocation(p.id, "uLightPos"), 1.0f, 3.0f, 2.0f);
+    glUniform3f(glGetUniformLocation(p.id, "uLightColor"), 1.0f, 1.0f, 1.0f);
+    glUniform3f(glGetUniformLocation(p.id, "uAmbientColor"), 0.2f, 0.2f, 0.2f);
+    glUniform3f(glGetUniformLocation(p.id, "uDiffuseColor"), 0.8f, 0.5f, 0.3f);
+    glUniform3f(glGetUniformLocation(p.id, "uSpecularColor"), 0.5f, 0.5f, 0.5f);
+    glUniform1f(glGetUniformLocation(p.id, "uShininess"), 32.0f);
+
+
+    float prevTime = 0.f;
+
+    while (!glfwWindowShouldClose(GraphicsContext::Get().GetWindow())) {
+        float dt = (float)glfwGetTime() - prevTime;
+        prevTime = (float)glfwGetTime();
+
+        GraphicsContext::Get().Clear();
+
+        // 마우스 입력 받기    
+        auto [dx, dy] = InputManager::Get().GetMouseDelta();
+        camera->ProcessMouseMove(dx, dy);
+        camera->ProcessKeyboard(dt);
+
+
+        glUseProgram(p.id);
+        glBindVertexArray(vao);
+
+        // 바닥 띄우기 (좌표 텍스쳐 사용)
+        glUniform3fv(glGetUniformLocation(p.id, "uCameraPos"), 1, glm::value_ptr(camera->GetPosition()));
+        glUniformMatrix4fv(glGetUniformLocation(p.id, "uView"), 1, GL_FALSE, glm::value_ptr(camera->GetViewMatrix()));
+
+        // 텍스쳐 Uniform
+        glUniform1i(glGetUniformLocation(p.id, "uUseTexture"), 1);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, img.id);
+        glUniform1i(glGetUniformLocation(p.id, "uTexture"), 0);
+
+        
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+
+        InputManager::Get().ResetMouseDelta();
+        GraphicsContext::Get().Present();
+    }
+
+    return 1;
 }
