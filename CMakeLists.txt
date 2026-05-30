@@ -113,6 +113,7 @@ add_gdm_example(04_AIMLAB
     src/aimlab/engine.hpp
     src/aimlab/component.hpp
     src/aimlab/physics.hpp
+    src/aimlab/manager.hpp
 	
     shader/aimlab.vert
     shader/aimlab.frag
