@@ -1,50 +1,33 @@
 ﻿#version 330 core
 
-in vec3 vWorldPos;
-in vec3 vViewPos;
-in vec3 vNormal;
-in vec2 vUV;
+in vec2 UV;
+in vec3 FragPos;
+in vec3 Normal;
 
-out vec4 FragColor;
+layout(location = 0) out vec4 color;
 
-uniform vec3 uCameraPos;
+uniform sampler2D myTextureSampler;
 
-uniform vec3 uLightPos;
-uniform vec3 uLightColor;
+uniform vec3 lightPos;
+uniform vec3 viewPos;
+uniform vec3 lightColor;
 
-uniform vec3 uAmbientColor;
-uniform vec3 uDiffuseColor;
-uniform vec3 uSpecularColor;
+void main(){
+    vec3 objectColor = texture(myTextureSampler, UV).rgb;
+    
+    float ambientStrength = 0.5;
+    vec3 ambient = ambientStrength * objectColor;
 
-uniform float uShininess;
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - FragPos);
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = 0.4 * diff * objectColor;
 
-uniform sampler2D uTexture;
-uniform bool uUseTexture;
+    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    vec3 specular = 0.5 * spec * lightColor;
 
-void main()
-{
-    vec3 N = normalize(vNormal);
-    vec3 L = normalize(uLightPos - vWorldPos);
-    vec3 V = normalize(uCameraPos - vWorldPos);
-    vec3 R = reflect(-L, N);
-
-    // Ambient
-    vec3 ambient = uAmbientColor * uLightColor;
-
-    // Diffuse (Lambert)
-    float diff = max(dot(N, L), 0.0);
-    vec3 diffuse = diff * uDiffuseColor * uLightColor;
-
-    // Specular (Phong)
-    float spec = pow(max(dot(V, R), 0.0), uShininess);
-    vec3 specular = spec * uSpecularColor * uLightColor;
-
-    vec3 lighting = ambient + diffuse + specular;
-
-    vec3 baseColor = vec3(1.0);
-    if (uUseTexture) {
-        baseColor = texture(uTexture, vUV).rgb;
-    }
-
-    FragColor = vec4(lighting * baseColor, 1.0);
+    vec3 result = ambient + diffuse + specular;
+    color = vec4(result, 1.0);
 }

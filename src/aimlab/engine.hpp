@@ -64,6 +64,12 @@ public:
     GLFWwindow* GetWindow() const { return m_window; }
     float GetWindowSize() const { return (float)m_width / (float)m_height; }
 
+    void SetProgram(GLuint id) {
+        m_program = id;
+        glUseProgram(id);
+    }
+    GLuint GetProgram() const { return m_program; }
+
     ~GraphicsContext() {
         glfwDestroyWindow(m_window);
         glfwTerminate();
@@ -73,6 +79,7 @@ private:
     GraphicsContext() = default;
 
     GLFWwindow* m_window = nullptr;
+    GLuint m_program = 0;
     int m_width = 0, m_height = 0;
     std::string m_title;
 };
@@ -129,10 +136,19 @@ using Program = glutil::GLProgram;
 
 class ResourceManager {
 public:
-    ResourceManager() = default;
+    static ResourceManager& Get() {
+        static ResourceManager rm;
+        return rm;
+    }
     ~ResourceManager() { Clear(); }
 
-public:
+    Texture* GetDefaultTexture() const { return _defaultTexture; }
+
+    void SetDefaultTexture(const std::filesystem::path& path) {
+        delete _defaultTexture;
+        _defaultTexture = new Texture(glutil::ImageLoader::loadImageToGL(path));
+    }
+
     Mesh* GetMesh(const std::string& name) {
         auto it = _meshes.find(name);
 
@@ -171,6 +187,9 @@ public:
     }
 
     void Clear() {
+        delete _defaultTexture;
+        _defaultTexture = nullptr;
+
         for (auto& pair : _meshes)
             delete pair.second;
 
@@ -186,17 +205,10 @@ public:
     }
 
 private:
+    ResourceManager() = default;
+    Texture* _defaultTexture = nullptr;
     std::unordered_map<std::string, Mesh*> _meshes;
     std::unordered_map<std::string, Texture*> _textures;
     std::unordered_map<std::string, Program*> _programs;
-};
-
-struct Material {
-    Material(Program* program) { _program = program; }
-
-    virtual void Bind(GraphicsContext* context) = 0;
-
-private:
-    Program* _program;
 };
 #endif // ENGINE_HPP

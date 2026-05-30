@@ -1,30 +1,23 @@
 #version 330 core
 
-layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
-layout(location = 2) in vec2 aUV;
+layout(location = 0) in vec3 vertexPosition_modelspace;
+layout(location = 1) in vec3 vertexNormal;
+layout(location = 2) in vec2 vertexUV;
 
-uniform mat4 uModel;
-uniform mat4 uView;
-uniform mat4 uProjection;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
-out vec3 vWorldPos;
-out vec3 vViewPos;
-out vec3 vNormal;
-out vec2 vUV;
+out vec2 UV;
+out vec3 FragPos;
+out vec3 Normal;
 
-void main()
-{
-    vec4 worldPos = uModel * vec4(aPosition, 1.0);
-    vec4 viewPos  = uView * worldPos;
+void main(){
+	gl_Position =  projection * view * model * vec4(vertexPosition_modelspace,1);
+ 
+    UV = vertexUV;
 
-    vWorldPos = worldPos.xyz;
-    vViewPos  = viewPos.xyz;
+    FragPos = vec3(model * vec4(vertexPosition_modelspace, 1.0));
 
-    // normal transform (model 기준)
-    vNormal = mat3(transpose(inverse(uModel))) * aNormal;
-
-    vUV = aUV;
-
-    gl_Position = uProjection * viewPos;
+    Normal = mat3(transpose(inverse(model))) * vertexNormal;
 }
