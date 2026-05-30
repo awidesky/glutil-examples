@@ -63,10 +63,20 @@ set(GLAD_VERSION "2.0.8" CACHE STRING "" FORCE)
 
 add_subdirectory("${GDM_DIR}")
 
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/generatedHeader")
+configure_file(
+    "${CMAKE_SOURCE_DIR}/src/aimlab/config.hpp.in"
+    "${CMAKE_BINARY_DIR}/generatedHeader/config.hpp"
+    @ONLY
+)
+
 
 # Example targets
 function(add_gdm_example TARGET_NAME)
     add_executable(${TARGET_NAME} ${ARGN})
+    target_include_directories(${TARGET_NAME} PRIVATE
+        "${CMAKE_BINARY_DIR}/generatedHeader"
+    )
     target_link_libraries(${TARGET_NAME} PRIVATE
         gdm::deps
         gdm::glutil
@@ -109,11 +119,13 @@ add_gdm_example(03_Excavator_good
 )
 add_gdm_example(04_AIMLAB
     src/aimlab/AIMLAB_main.cpp
+    src/aimlab/gameloop.hpp
     src/aimlab/camera.hpp
     src/aimlab/engine.hpp
     src/aimlab/component.hpp
     src/aimlab/physics.hpp
-	
+    src/aimlab/mesh.hpp
+
     shader/aimlab.vert
     shader/aimlab.frag
 )

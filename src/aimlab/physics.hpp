@@ -1,7 +1,5 @@
 ﻿#ifndef PHYSCIS_HPP
 #define PHYSCIS_HPP
-
-#pragma once
 #include <glm/glm.hpp>
 
 class PhysicsSystem {

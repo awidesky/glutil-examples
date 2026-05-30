@@ -1,9 +1,9 @@
 ﻿#ifndef COMPONENT_HPP
 #define COMPONENT_HPP
-
-#pragma once
+#include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <vector>
 #include <GLFW/glfw3.h>
 #include "engine.hpp"
@@ -72,6 +72,13 @@ public:
         }
     }
 
+    void Input() {
+        if (!active)
+            return;
+        for (auto c : m_components)
+            c->Input();
+    }
+
     void Render() {
         if (!active)
             return;
@@ -81,6 +88,47 @@ public:
 
 private:
     std::vector<Component*> m_components;
+};
+
+class CameraController : public Component {
+public:
+    void Start() override {
+        const GLuint program = GraphicsContext::Get().GetProgram();
+        viewLocation = glGetUniformLocation(program, "view");
+        viewPosLocation = glGetUniformLocation(program, "viewPos");
+    }
+
+    void Update(float dt) override {
+        auto& camera = Camera::Get();
+        auto [dx, dy] = InputManager::Get().GetMouseDelta();
+
+        camera.yaw += dx * camera.sensitivity;
+        camera.pitch += dy * camera.sensitivity;
+        camera.pitch = std::clamp(camera.pitch, -89.0f, 89.0f);
+
+        glm::vec3 forward = camera.GetForward();
+        glm::vec3 flatDir = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z));
+        glm::vec3 right = glm::normalize(glm::cross(flatDir, camera.up));
+
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_W))
+            camera.position += flatDir * camera.speed * dt;
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_S))
+            camera.position -= flatDir * camera.speed * dt;
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_A))
+            camera.position -= right * camera.speed * dt;
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_D))
+            camera.position += right * camera.speed * dt;
+    }
+
+    void Render() override {
+        const Camera& camera = Camera::Get();
+        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
+        glUniform3fv(viewPosLocation, 1, glm::value_ptr(camera.position));
+    }
+
+private:
+    GLint viewLocation = -1;
+    GLint viewPosLocation = -1;
 };
 
 class TargetLogic : public Component {
@@ -106,7 +154,6 @@ public:
     bool isReloading = false;
     float reloadTime = 1.5f;
     float reloadTimer = 0.f;
-    Camera* camera = nullptr;
     std::vector<GameObject*>* targets = nullptr;
 
     void Update(float dt) override {
@@ -124,11 +171,12 @@ public:
     }
 
     void Fire() {
-        if (currentAmmo <= 0 || isReloading || !targets || !camera)
+        if (currentAmmo <= 0 || isReloading || !targets)
             return;
         currentAmmo--;
 
-        PhysicsSystem::Ray ray = {camera->GetPosition(), camera->GetForward()};
+        const Camera& camera = Camera::Get();
+        PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
         float t;
         for (auto* obj : *targets) {
             if (!obj->active)
