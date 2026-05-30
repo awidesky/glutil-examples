@@ -736,7 +736,8 @@
 #include <iostream>
 
 int main() {
-    if (!GraphicsContext::Get().Init(800, 800, "AIMLAB"))
+    bool ok = GraphicsContext::Get().Init(1920, 1080, "AIMLAB");
+    if (!ok)
         return -1;
 
     InputManager::Get().Init();
