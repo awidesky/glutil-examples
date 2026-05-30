@@ -93,7 +93,7 @@ public:
         glfwSetCursorPosCallback(window, MouseCallback);
     }
 
-    static void MouseCallback(GLFWwindow* window, double x, double y) { InputManager::Get().OnMouseMove(x, y); }
+    static void MouseCallback(GLFWwindow* window, double x, double y) { (void)window; InputManager::Get().OnMouseMove(x, y); }
     void OnMouseMove(double x, double y) {
         if (m_firstMouse) {
             m_lastX = x;

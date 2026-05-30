@@ -144,7 +144,7 @@ struct object {
     
     object(const modelData& m, int colorCheck, float x, float y, float z) : object(m, colorCheck, vec3(x, y, z)) {}
     object(const modelData& m, int colorCheck, vec3&& pos)
-        : model(m), colorCheck(colorCheck), position(pos), modelMatrix(1.0f), texture(defaultTexture) {}
+        : position(pos), modelMatrix(1.0f), model(m), texture(defaultTexture), colorCheck(colorCheck) {}
 
     // 물체를 변환하는 함수들, modelMatrix를 변환한다.
     void Translate(float x, float y, float z) {
