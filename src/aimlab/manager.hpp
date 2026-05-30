@@ -20,29 +20,29 @@
 class ScoreManager {
 public:
     static ScoreManager& Get() {
-        static ScoreManager st;
-        return st;
+        static ScoreManager scoremanager;
+        return scoremanager;
     }
     ScoreManager(const ScoreManager&) = delete;
     ScoreManager& operator=(const ScoreManager&) = delete;
 
     int   score      = 0;
-    int   totalShots = 0;
-    int   hits       = 0;
+    int   totalShot  = 0;
+    int   hit        = 0;
 
     void RecordHit(float reactionTime) {
-        hits++;
-        totalShots++;
+        hit++;
+        totalShot++;
         score += (int)(100.f / reactionTime);
     }
-    void RecordMiss() { totalShots++; }
+    void RecordMiss() { totalShot++; }
 
     float GetAccuracy() const {
-        if (totalShots == 0) return 0.f;
-        return (float)hits / (float)totalShots * 100.f;
+        if (totalShot == 0) return 0.f;
+        return (float)hit / (float)totalShot * 100.f;
     }
 
-    void Reset() { score = totalShots = hits = 0; }
+    void Reset() { score = totalShot = hit = 0; }
 
 private:
     ScoreManager() = default;
