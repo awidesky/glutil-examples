@@ -735,7 +735,7 @@
 #include <glutil/glutil.hpp>
 int main() {
 
-    bool ok = GraphicsContext::Get().Init(800, 800, "AIMLAB");
+    bool ok = GraphicsContext::Get().Init(1920, 1080, "AIMLAB");
     if (!ok)
         return -1;
     InputManager::Get().Init();
@@ -759,7 +759,7 @@ int main() {
     };
 
     float planeUVs[] = {
-      0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+      0.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 0.0f, 50.0f,
     };
 
     GLuint vao;
@@ -787,7 +787,7 @@ int main() {
 
     // Model 계산
     Transform transform;
-    transform.scale = glm::vec3(10.f, 1.f, 10.f);
+    transform.scale = glm::vec3(100.f, 1.f, 100.f);
 
     // View / Projection 계산
     Camera* camera = new Camera(glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
