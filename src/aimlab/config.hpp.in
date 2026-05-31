@@ -1,0 +1,10 @@
+#ifndef CONFIG_HPP_IN
+#define CONFIG_HPP_IN
+
+#include <filesystem>
+
+namespace glutil {
+inline const std::filesystem::path PROJECT_ROOT = R"(@CMAKE_SOURCE_DIR@)";
+}
+
+#endif // CONFIG_HPP_IN

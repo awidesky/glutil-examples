@@ -727,125 +727,75 @@
 //	return 0;
 // }
 
-#include "camera.hpp"
-#include "component.hpp"
-#include "engine.hpp"
-#include <filesystem>
-#include <glm/gtc/type_ptr.hpp>
-#include <glutil/glutil.hpp>
-int main() {
+#include "config.hpp"
+#include "gameloop.hpp"
+#include "mesh.hpp"
 
-    bool ok = GraphicsContext::Get().Init(1920, 1080, "AIMLAB");
+#include <glm/glm.hpp>
+#include <glutil/glutil.hpp>
+#include <iostream>
+
+int main() {
+    auto& gc = GraphicsContext::Get();
+    bool ok = gc.Init(1920, 1080, "AIMLAB");
     if (!ok)
         return -1;
+
+    gc.mouseSensitivity = 0.1f;
+    gc.fov = 75.0f;
+    gc.ambientStrength = 0.5f;
+
     InputManager::Get().Init();
 
-    glutil::GLProgram p = glutil::ShaderLoader::loadProgramToGL("shader/aimlab.vert", "shader/aimlab.frag");
-    if (!p.ok) {
-        std::cout << p.error;
+    glutil::GLProgram program = glutil::ShaderLoader::loadProgramToGL(glutil::PROJECT_ROOT / "shader" / "aimlab.vert",
+                                                                      glutil::PROJECT_ROOT / "shader" / "aimlab.frag");
+    if (!program.ok) {
+        std::cout << program.error;
+        return -1;
+    }
+    gc.SetProgram(program.id);
+
+    ResourceManager::Get().SetDefaultTexture(glutil::PROJECT_ROOT / "texture" / "grid.bmp");
+    Texture* defaultTexture = ResourceManager::Get().GetDefaultTexture();
+    if (!defaultTexture || !defaultTexture->ok) {
+        std::cout << defaultTexture->error;
+        return -1;
     }
 
-    glutil::GLTexture2D img = glutil::ImageLoader::loadImageToGL("texture/grid.bmp");
-    if (!img.ok) {
-        std::cout << img.error;
+    ResourceManager::Get().AddMesh("plane", glutil::PROJECT_ROOT / "model" / "plane.obj");
+    Mesh* planeMesh = ResourceManager::Get().GetMesh("plane");
+    if (!planeMesh || !planeMesh->ok) {
+        std::cout << planeMesh->error;
+        return -1;
     }
 
-    float planePositions[] = {
-      -0.5f, 0.0f, -0.5f, 0.5f, 0.0f, -0.5f, 0.5f, 0.0f, 0.5f, 0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, -0.5f,
-    };
+    Camera& camera = Camera::Get();
+    camera.position = glm::vec3(0.f, 1.f, 0.f);
+    camera.up = glm::vec3(0.f, 1.f, 0.f);
+    camera.yaw = -90.f;
+    camera.pitch = 0.f;
+    camera.speed = 5.f;
 
-    float planeNormals[] = {
-      0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-    };
+    GameLoop gEngine;
 
-    float planeUVs[] = {
-      1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-    };
+    GameObject* system = new GameObject();
+    system->AddComponent(new SystemController());
+    gEngine.world.push_back(system);
 
-    GLuint vao;
-    GLuint vbo[3];
+    GameObject* cameraObject = new GameObject();
+    auto* cameraController = new CameraController();
+    cameraObject->AddComponent(cameraController);
+    gEngine.world.push_back(cameraObject);
 
-    //  정점 계산
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(3, vbo);
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(planePositions), planePositions, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(planeNormals), planeNormals, GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(planeUVs), planeUVs, GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(2);
-    glBindVertexArray(0);
+    GameObject* plane = new GameObject();
+    plane->transform.rotation.y = 180.f;
+    plane->transform.scale = glm::vec3(10.f, 1.f, 10.f);
 
+    auto* planeRenderer = new MeshRenderer(planeMesh, new Material());
+    plane->AddComponent(planeRenderer);
 
+    gEngine.world.push_back(plane);
+    gEngine.Run();
 
-    // Model 계산
-    Transform transform;
-    transform.scale = glm::vec3(100.f, 1.f, 100.f);
-
-    // View / Projection 계산
-    Camera camera(glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
-
-
-    // Uniform 계산
-    glUseProgram(p.id);
-    
-    // Model
-    glUniformMatrix4fv(glGetUniformLocation(p.id, "uModel"), 1, GL_FALSE, glm::value_ptr(transform.GetWorldMatrix()));
-    // Projection
-    glUniformMatrix4fv(glGetUniformLocation(p.id, "uProjection"), 1, GL_FALSE,
-                       glm::value_ptr(camera.GetProjectionMatrix(75.f)));
-
-    // 조명 계산 
-    glUniform3f(glGetUniformLocation(p.id, "uLightPos"), 1.0f, 3.0f, 2.0f);
-    glUniform3f(glGetUniformLocation(p.id, "uLightColor"), 1.0f, 1.0f, 1.0f);
-    glUniform3f(glGetUniformLocation(p.id, "uAmbientColor"), 0.2f, 0.2f, 0.2f);
-    glUniform3f(glGetUniformLocation(p.id, "uDiffuseColor"), 0.0f, 0.0f, 0.0f);
-    glUniform3f(glGetUniformLocation(p.id, "uSpecularColor"), 0.5f, 0.5f, 0.5f);
-    glUniform1f(glGetUniformLocation(p.id, "uShininess"), 32.0f);
-
-
-    float prevTime = 0.f;
-
-    while (!glfwWindowShouldClose(GraphicsContext::Get().GetWindow())
-            && glfwGetKey(GraphicsContext::Get().GetWindow(), GLFW_KEY_ESCAPE) != GLFW_PRESS) { // TODO : change to windowController
-        float dt = (float)glfwGetTime() - prevTime;
-        prevTime = (float)glfwGetTime();
-
-        GraphicsContext::Get().Clear();
-
-        // 마우스 입력 받기    
-        auto [dx, dy] = InputManager::Get().GetMouseDelta();
-        camera.ProcessMouseMove(dx, dy);
-        camera.ProcessKeyboard(dt);
-
-
-        glUseProgram(p.id);
-        glBindVertexArray(vao);
-
-        // 바닥 띄우기 (좌표 텍스쳐 사용)
-        glUniform3fv(glGetUniformLocation(p.id, "uCameraPos"), 1, glm::value_ptr(camera.GetPosition()));
-        glUniformMatrix4fv(glGetUniformLocation(p.id, "uView"), 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
-
-        // 텍스쳐 Uniform
-        glUniform1i(glGetUniformLocation(p.id, "uUseTexture"), 1);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, img.id);
-        glUniform1i(glGetUniformLocation(p.id, "uTexture"), 0);
-
-        
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
-
-        InputManager::Get().ResetMouseDelta();
-        GraphicsContext::Get().Present();
-    }
-
-    return 1;
+    return 0;
 }

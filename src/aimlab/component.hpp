@@ -1,9 +1,10 @@
-﻿#ifndef COMPONENT_HPP
-#define COMPONENT_HPP
-
-#pragma once
+﻿#ifndef AIMLAB_COMPONENT_HPP
+#define AIMLAB_COMPONENT_HPP
+#include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 #include <vector>
 #include <GLFW/glfw3.h>
 #include "engine.hpp"
@@ -72,6 +73,13 @@ public:
         }
     }
 
+    void Input() {
+        if (!active)
+            return;
+        for (auto c : m_components)
+            c->Input();
+    }
+
     void Render() {
         if (!active)
             return;
@@ -81,6 +89,138 @@ public:
 
 private:
     std::vector<Component*> m_components;
+};
+
+class CameraController : public Component {
+public:
+    void Start() override {
+        const GLuint program = GraphicsContext::Get().GetProgram();
+        viewLocation = glGetUniformLocation(program, "view");
+        viewPosLocation = glGetUniformLocation(program, "viewPos");
+    }
+
+    void Update(float dt) override {
+        auto& gc = GraphicsContext::Get();
+        auto& camera = Camera::Get();
+        auto [dx, dy] = InputManager::Get().GetMouseDelta();
+
+        camera.yaw += dx * gc.mouseSensitivity;
+        camera.pitch += dy * gc.mouseSensitivity;
+        camera.pitch = std::clamp(camera.pitch, -89.0f, 89.0f);
+
+        glm::vec3 forward = camera.GetForward();
+        glm::vec3 flatDir = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z));
+        glm::vec3 right = glm::normalize(glm::cross(flatDir, camera.up));
+
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_W))
+            camera.position += flatDir * camera.speed * dt;
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_S))
+            camera.position -= flatDir * camera.speed * dt;
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_A))
+            camera.position -= right * camera.speed * dt;
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_D))
+            camera.position += right * camera.speed * dt;
+    }
+
+    void Render() override {
+        const Camera& camera = Camera::Get();
+        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
+        glUniform3fv(viewPosLocation, 1, glm::value_ptr(camera.position));
+    }
+
+private:
+    GLint viewLocation = -1;
+    GLint viewPosLocation = -1;
+};
+
+class SystemController : public Component {
+public:
+    void Start() override {
+        const GLuint program = GraphicsContext::Get().GetProgram();
+        projectionLocation = glGetUniformLocation(program, "projection");
+        lightPosLocation = glGetUniformLocation(program, "lightPos");
+        ambientStrengthLocation = glGetUniformLocation(program, "ambientStrength");
+    }
+
+    void Update(float dt) override {
+        auto& gc = GraphicsContext::Get();
+        auto& im = InputManager::Get();
+
+        const float sensitivityRate = 1.5f;
+        const float fovRate = 30.0f;
+        const float ambientRate = 0.05f;
+
+        if (im.IsKeyDown(GLFW_KEY_LEFT_BRACKET)) {
+            float oldValue = gc.mouseSensitivity;
+            gc.mouseSensitivity = std::max(0.001f, gc.mouseSensitivity - sensitivityRate * dt);
+            if (gc.mouseSensitivity != oldValue)
+                std::cout << "mouseSensitivity: " << gc.mouseSensitivity << '\n';
+        }
+        if (im.IsKeyDown(GLFW_KEY_RIGHT_BRACKET)) {
+            float oldValue = gc.mouseSensitivity;
+            gc.mouseSensitivity = std::min(2.0f, gc.mouseSensitivity + sensitivityRate * dt);
+            if (gc.mouseSensitivity != oldValue)
+                std::cout << "mouseSensitivity: " << gc.mouseSensitivity << '\n';
+        }
+
+        if (im.IsKeyDown(GLFW_KEY_O)) {
+            float oldValue = gc.fov;
+            gc.fov = std::max(20.0f, gc.fov - fovRate * dt);
+            if (gc.fov != oldValue)
+                std::cout << "fov: " << gc.fov << '\n';
+        }
+        if (im.IsKeyDown(GLFW_KEY_P)) {
+            float oldValue = gc.fov;
+            gc.fov = std::min(120.0f, gc.fov + fovRate * dt);
+            if (gc.fov != oldValue)
+                std::cout << "fov: " << gc.fov << '\n';
+        }
+
+        if (im.IsKeyDown(GLFW_KEY_SEMICOLON)) {
+            float oldValue = gc.ambientStrength;
+            gc.ambientStrength = std::max(0.0f, gc.ambientStrength - ambientRate * dt);
+            if (gc.ambientStrength != oldValue)
+                std::cout << "ambientStrength: " << gc.ambientStrength << '\n';
+        }
+        if (im.IsKeyDown(GLFW_KEY_APOSTROPHE)) {
+            float oldValue = gc.ambientStrength;
+            gc.ambientStrength = std::min(3.0f, gc.ambientStrength + ambientRate * dt);
+            if (gc.ambientStrength != oldValue)
+                std::cout << "ambientStrength: " << gc.ambientStrength << '\n';
+        }
+
+        const bool keyC = im.IsKeyDown(GLFW_KEY_C);
+        const bool keyEsc = im.IsKeyDown(GLFW_KEY_ESCAPE);
+
+        if (keyC && !m_prevC)
+            gc.ToggleFullscreen();
+
+        if (keyEsc && !m_prevEsc) {
+            if (gc.IsFullscreen())
+                gc.ExitFullscreen();
+            else
+                glfwSetWindowShouldClose(gc.GetWindow(), GLFW_TRUE);
+        }
+
+        m_prevC = keyC;
+        m_prevEsc = keyEsc;
+    }
+
+    void Render() override {
+        const auto& gc = GraphicsContext::Get();
+        const Camera& camera = Camera::Get();
+        static const glm::vec3 lightPos(1.0f, 3.0f, 2.0f);
+        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix(gc.fov)));
+        glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
+        glUniform1f(ambientStrengthLocation, gc.ambientStrength);
+    }
+
+private:
+    GLint projectionLocation = -1;
+    GLint lightPosLocation = -1;
+    GLint ambientStrengthLocation = -1;
+    bool m_prevC = false;
+    bool m_prevEsc = false;
 };
 
 class TargetLogic : public Component {
@@ -106,7 +246,6 @@ public:
     bool isReloading = false;
     float reloadTime = 1.5f;
     float reloadTimer = 0.f;
-    Camera* camera = nullptr;
     std::vector<GameObject*>* targets = nullptr;
 
     void Update(float dt) override {
@@ -124,11 +263,12 @@ public:
     }
 
     void Fire() {
-        if (currentAmmo <= 0 || isReloading || !targets || !camera)
+        if (currentAmmo <= 0 || isReloading || !targets)
             return;
         currentAmmo--;
 
-        PhysicsSystem::Ray ray = {camera->GetPosition(), camera->GetForward()};
+        const Camera& camera = Camera::Get();
+        PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
         float t;
         for (auto* obj : *targets) {
             if (!obj->active)
@@ -150,4 +290,4 @@ public:
         }
     }
 };
-#endif // COMPONENT_HPP
+#endif // AIMLAB_COMPONENT_HPP
