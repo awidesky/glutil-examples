@@ -63,21 +63,21 @@ private:
 class RoundTimer {
 public:
     float duration  = 60.f;
-    float remaining = 60.f;
+    float remainTime = 60.f;
     bool  isRunning = false;
 
     void Start(float d) {
-        duration = remaining = d;
+        duration = remainTime = d;
         isRunning = true;
     }
     void Update(float dt) {
-        if (isRunning) remaining -= dt;
+        if (isRunning)
+            remainTime -= dt;
     }
-    bool IsExpired() const {
-        return isRunning && remaining <= 0.f;
+    bool IsExpired() const { return isRunning && remainTime <= 0.f;
     }
     void Reset() {
-        remaining = duration;
+        remainTime = duration;
         isRunning = false;
     }
 };

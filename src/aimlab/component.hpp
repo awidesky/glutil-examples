@@ -31,7 +31,8 @@ public:
     GameObject* pOwner = nullptr;
     bool isStarted = false;
     virtual void Start() {}
-    virtual void Update(float dt) {}
+    virtual void Input() {}
+    virtual void Update(float dt) { (void)dt; }
     virtual void Render() {}
     virtual ~Component() {}
 };
