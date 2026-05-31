@@ -23,7 +23,6 @@ public:
     float yaw = -90.0f;
     float pitch = 0.0f;
     float speed = 5.0f;
-    float sensitivity = 0.1f;
 
     glm::vec3 GetForward() const {
         return glm::normalize(glm::vec3(cos(glm::radians(yaw)) * cos(glm::radians(pitch)),
