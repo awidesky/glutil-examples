@@ -759,7 +759,7 @@ int main() {
     };
 
     float planeUVs[] = {
-      0.0f, 50.0f, 50.0f, 50.0f, 50.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 0.0f, 50.0f,
+      1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
     };
 
     GLuint vao;
@@ -790,7 +790,7 @@ int main() {
     transform.scale = glm::vec3(100.f, 1.f, 100.f);
 
     // View / Projection 계산
-    Camera* camera = new Camera(glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
+    Camera camera(glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
 
 
     // Uniform 계산
@@ -800,20 +800,21 @@ int main() {
     glUniformMatrix4fv(glGetUniformLocation(p.id, "uModel"), 1, GL_FALSE, glm::value_ptr(transform.GetWorldMatrix()));
     // Projection
     glUniformMatrix4fv(glGetUniformLocation(p.id, "uProjection"), 1, GL_FALSE,
-                       glm::value_ptr(camera->GetProjectionMatrix(75.f)));
+                       glm::value_ptr(camera.GetProjectionMatrix(75.f)));
 
     // 조명 계산 
     glUniform3f(glGetUniformLocation(p.id, "uLightPos"), 1.0f, 3.0f, 2.0f);
     glUniform3f(glGetUniformLocation(p.id, "uLightColor"), 1.0f, 1.0f, 1.0f);
     glUniform3f(glGetUniformLocation(p.id, "uAmbientColor"), 0.2f, 0.2f, 0.2f);
-    glUniform3f(glGetUniformLocation(p.id, "uDiffuseColor"), 0.8f, 0.5f, 0.3f);
+    glUniform3f(glGetUniformLocation(p.id, "uDiffuseColor"), 0.0f, 0.0f, 0.0f);
     glUniform3f(glGetUniformLocation(p.id, "uSpecularColor"), 0.5f, 0.5f, 0.5f);
     glUniform1f(glGetUniformLocation(p.id, "uShininess"), 32.0f);
 
 
     float prevTime = 0.f;
 
-    while (!glfwWindowShouldClose(GraphicsContext::Get().GetWindow())) {
+    while (!glfwWindowShouldClose(GraphicsContext::Get().GetWindow())
+            && glfwGetKey(GraphicsContext::Get().GetWindow(), GLFW_KEY_ESCAPE) != GLFW_PRESS) { // TODO : change to windowController
         float dt = (float)glfwGetTime() - prevTime;
         prevTime = (float)glfwGetTime();
 
@@ -821,16 +822,16 @@ int main() {
 
         // 마우스 입력 받기    
         auto [dx, dy] = InputManager::Get().GetMouseDelta();
-        camera->ProcessMouseMove(dx, dy);
-        camera->ProcessKeyboard(dt);
+        camera.ProcessMouseMove(dx, dy);
+        camera.ProcessKeyboard(dt);
 
 
         glUseProgram(p.id);
         glBindVertexArray(vao);
 
         // 바닥 띄우기 (좌표 텍스쳐 사용)
-        glUniform3fv(glGetUniformLocation(p.id, "uCameraPos"), 1, glm::value_ptr(camera->GetPosition()));
-        glUniformMatrix4fv(glGetUniformLocation(p.id, "uView"), 1, GL_FALSE, glm::value_ptr(camera->GetViewMatrix()));
+        glUniform3fv(glGetUniformLocation(p.id, "uCameraPos"), 1, glm::value_ptr(camera.GetPosition()));
+        glUniformMatrix4fv(glGetUniformLocation(p.id, "uView"), 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
 
         // 텍스쳐 Uniform
         glUniform1i(glGetUniformLocation(p.id, "uUseTexture"), 1);
