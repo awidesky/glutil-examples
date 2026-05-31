@@ -1,7 +1,6 @@
-﻿#ifndef MANAGER_HPP
-#define MANAGER_HPP
+﻿#ifndef AIMLAB_MANAGER_HPP
+#define AIMLAB_MANAGER_HPP
 
-#pragma once
 #include "component.hpp"
 #include <vector>
 #include <cstdlib>
@@ -136,4 +135,4 @@ public:
     }
 };
 
-#endif // MANAGER_HPP
+#endif // AIMLAB_MANAGER_HPP
