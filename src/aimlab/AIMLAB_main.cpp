@@ -736,9 +736,14 @@
 #include <iostream>
 
 int main() {
-    bool ok = GraphicsContext::Get().Init(1920, 1080, "AIMLAB");
+    auto& gc = GraphicsContext::Get();
+    bool ok = gc.Init(1920, 1080, "AIMLAB");
     if (!ok)
         return -1;
+
+    gc.mouseSensitivity = 0.1f;
+    gc.fov = 75.0f;
+    gc.ambientStrength = 0.5f;
 
     InputManager::Get().Init();
 
@@ -748,7 +753,7 @@ int main() {
         std::cout << program.error;
         return -1;
     }
-    GraphicsContext::Get().SetProgram(program.id);
+    gc.SetProgram(program.id);
 
     ResourceManager::Get().SetDefaultTexture(glutil::PROJECT_ROOT / "texture" / "grid.bmp");
     Texture* defaultTexture = ResourceManager::Get().GetDefaultTexture();
@@ -764,22 +769,18 @@ int main() {
         return -1;
     }
 
-    const glm::vec3 lightPos{1.0f, 3.0f, 2.0f};
-    const float fov = 75.0f;
-
     Camera& camera = Camera::Get();
     camera.position = glm::vec3(0.f, 1.f, 0.f);
     camera.up = glm::vec3(0.f, 1.f, 0.f);
     camera.yaw = -90.f;
     camera.pitch = 0.f;
     camera.speed = 5.f;
-    camera.sensitivity = 0.1f;
-
-    glUniformMatrix4fv(glGetUniformLocation(program.id, "projection"), 1, GL_FALSE,
-                       glm::value_ptr(camera.GetProjectionMatrix(fov)));
-    glUniform3fv(glGetUniformLocation(program.id, "lightPos"), 1, glm::value_ptr(lightPos));
 
     GameLoop gEngine;
+
+    GameObject* system = new GameObject();
+    system->AddComponent(new SystemController());
+    gEngine.world.push_back(system);
 
     GameObject* cameraObject = new GameObject();
     auto* cameraController = new CameraController();

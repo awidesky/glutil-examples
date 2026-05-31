@@ -19,9 +19,6 @@ public:
     }
 
     void Input() {
-        if (glfwGetKey(GraphicsContext::Get().GetWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
-            isRunning = false;
-
         for (auto* obj : world)
             obj->Input();
     }
@@ -40,6 +37,7 @@ public:
 
     void Run() {
         float prevTime = (float)glfwGetTime();
+        // 게임 내 로직으로 판단히 중지해야 하거나, 화면이 닫히면 끈다.
         while (!glfwWindowShouldClose(GraphicsContext::Get().GetWindow()) && isRunning) {
             float currentTime = (float)glfwGetTime();
             float dt = currentTime - prevTime;
@@ -47,7 +45,7 @@ public:
 
             Input();
             Update(dt);
-            InputManager::Get().ResetMouseDelta();
+            InputManager::Get().ResetMouseDelta(); // TODO : 컴포넌트로 빼거나 3함수 중 하나에 넣기?
             Render();
         }
     }

@@ -3,6 +3,8 @@
 
 #include <glutil/glutil.hpp>
 
+#include <glm/glm.hpp>
+
 #include <utility>
 #include <filesystem>
 #include <string>
@@ -19,8 +21,6 @@ public:
     GraphicsContext& operator=(const GraphicsContext&) = delete;
 
     bool Init(int w, int h, std::string s) {
-        m_width = w;
-        m_height = h;
         m_title = s;
 
         if (!glfwInit())
@@ -62,7 +62,44 @@ public:
     }
 
     GLFWwindow* GetWindow() const { return m_window; }
-    float GetWindowSize() const { return (float)m_width / (float)m_height; }
+    float GetWindowSize() const {
+        int w = 1;
+        int h = 1;
+        glfwGetFramebufferSize(m_window, &w, &h);
+        return h > 0 ? (float)w / (float)h : 1.0f;
+    }
+
+    void ToggleFullscreen() {
+        if (m_isFullscreen)
+            ExitFullscreen();
+        else
+            EnterFullscreen();
+    }
+
+    void EnterFullscreen() {
+        if (m_isFullscreen)
+            return;
+
+        glfwGetWindowPos(m_window, &m_windowedX, &m_windowedY);
+        glfwGetWindowSize(m_window, &m_windowedW, &m_windowedH);
+
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        glfwSetWindowMonitor(m_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        glViewport(0, 0, mode->width, mode->height);
+        m_isFullscreen = true;
+    }
+
+    void ExitFullscreen() {
+        if (!m_isFullscreen)
+            return;
+
+        glfwSetWindowMonitor(m_window, nullptr, m_windowedX, m_windowedY, m_windowedW, m_windowedH, 0);
+        glViewport(0, 0, m_windowedW, m_windowedH);
+        m_isFullscreen = false;
+    }
+
+    bool IsFullscreen() const { return m_isFullscreen; }
 
     void SetProgram(GLuint id) {
         m_program = id;
@@ -75,12 +112,19 @@ public:
         glfwTerminate();
     }
 
+    float mouseSensitivity = 0.1f;
+    float fov = 75.0f;
+    float ambientStrength = 0.5f;
 private:
     GraphicsContext() = default;
 
     GLFWwindow* m_window = nullptr;
     GLuint m_program = 0;
-    int m_width = 0, m_height = 0;
+    bool m_isFullscreen = false;
+    int m_windowedX = 100;
+    int m_windowedY = 100;
+    int m_windowedW = 1280;
+    int m_windowedH = 720;
     std::string m_title;
 };
 
