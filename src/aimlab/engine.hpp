@@ -1,5 +1,5 @@
-﻿#ifndef ENGINE_HPP
-#define ENGINE_HPP
+﻿#ifndef AIMLAB_ENGINE_HPP
+#define AIMLAB_ENGINE_HPP
 
 #include <glutil/glutil.hpp>
 
@@ -255,4 +255,4 @@ private:
     std::unordered_map<std::string, Texture*> _textures;
     std::unordered_map<std::string, Program*> _programs;
 };
-#endif // ENGINE_HPP
+#endif // AIMLAB_ENGINE_HPP

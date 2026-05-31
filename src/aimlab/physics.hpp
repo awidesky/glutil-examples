@@ -1,5 +1,5 @@
-﻿#ifndef PHYSCIS_HPP
-#define PHYSCIS_HPP
+﻿#ifndef AIMLAB_PHYSICS_HPP
+#define AIMLAB_PHYSICS_HPP
 #include <glm/glm.hpp>
 
 class PhysicsSystem {
@@ -31,4 +31,4 @@ private:
     PhysicsSystem() = default;
 };
 
-#endif // PHYSCIS_HPP
+#endif // AIMLAB_PHYSICS_HPP
