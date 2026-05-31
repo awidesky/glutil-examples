@@ -1,5 +1,5 @@
-﻿#ifndef COMPONENT_HPP
-#define COMPONENT_HPP
+﻿#ifndef AIMLAB_COMPONENT_HPP
+#define AIMLAB_COMPONENT_HPP
 #include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -290,4 +290,4 @@ public:
         }
     }
 };
-#endif // COMPONENT_HPP
+#endif // AIMLAB_COMPONENT_HPP

@@ -1,5 +1,5 @@
-﻿#ifndef CAMERA_HPP
-#define CAMERA_HPP
+﻿#ifndef AIMLAB_CAMERA_HPP
+#define AIMLAB_CAMERA_HPP
 
 #include <cmath>
 
@@ -42,4 +42,4 @@ private:
     Camera() = default;
 };
 
-#endif // CAMERA_HPP
+#endif // AIMLAB_CAMERA_HPP
