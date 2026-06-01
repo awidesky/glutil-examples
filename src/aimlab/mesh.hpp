@@ -21,7 +21,7 @@ public:
         glActiveTexture(GL_TEXTURE0);
         Texture* bindTexture = texture ? texture : ResourceManager::Get().GetDefaultTexture();
         if (bindTexture)
-            glBindTexture(GL_TEXTURE_2D, bindTexture->id);
+            bindTexture->bind();
         glUniform1i(myTextureSamplerLocation, 0);
     }
 };
