@@ -1,8 +1,6 @@
 ﻿#ifndef AIMLAB_ENGINE_HPP
 #define AIMLAB_ENGINE_HPP
 
-//#defing AIMLAB_OPTION_GL_DEBUG
-
 #include <glutil/glutil.hpp>
 
 #include <glm/glm.hpp>
@@ -43,14 +41,16 @@ public:
         }
 
         glfwMakeContextCurrent(m_window);
+        glfwSwapInterval(1);
 
         if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress))
             return false;
 
         glViewport(0, 0, w, h);
         glEnable(GL_DEPTH_TEST);
-
         glEnable(GL_MULTISAMPLE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 #ifdef AIMLAB_OPTION_GL_DEBUG
         glutil::debug::init();
@@ -70,11 +70,14 @@ public:
     }
 
     GLFWwindow* GetWindow() const { return m_window; }
-    float GetWindowSize() const {
+    float GetWindowAspect() const {
         int w = 1;
         int h = 1;
-        glfwGetFramebufferSize(m_window, &w, &h);
+        GetWindowSize(w, h);
         return h > 0 ? (float)w / (float)h : 1.0f;
+    }
+    void GetWindowSize(int& width, int& height) const {
+        glfwGetFramebufferSize(m_window, &width, &height);
     }
 
     void ToggleFullscreen() {
@@ -239,14 +242,17 @@ public:
         return it->second;
     }
 
-    void AddMesh(const std::string& name, const std::filesystem::path& path) {
-        _meshes[name] = new Mesh(glutil::ModelLoader::loadOBJtoGL(path));
+    Mesh* AddMesh(const std::string& name, const std::filesystem::path& path) {
+        return _meshes[name] = new Mesh(glutil::ModelLoader::loadOBJtoGL(path));
     }
-    void AddTexture(const std::string& name, const std::filesystem::path& path) {
-        _textures[name] = new Texture(glutil::ImageLoader::loadImageToGL(path));
+    Texture* AddTexture(const std::string& name, const std::filesystem::path& path) {
+        return _textures[name] = new Texture(glutil::ImageLoader::loadImageToGL(path));
+        if (!_textures[name]->tex.ok) {
+            std::cerr << "sdfasfdasfasdf " << _textures[name]->tex.error << '\n';
+        }
     }
-    void AddProgram(const std::string& name, const std::filesystem::path& vs, const std::filesystem::path& fs) {
-        _programs[name] = new Program(glutil::ShaderLoader::loadProgramToGL(vs, fs));
+    Program* AddProgram(const std::string& name, const std::filesystem::path& vs, const std::filesystem::path& fs) {
+        return _programs[name] = new Program(glutil::ShaderLoader::loadProgramToGL(vs, fs));
     }
 
     void Clear() {

@@ -35,7 +35,7 @@ public:
     }
 
     glm::mat4 GetProjectionMatrix(float fov) const {
-        return glm::perspective(glm::radians(fov), GraphicsContext::Get().GetWindowSize(), 0.1f, 100.f);
+        return glm::perspective(glm::radians(fov), GraphicsContext::Get().GetWindowAspect(), 0.1f, 100.f);
     }
 
 private:
