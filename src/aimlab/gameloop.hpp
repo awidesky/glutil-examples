@@ -1,4 +1,4 @@
-#ifndef AIMLAB_GAMELOOP_HPP
+﻿#ifndef AIMLAB_GAMELOOP_HPP
 #define AIMLAB_GAMELOOP_HPP
 
 #include "engine.hpp"
@@ -11,6 +11,7 @@ class GameLoop {
 public:
     std::vector<GameObject*> world;
     bool isRunning = true;
+
 
     ~GameLoop() {
         for (auto* obj : world)

@@ -735,6 +735,7 @@
 #include "config.hpp"
 #include "gameloop.hpp"
 #include "mesh.hpp"
+#include "manager.hpp"
 
 #include <glm/glm.hpp>
 #include <glutil/glutil.hpp>
@@ -782,6 +783,7 @@ int main() {
     camera.speed = 5.f;
 
     GameLoop gEngine;
+    gEngine.world.reserve(1000);
 
     GameObject* system = new GameObject();
     system->AddComponent(new SystemController());
@@ -803,7 +805,28 @@ int main() {
     plane->AddComponent(planeRenderer);
     gEngine.world.push_back(plane);
 
-        
+    // Target ResourceRenderer
+    rm.AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
+    rm.AddTexture("target", glutil::PROJECT_ROOT / "texture" / "target.png");
+    //GameObject* target = new GameObject();
+    //target->transform.scale = glm::vec3(10.f, 10.f, 0.2f);
+
+    //Mesh* mesh = ResourceManager::Get().GetMesh("target");
+    //Texture* tex = ResourceManager::Get().GetTexture("target");
+
+    //target->AddComponent(new TargetLogic());
+    //target->AddComponent(new MeshRenderer(mesh, new Material(tex)));
+
+    //gEngine.world.push_back(target);
+
+    
+    GameObject* TargetSpawner = new GameObject();
+    TargetSpawner->transform.position = glm::vec3(0.f, 0.f, 0.f);
+    auto* spawner = new TargetSpawnerComponent();
+    spawner->world = &gEngine.world;
+    TargetSpawner->AddComponent(spawner);
+    gEngine.world.push_back(TargetSpawner);
+
     GameObject* gun = new GameObject();
     gun->transform.scale = glm::vec3(0.01f);
     gun->transform.position = glm::vec3(-0.2f, 0.5f, 0.2f);
@@ -813,24 +836,17 @@ int main() {
     //gun->AddComponent(new TargetLogic());
     gEngine.world.push_back(gun);
     
-    GameObject* target = new GameObject();
-    target->transform.scale = glm::vec3(0.3f, 0.3f, 0.1f);
-    target->transform.position = glm::vec3(3.f, 2.f, 3.f);
-    target->AddComponent(
-      new MeshRenderer(rm.AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj"),
-                       new Material(rm.AddTexture("target", glutil::PROJECT_ROOT / "texture" / "target.png"))));
-    target->AddComponent(new TargetLogic());
-    gEngine.world.push_back(target);
 
-    GameObject* crosshair = new GameObject();
-    crosshair->AddComponent(
-      new OrthogonalRenderer(rm.AddMesh("crosshair", glutil::PROJECT_ROOT / "model" / "crosshair.obj"),
-                       new Material(rm.AddTexture("crosshair", glutil::PROJECT_ROOT / "texture" / "crosshair.png"))));
-    gEngine.world.push_back(crosshair);
+    //GameObject* crosshair = new GameObject();
+    //crosshair->AddComponent(
+    //  new OrthogonalRenderer(rm.AddMesh("crosshair", glutil::PROJECT_ROOT / "model" / "crosshair.obj"),
+    //                   new Material(rm.AddTexture("crosshair", glutil::PROJECT_ROOT / "texture" / "crosshair.png"))));
+    //gEngine.world.push_back(crosshair);
 
-#ifdef AIMLAB_OPTION_GL_DEBUG
-    glutil::debug::snapshot(true).bufferVAOInfo(true, true, true).capture();
-#endif
+
+//#ifdef AIMLAB_OPTION_GL_DEBUG
+//    glutil::debug::snapshot(true).bufferVAOInfo(true, true, true).capture();
+//#endif
 
     gEngine.Run();
 

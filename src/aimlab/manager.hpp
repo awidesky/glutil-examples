@@ -2,11 +2,13 @@
 #define AIMLAB_MANAGER_HPP
 
 #include "component.hpp"
+#include "mesh.hpp"
 #include <vector>
 #include <cstdlib>
 #include <cstdio>
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <config.hpp>
 
 // ScoreManager
 // 싱글톤. 게임 점수, 정확도 관리.
@@ -59,7 +61,7 @@ private:
 //   Update(dt)  - 매 프레임 호출. remaining 감소
 //   IsExpired() - remaining <= 0 이면 true. GameLoop에서 게임 종료 판단
 //   Reset()     - 타이머 초기화
-class RoundTimer {
+class RoundTimerComponent : public Component {
 public:
     float duration  = 60.f;
     float remainTime = 60.f;
@@ -69,7 +71,7 @@ public:
         duration = remainTime = d;
         isRunning = true;
     }
-    void Update(float dt) {
+    virtual void Update(float dt) override{
         if (isRunning)
             remainTime -= dt;
     }
@@ -95,16 +97,16 @@ public:
 //   Update(dt)   - 매 프레임 호출. 타이머 누적 후 조건 맞으면 SpawnTarget()
 //   SpawnTarget() - 랜덤 위치에 GameObject 생성 + TargetLogic 붙여서 world에 추가
 
-class TargetSpawner {
+class TargetSpawnerComponent : public Component {
 public:
     float spawnInterval = 2.0f;
-    int   maxTargets    = 5;
+    int   maxTargets    = 10;
     float spawnTimer    = 0.f;
-    float spawnRange    = 5.0f;
+    float spawnRange    = 10.0f;
 
     std::vector<GameObject*>* world = nullptr;
 
-    void Update(float dt) {
+    virtual void Update(float dt) override{
         if (!world) return;
 
         spawnTimer += dt;
@@ -122,15 +124,18 @@ public:
 
     void SpawnTarget() {
         float x = ((float)rand() / RAND_MAX * 2.f - 1.f) * spawnRange;
-        float z = ((float)rand() / RAND_MAX * 2.f - 1.f) * spawnRange;
+        float y = ((float)rand() / RAND_MAX * 2.f - 1.f) * spawnRange;
 
         GameObject* target = new GameObject();
-        target->transform.position = glm::vec3(x, 1.f, z);
-        target->transform.scale    = glm::vec3(1.f, 1.5f, 0.1f);
+        target->transform.position = glm::vec3(x, 1.0f, y);
+        target->transform.scale = glm::vec3(0.2f, 0.2f, 0.05f);
 
-        // 나중에 추가할 것들 (mesh)
+        Mesh* mesh = ResourceManager::Get().GetMesh("target");
+        Texture* tex = ResourceManager::Get().GetTexture("target");
 
         target->AddComponent(new TargetLogic());
+        target->AddComponent(new MeshRenderer(mesh, new Material(tex)));
+
         world->push_back(target);
     }
 };

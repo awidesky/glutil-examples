@@ -1,4 +1,4 @@
-#ifndef AIMLAB_MESH_HPP
+﻿#ifndef AIMLAB_MESH_HPP
 #define AIMLAB_MESH_HPP
 
 #include <glm/glm.hpp>
@@ -44,7 +44,6 @@ public:
     }
     void Render() override {
         if (!pMeshData || !pMaterial) return;
-
         pMaterial->Bind();
 
         const glm::mat4 model = pOwner ? pOwner->transform.GetWorldMatrix() : glm::mat4(1.0f);
