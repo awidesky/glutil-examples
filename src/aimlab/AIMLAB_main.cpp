@@ -740,7 +740,6 @@ int main() {
     bool ok = gc.Init(1920, 1080, "AIMLAB");
     if (!ok)
         return -1;
-
     gc.mouseSensitivity = 0.1f;
     gc.fov = 75.0f;
     gc.ambientStrength = 0.5f;
@@ -785,6 +784,9 @@ int main() {
     GameObject* cameraObject = new GameObject();
     auto* cameraController = new CameraController();
     cameraObject->AddComponent(cameraController);
+    auto* weaponsystem = new WeaponSystem();
+    weaponsystem->targets = &gEngine.world;
+    cameraObject->AddComponent(weaponsystem);
     gEngine.world.push_back(cameraObject);
 
     GameObject* plane = new GameObject();
@@ -793,8 +795,27 @@ int main() {
 
     auto* planeRenderer = new MeshRenderer(planeMesh, new Material());
     plane->AddComponent(planeRenderer);
-
     gEngine.world.push_back(plane);
+
+    ResourceManager::Get().AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
+    ResourceManager::Get().AddTexture("target", glutil::PROJECT_ROOT / "texture" / "target.png");
+    Mesh* targetMesh = ResourceManager::Get().GetMesh("target");
+    if (!targetMesh || !targetMesh->ok) {
+        std::cout << targetMesh->error;
+        return -1;
+    }
+
+    GameObject* target = new GameObject();
+    target->transform.scale = glm::vec3(0.3f, 0.3f, 0.1f);
+    target->transform.position = glm::vec3(3.f, 2.f, 3.f);
+    Texture* targetTex = ResourceManager::Get().GetTexture("target");
+    Material* targetMat = new Material(targetTex);
+    auto* targetRenderer = new MeshRenderer(targetMesh, targetMat);
+    target->AddComponent(targetRenderer);
+    TargetLogic* logic = new TargetLogic();
+    target->AddComponent(logic);
+    gEngine.world.push_back(target);
+
     gEngine.Run();
 
     return 0;

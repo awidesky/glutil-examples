@@ -4,7 +4,6 @@
 #include <glutil/glutil.hpp>
 
 #include <glm/glm.hpp>
-
 #include <utility>
 #include <filesystem>
 #include <string>
@@ -175,7 +174,18 @@ private:
 
 
 using Mesh = glutil::GLModelData;
-using Texture = glutil::GLTexture2D;
+struct Texture {
+    glutil::GLTexture2D tex;
+    Texture(glutil::GLTexture2D&& loadedTex) : tex(std::move(loadedTex)) {
+        glBindTexture(GL_TEXTURE_2D, tex.id);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GLfloat maxAniso = 1.0f;
+        //glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, std::min(8.0f, maxAniso));
+    }
+    void bind() const { glBindTexture(GL_TEXTURE_2D, tex.id);}
+};
 using Program = glutil::GLProgram;
 
 class ResourceManager {
