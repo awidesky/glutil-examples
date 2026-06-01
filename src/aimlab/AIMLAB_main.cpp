@@ -803,6 +803,15 @@ int main() {
     plane->AddComponent(planeRenderer);
     gEngine.world.push_back(plane);
 
+        
+    GameObject* gun = new GameObject();
+    gun->transform.scale = glm::vec3(0.01f);
+    gun->transform.position = glm::vec3(-0.2f, 0.5f, 0.2f);
+    gun->AddComponent(new MeshRenderer(
+      rm.AddMesh("gun", glutil::PROJECT_ROOT / "model" / "ak47" / "ak47.obj"),
+      new Material(rm.AddTexture("gun", glutil::PROJECT_ROOT / "model" / "ak47" / "123456_wire_115115115_color.png"))));
+    //gun->AddComponent(new TargetLogic());
+    gEngine.world.push_back(gun);
     
     GameObject* target = new GameObject();
     target->transform.scale = glm::vec3(0.3f, 0.3f, 0.1f);
