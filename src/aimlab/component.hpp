@@ -146,7 +146,7 @@ public:
         auto& gc = GraphicsContext::Get();
         auto& im = InputManager::Get();
 
-        const float sensitivityRate = 1.5f;
+        const float sensitivityRate = 0.1f;
         const float fovRate = 30.0f;
         const float ambientRate = 0.05f;
 

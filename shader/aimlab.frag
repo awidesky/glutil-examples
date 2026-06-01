@@ -13,7 +13,8 @@ uniform vec3 viewPos;
 uniform float ambientStrength;
 
 void main(){
-    vec3 objectColor = texture(myTextureSampler, UV).rgb;
+    vec4 tex = texture(myTextureSampler, UV);
+    vec3 objectColor = tex.rgb;
     
     vec3 ambient = ambientStrength * objectColor;
 
@@ -29,5 +30,5 @@ void main(){
     vec3 specular = 0.5 * spec * lightColor;
 
     vec3 result = ambient + diffuse + specular;
-    color = vec4(result, 1.0);
+    color = vec4(result, tex.a);
 }

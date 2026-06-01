@@ -727,6 +727,11 @@
 //	return 0;
 // }
 
+
+
+#define AIMLAB_OPTION_GL_DEBUG
+
+
 #include "config.hpp"
 #include "gameloop.hpp"
 #include "mesh.hpp"
@@ -754,15 +759,16 @@ int main() {
     }
     gc.SetProgram(program.id);
 
-    ResourceManager::Get().SetDefaultTexture(glutil::PROJECT_ROOT / "texture" / "grid.bmp");
+    auto& rm = ResourceManager::Get();
+    rm.SetDefaultTexture(glutil::PROJECT_ROOT / "texture" / "grid.bmp");
     //Texture* defaultTexture = ResourceManager::Get().GetDefaultTexture();
     //if (!defaultTexture || !defaultTexture->ok) { // TODO : better error checking and printing(inside add* function? and exit policy.
     //    std::cout << defaultTexture->error;
     //    return -1;
     //}
 
-    ResourceManager::Get().AddMesh("plane", glutil::PROJECT_ROOT / "model" / "plane.obj");
-    Mesh* planeMesh = ResourceManager::Get().GetMesh("plane");
+    rm.AddMesh("plane", glutil::PROJECT_ROOT / "model" / "plane.obj");
+    Mesh* planeMesh = rm.GetMesh("plane");
     if (!planeMesh || !planeMesh->ok) {
         std::cout << planeMesh->error;
         return -1;
@@ -797,24 +803,25 @@ int main() {
     plane->AddComponent(planeRenderer);
     gEngine.world.push_back(plane);
 
-    ResourceManager::Get().AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
-    ResourceManager::Get().AddTexture("target", glutil::PROJECT_ROOT / "texture" / "target.png");
-    Mesh* targetMesh = ResourceManager::Get().GetMesh("target");
-    if (!targetMesh || !targetMesh->ok) {
-        std::cout << targetMesh->error;
-        return -1;
-    }
-
+    
     GameObject* target = new GameObject();
     target->transform.scale = glm::vec3(0.3f, 0.3f, 0.1f);
     target->transform.position = glm::vec3(3.f, 2.f, 3.f);
-    Texture* targetTex = ResourceManager::Get().GetTexture("target");
-    Material* targetMat = new Material(targetTex);
-    auto* targetRenderer = new MeshRenderer(targetMesh, targetMat);
-    target->AddComponent(targetRenderer);
-    TargetLogic* logic = new TargetLogic();
-    target->AddComponent(logic);
+    target->AddComponent(
+      new MeshRenderer(rm.AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj"),
+                       new Material(rm.AddTexture("target", glutil::PROJECT_ROOT / "texture" / "target.png"))));
+    target->AddComponent(new TargetLogic());
     gEngine.world.push_back(target);
+
+    GameObject* crosshair = new GameObject();
+    crosshair->AddComponent(
+      new OrthogonalRenderer(rm.AddMesh("crosshair", glutil::PROJECT_ROOT / "model" / "crosshair.obj"),
+                       new Material(rm.AddTexture("crosshair", glutil::PROJECT_ROOT / "texture" / "crosshair.png"))));
+    gEngine.world.push_back(crosshair);
+
+#ifdef AIMLAB_OPTION_GL_DEBUG
+    glutil::debug::snapshot(true).bufferVAOInfo(true, true, true).capture();
+#endif
 
     gEngine.Run();
 
