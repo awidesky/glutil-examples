@@ -61,6 +61,11 @@ set(GLFW_VERSION "3.4.0" CACHE STRING "" FORCE)
 set(GLM_VERSION "1.0.1" CACHE STRING "" FORCE)
 set(GLAD_VERSION "2.0.8" CACHE STRING "" FORCE)
 
+set(GDM_GLAD_EXTENSION
+    "GL_ARB_debug_output;GL_EXT_debug_label;GL_EXT_debug_marker;GL_EXT_texture_compression_s3tc;GL_KHR_debug;GL_EXT_texture_filter_anisotropic"
+    CACHE STRING "" FORCE
+)
+
 add_subdirectory("${GDM_DIR}")
 
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/generatedHeader")

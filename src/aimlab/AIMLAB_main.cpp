@@ -756,11 +756,11 @@ int main() {
     gc.SetProgram(program.id);
 
     ResourceManager::Get().SetDefaultTexture(glutil::PROJECT_ROOT / "texture" / "grid.bmp");
-    Texture* defaultTexture = ResourceManager::Get().GetDefaultTexture();
-    if (!defaultTexture || !defaultTexture->ok) {
-        std::cout << defaultTexture->error;
-        return -1;
-    }
+    //Texture* defaultTexture = ResourceManager::Get().GetDefaultTexture();
+    //if (!defaultTexture || !defaultTexture->ok) { // TODO : better error checking and printing(inside add* function? and exit policy.
+    //    std::cout << defaultTexture->error;
+    //    return -1;
+    //}
 
     ResourceManager::Get().AddMesh("plane", glutil::PROJECT_ROOT / "model" / "plane.obj");
     Mesh* planeMesh = ResourceManager::Get().GetMesh("plane");
