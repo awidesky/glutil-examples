@@ -48,9 +48,12 @@ public:
 
         glViewport(0, 0, w, h);
         glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
         glEnable(GL_MULTISAMPLE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // glEnable(GL_CULL_FACE);
+        // glCullFace(GL_BACK);
 
 #ifdef AIMLAB_OPTION_GL_DEBUG
         glutil::debug::init();
@@ -193,8 +196,8 @@ struct Texture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GLfloat maxAniso = 1.0f;
-        //glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
-        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, std::min(8.0f, maxAniso));
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, std::min(8.0f, maxAniso));
     }
     void bind() const { glBindTexture(GL_TEXTURE_2D, tex.id);}
 };

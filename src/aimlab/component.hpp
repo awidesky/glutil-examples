@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/euler_angles.hpp>
 #include <iostream>
 #include <vector>
 #include <GLFW/glfw3.h>
@@ -16,14 +18,16 @@ struct Transform {
     glm::vec3 rotation{0, 0, 0};
     glm::vec3 scale{1, 1, 1};
 
-    glm::mat4 GetWorldMatrix() const {
-        glm::mat4 m(1.f);
-        m = glm::translate(m, position);
-        m = glm::rotate(m, glm::radians(rotation.x), {1, 0, 0});
-        m = glm::rotate(m, glm::radians(rotation.y), {0, 1, 0});
-        m = glm::rotate(m, glm::radians(rotation.z), {0, 0, 1});
-        return glm::scale(m, scale);
-    }
+glm::mat4 GetWorldMatrix() const {
+    glm::mat4 m(1.f);
+    m = glm::translate(m, position);
+
+    m = glm::rotate(m, glm::radians(rotation.y), {0, 1, 0});
+    m = glm::rotate(m, glm::radians(rotation.x), {1, 0, 0});
+    m = glm::rotate(m, glm::radians(rotation.z), {0, 0, 1});
+
+    return glm::scale(m, scale);
+}
 };
 
 class GameObject;
@@ -289,6 +293,58 @@ public:
             isReloading = true;
             reloadTimer = reloadTime;
         }
+    }
+};
+class CrossHairComponent : public Component {
+public:
+    void Start() override { pOwner->transform.scale = glm::vec3(32.0f, 32.0f, 1.0f); }
+    void Update(float dt) override {
+        (void)dt;
+        auto& gc = GraphicsContext::Get();
+
+        int w, h;
+        gc.GetWindowSize(w, h);
+
+        pOwner->transform.position.x = w * 0.5f;
+        pOwner->transform.position.y = h * 0.5f;
+        pOwner->transform.position.z = 0.0f;
+    }
+};
+class GunController : public Component {
+public:
+    glm::vec3 offset = {0.5f, -0.5f, 0.6f};
+
+    float recoilBack = 0.0f;
+    float recoilUp = 0.0f;
+    float recoilPitch = 0.0f;
+
+    void Fire() {
+        recoilBack = std::min(recoilBack + 0.03f, 0.08f);
+        recoilUp = std::min(recoilUp + 0.05f, 0.1f);
+        recoilPitch = std::min(recoilPitch + 5.0f, 20.0f);
+    }
+
+    void Update(float dt) override {
+        if (InputManager::Get().IsMouseDown(GLFW_MOUSE_BUTTON_LEFT))
+            Fire();
+        //if (InputManager::Get().IsKeyDown(GLFW_KEY_R)) TODO : Fire와 reload를 가지는 컴포넌트를 만들고, 그걸 상속받음
+        //    Reload();
+
+        recoilBack = std::max(0.0f, recoilBack - 1.f * dt);
+        recoilUp = std::max(0.0f, recoilUp - 1.9f * dt);
+        recoilPitch = std::max(0.0f, recoilPitch - 90.0f * dt);
+
+        const Camera& camera = Camera::Get();
+        glm::vec3 forward = camera.GetForward();
+        glm::vec3 right = glm::normalize(glm::cross(forward, camera.up));
+        glm::vec3 up = glm::normalize(glm::cross(right, forward));
+        glm::vec3 finalOffset = offset + glm::vec3(0.0f, recoilUp, -recoilBack);
+        pOwner->transform.position =
+          camera.position + right * finalOffset.x + up * finalOffset.y + forward * finalOffset.z;
+
+        pOwner->transform.rotation.x = -camera.pitch - recoilPitch;
+        pOwner->transform.rotation.y = 90.0f - camera.yaw;
+        pOwner->transform.rotation.z = 0.0f;
     }
 };
 #endif // AIMLAB_COMPONENT_HPP
