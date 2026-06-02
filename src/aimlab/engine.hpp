@@ -55,6 +55,7 @@ public:
 
 #ifdef AIMLAB_OPTION_GL_DEBUG
         glutil::debug::init();
+        lastPrint = std::chrono::steady_clock::now();
 #endif
 
         return true;
@@ -66,9 +67,34 @@ public:
     }
 
     void Present() {
+#ifdef AIMLAB_OPTION_GL_DEBUG
+        const auto renderEnd = std::chrono::steady_clock::now();
+#endif
         glfwSwapBuffers(m_window);
-        glfwPollEvents();
+#ifdef AIMLAB_OPTION_GL_DEBUG
+        const std::chrono::duration<double> renderElapsed = renderEnd - frameBegin;
+        renderTime += renderElapsed.count();
+        frameCount++;
+
+        const auto printNow = std::chrono::steady_clock::now();
+        const std::chrono::duration<double> printElapsed = printNow - lastPrint;
+        if (printElapsed.count() >= 5.0) {
+            const double frameTimeAvgMs = (printElapsed.count() / static_cast<double>(frameCount)) * 1000.0;
+            const double renderTimeAvgMs = (renderTime / static_cast<double>(frameCount)) * 1000.0;
+            const double renderFramePercentage = 100.0 * renderTimeAvgMs / frameTimeAvgMs;
+            if (renderFramePercentage < 110.0) // 100 이상은 말이 되지 않음(lastPrint의 초기화 때문에 맨 처음은 그렇게 나옴, 무시해야 함)
+                std::cout << "[Render Time / Frame Time] " << std::fixed << std::setprecision(4) << renderTimeAvgMs
+                          << " / " << frameTimeAvgMs << " ms (" << std::setprecision(2) << renderFramePercentage << "%)"
+                          << std::endl;
+
+            lastPrint = printNow;
+            frameCount = 0;
+            renderTime = 0.0;
+        }
+        frameBegin = std::chrono::steady_clock::now();
+#endif
     }
+    void PollEvents() { glfwPollEvents(); }
 
     GLFWwindow* GetWindow() const { return m_window; }
     float GetWindowAspect() const {
@@ -138,6 +164,12 @@ private:
     int m_windowedW = 1280;
     int m_windowedH = 720;
     std::string m_title;
+
+#ifdef AIMLAB_OPTION_GL_DEBUG
+    std::chrono::steady_clock::time_point lastPrint, frameBegin;
+    unsigned int frameCount = 0;
+    double renderTime = 0.0;
+#endif
 };
 
 class InputManager {
@@ -248,9 +280,6 @@ public:
     }
     Texture* AddTexture(const std::string& name, const std::filesystem::path& path) {
         return _textures[name] = new Texture(glutil::ImageLoader::loadImageToGL(path));
-        if (!_textures[name]->tex.ok) {
-            std::cerr << "sdfasfdasfasdf " << _textures[name]->tex.error << '\n';
-        }
     }
     Program* AddProgram(const std::string& name, const std::filesystem::path& vs, const std::filesystem::path& fs) {
         return _programs[name] = new Program(glutil::ShaderLoader::loadProgramToGL(vs, fs));

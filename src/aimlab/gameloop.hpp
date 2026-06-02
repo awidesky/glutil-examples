@@ -27,6 +27,7 @@ public:
     }
 
     void Input() {
+        GraphicsContext::Get().PollEvents();
         for (auto* obj : system)  obj->Input();
         for (auto* obj : world3d) obj->Input();
         for (auto* obj : world2d) obj->Input();
@@ -59,8 +60,8 @@ public:
             InputManager::Get().ResetMouseDelta(); // TODO : 컴포넌트로 빼거나 3함수 중 하나에 넣기?
             Render();
 
-            for (auto* t : targetsToSpawn)
-                world3d.push_back(t);
+            /** 추가됐던 월드 객체들을 다 넣어준다. */
+            for (auto* t : targetsToSpawn) world3d.push_back(t);
             targetsToSpawn.clear();
         }
     }
