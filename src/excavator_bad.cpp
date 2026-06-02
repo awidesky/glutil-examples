@@ -1,34 +1,35 @@
-// Include standard headers
+﻿// Include standard headers
 #include <stdio.h>
 #include <stdlib.h>
 #include <utility>
 #include <vector>
 
-
-// Include GLAD
+// Include GLEW
 #include <glad/gl.h>
 
 // Include GLFW
 #include <GLFW/glfw3.h>
-GLFWwindow *window;
+GLFWwindow* window;
 
 // Include GLM
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/norm.hpp>
+#include <glm/gtx/quaternion.hpp>
 using namespace glm;
 
-// Include glutil
-#include <glutil/glutil.hpp>
+#include "excavator_bad_utils.hpp"
 
 // 키보드와 마우스 입력 처리
 static void processKeyboardMouseInput(glm::mat4& mat, glm::vec3& tractorPosition);
-//opengl 초기화
+// opengl 초기화
 static int glinit();
+
+// 에러 체크
+void checkGLerror(const char*);
 
 // 디폴트 텍스쳐는 오브젝트가 단색이 아닌 텍스쳐를 쓰기로 되어 있으나(colorcheck < 0),
 // 텍스쳐가 주어져 있지 않은 경우 쓴다.
@@ -52,122 +53,63 @@ static glm::mat4 View;
 // 원래 torus.obj 모델은 너무 크므로, 1/10으로 줄여 쓴다
 const float TORUS_BASE_SCALE = 0.1f;
 
-// opengl error를 하나 만들까?
-float g_makeError = false, g_makeErrorPressedLastFrame = false;
-
 /*
-* 모델(obj파일)을 나타내는 객체.
-* obj파일에서 읽어온 버텍스 값과 gl buffer를 저장한다.
-*/
+ * 모델(obj파일)을 나타내는 객체.
+ * obj파일에서 읽어온 버텍스 값과 gl buffer를 저장한다.
+ */
 struct modelData {
-    GLuint vao = 0, vbo = 0, ebo = 0;
-    GLsizei indexCount = 0;
+    std::vector<glm::vec3> vertices;
+    GLuint vertexbuffer, uvbuffer, normalbuffer;
+    modelData(const char* path) {
+        std::vector<glm::vec2> uvs;
+        std::vector<glm::vec3> normals;
+        loadOBJ(path, vertices, uvs, normals);
+        glGenBuffers(1, &vertexbuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
 
-    modelData(const char * path) {
-        glutil::ModelData model = glutil::ModelLoader::loadOBJ(path);
+        glGenBuffers(1, &uvbuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+        glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
 
-        if (!model.ok) {
-            std::cerr << model.error << std::endl;
-            return;
-        }
-
-        const glutil::MeshData& mesh = model.meshes[0];
-        indexCount = static_cast<GLsizei>(mesh.indexCount());
-
-        // VAO
-        glGenVertexArrays(1, &vao);
-        glBindVertexArray(vao);
-
-        // VBO (VertexPNT interleaved)
-        glGenBuffers(1, &vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(
-            GL_ARRAY_BUFFER,
-            mesh.vertexCount() * sizeof(glutil::VertexPNT),
-            mesh.vertexData(),
-            GL_STATIC_DRAW
-        );
-
-        // EBO
-        glGenBuffers(1, &ebo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER,
-            mesh.indexCount() * sizeof(unsigned int),
-            mesh.indexData(),
-            GL_STATIC_DRAW
-        );
-
-        // position
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(
-            0, 3, GL_FLOAT, GL_FALSE,
-            sizeof(glutil::VertexPNT),
-            (void*)offsetof(glutil::VertexPNT, x)
-        );
-
-        // normal
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(
-            1, 3, GL_FLOAT, GL_FALSE,
-            sizeof(glutil::VertexPNT),
-            (void*)offsetof(glutil::VertexPNT, nx)
-        );
-
-        // uv
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(
-            2, 2, GL_FLOAT, GL_FALSE,
-            sizeof(glutil::VertexPNT),
-            (void*)offsetof(glutil::VertexPNT, u)
-        );
-
-        glBindVertexArray(0);
+        glGenBuffers(1, &normalbuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+        glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
     }
     ~modelData() {
-        glDeleteBuffers(1, &vbo);
-        glDeleteBuffers(1, &ebo);
-        glDeleteVertexArrays(1, &vao);
+        glDeleteBuffers(1, &vertexbuffer);
+        glDeleteBuffers(1, &uvbuffer);
+        glDeleteBuffers(1, &normalbuffer);
     }
 };
 
 /*
-* 모델로 만든 오브젝트를 나타낸다.
-* 모델의 기본 위치, 모델, 텍스쳐, colorcheck등 속성을 가진다.
-*/
+ * 모델로 만든 오브젝트를 나타낸다.
+ * 모델의 기본 위치, 모델, 텍스쳐, colorcheck등 속성을 가진다.
+ */
 struct object {
     glm::vec3 position;
     glm::mat4 modelMatrix;
     modelData model;
     GLuint texture;
     int colorCheck;
-    
+
     object(const modelData& m, int colorCheck, float x, float y, float z) : object(m, colorCheck, vec3(x, y, z)) {}
     object(const modelData& m, int colorCheck, vec3&& pos)
-        : position(pos), modelMatrix(1.0f), model(m), texture(defaultTexture), colorCheck(colorCheck) {}
+        : model(m), colorCheck(colorCheck), position(pos), modelMatrix(1.0f), texture(defaultTexture) {}
 
     // 물체를 변환하는 함수들, modelMatrix를 변환한다.
-    void Translate(float x, float y, float z) {
-        Translate(vec3(x, y, z));
-    }
-    void Translate(const glm::vec3& move) {
-        modelMatrix = translate(modelMatrix, move);
-    }
-    void MoveToPosition() {
-        Translate(position);
-    }
-    void Rotate(float degree, vec3 axis) { //local rotate
+    void Translate(float x, float y, float z) { Translate(vec3(x, y, z)); }
+    void Translate(const glm::vec3& move) { modelMatrix = translate(modelMatrix, move); }
+    void MoveToPosition() { Translate(position); }
+    void Rotate(float degree, vec3 axis) { // local rotate
         modelMatrix = rotate(modelMatrix, glm::radians(degree), axis);
     }
-    void Rotate(float yaw, float pitch, float roll) { //local rotate
+    void Rotate(float yaw, float pitch, float roll) { // local rotate
         modelMatrix = modelMatrix * eulerAngleYXZ(yaw, pitch, roll);
     }
-    void Scale(float x, float y, float z) {
-        Scale(vec3(x, y, z));
-    }
-    void Scale(vec3&& v) {
-        modelMatrix = scale(modelMatrix, v);
-    }
+    void Scale(float x, float y, float z) { Scale(vec3(x, y, z)); }
+    void Scale(vec3&& v) { modelMatrix = scale(modelMatrix, v); }
     // 그리는 작업을 진행하는 함수.
     void draw() {
         // MVP에 대한 행렬들 전송
@@ -177,29 +119,51 @@ struct object {
 
         // colorCheck값에 따라 색칠하는 방식 바뀐다.
         glUniform1i(ColorCheckUniformID, colorCheck);
-        
+
         // 단색을 쓰더라도 텍스쳐 매퍼는 사용된다, 코드의 복잡성을 감소시키기 위해...
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
         glUniform1i(TextureUniformID, 0);
 
+        // 1rst attribute buffer : vertices
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, model.vertexbuffer);
+        glVertexAttribPointer(0, // attribute. No particular reason for 0, but must match the layout in the shader.
+                              3, // size
+                              GL_FLOAT, // type
+                              GL_FALSE, // normalized?
+                              0,        // stride
+                              (void*)0  // array buffer offset
+        );
+
+        // uv
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ARRAY_BUFFER, model.uvbuffer);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+        // normal
+        glEnableVertexAttribArray(2);
+        glBindBuffer(GL_ARRAY_BUFFER, model.normalbuffer);
+        glVertexAttribPointer(2, // layout(location = 2)
+                              3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
         // Draw the model !
-        glBindVertexArray(model.vao);
-        glDrawElements(GL_TRIANGLES, model.indexCount, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.vertices.size());
+
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
     }
 };
 
 /*
-* 회전하는 핸들을 위한 클래스.
-* 객체의 현재 회전 각도와, 애니메이션이 끝까지 진행되었을 때 몇 도 돌아야 하는지를 저장한다.
-*/
+ * 회전하는 핸들을 위한 클래스.
+ * 객체의 현재 회전 각도와, 애니메이션이 끝까지 진행되었을 때 몇 도 돌아야 하는지를 저장한다.
+ */
 struct rotateObject : public object {
     float localAngle, animationRotate;
     rotateObject(const modelData& m, int colorCheck, vec3&& pos, float localAngle, float animationRotate)
         : object(m, colorCheck, std::move(pos)), localAngle(localAngle), animationRotate(animationRotate) {}
-
 };
 
 // 애니메이션 시작 시간. 음수인 경우 애니메이션이 시작되지 않은 것.
@@ -213,64 +177,29 @@ double lastFrameTime = -1;
 const float keyframe = 3.0f;
 // 3인칭 뷰인가?
 bool thirdView = true;
-static GLuint loadBMP(const char* path);
 
-static void start() {
-    //모델 객체를 만든다.
-    modelData cube{ "model/cube.obj" };
-    modelData plane{ "model/plane.obj" };
-    modelData torus{ "model/torus.obj" };
+void start() {
+    // 모델 객체를 만든다.
+    modelData cube{"models/cube.obj"};
+    modelData plane{"models/plane.obj"};
+    modelData torus{"models/torus.obj"};
+
+    // VAO
+    GLuint VertexArrayID;
+    glGenVertexArrays(1, &VertexArrayID);
+    glBindVertexArray(VertexArrayID);
 
     // Create and compile our GLSL program from the shaders
-    glutil::ShaderLoadResult vsSrc = glutil::ShaderLoader::loadFile("shader/excvator.vert");
-    if (!vsSrc.ok) return;
-    glutil::ShaderLoadResult fsSrc = glutil::ShaderLoader::loadFile("shader/excvator.frag");
-    if (!fsSrc.ok) return;
-
-    const GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vs, 1, vsSrc.string(), vsSrc.lengthPtr());
-    glCompileShader(vs);
-
-    const auto r1 = glutil::Inspector::shaderCompileResult(vs);
-    if (!r1.ok) {
-        std::cerr << "Shader Compile Failed! Log:\n" << r1.message << std::endl;
-        glDeleteShader(vs);
-        return;
-    }
-
-    const GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fs, 1, fsSrc.string(), fsSrc.lengthPtr());
-    glCompileShader(fs);
-
-    const auto r2 = glutil::Inspector::shaderCompileResult(fs);
-    if (!r2.ok) {
-        std::cerr << "Shader Compile Failed! Log:\n" << r2.message << std::endl;
-        glDeleteShader(fs);
-        return;
-    }
-
-    const GLuint programID = glCreateProgram();
-    glAttachShader(programID, vs);
-    glAttachShader(programID, fs);
-    glLinkProgram(programID);
-
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-
-    const auto r3 = glutil::Inspector::programLinkResult(programID);
-    if (!r3.ok) {
-        std::cerr << "Program Link Failed! Log:\n" << r3.message << std::endl;
-        glDeleteProgram(programID);
-        return;
-    }
+    GLuint programID = LoadShaders("TransformVertexShader.vertexshader", "ColorFragmentShader.fragmentshader");
 
     // 각 오브젝트에 맞는 텍스쳐를 가져온다.
-    defaultTexture = loadBMP("texture/default.bmp");
-    GLuint groundTexture = loadBMP("texture/grid.bmp");
-    GLuint trackTexture = loadBMP("texture/track.bmp");
-    GLuint scoopTexture = loadBMP("texture/scoop.bmp");
-    GLuint cabinTexture = loadBMP("texture/cabin.bmp");
-    GLuint bodyTexture = loadBMP("texture/body.bmp");
+    defaultTexture = loadBMP_custom("textures/default.bmp");
+    GLuint groundTexture = loadBMP_custom("textures/grid.bmp");
+    GLuint trackTexture = loadBMP_custom("textures/track.bmp");
+    GLuint scoopTexture = loadBMP_custom("textures/scoop.bmp");
+    GLuint diceTexture = loadDDS("textures/dice.DDS"); // 테스트용
+    GLuint cabinTexture = loadBMP_custom("textures/cabin.bmp");
+    GLuint bodyTexture = loadBMP_custom("textures/body.bmp");
 
     // 모든 유니폼 변수 ID를 가져온다
     TextureUniformID = glGetUniformLocation(programID, "myTextureSampler");
@@ -282,15 +211,13 @@ static void start() {
     ViewPosUniformID = glGetUniformLocation(programID, "viewPos");
     LightColorUniformID = glGetUniformLocation(programID, "lightColor");
 
-
     // Projection matrix : 45 Field of View, 4:3 ratio, display range : 0.01 unit <-> 500 units
     Projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.01f, 500.0f);
 
     // View matrix, 기본적으로 thirdView에서 시작한다.
-    View = glm::lookAt(
-        glm::vec3(4, 4, 4),    // Camera position in World Space
-        glm::vec3(0, 0, 0),    // and looks at the origin
-        glm::vec3(0, 1, 0)     // Head is up (set to 0,-1,0 to look upside-down)
+    View = glm::lookAt(glm::vec3(4, 4, 4), // Camera position in World Space
+                       glm::vec3(0, 0, 0), // and looks at the origin
+                       glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
     );
     glm::mat4 ThirdView = View;
     // 포크레인의 시작 위치, WASD(위, 왼쪽, 아래, 오른쪽)과 Q(뒤쪽), E(앞쪽)을 누르면 바뀐다.
@@ -298,53 +225,51 @@ static void start() {
 
     // ---------------오브젝트 선언 및 초기화---------------//
     // 땅바닥을 표현, 움직임 확인과 축 확인에 용이하다.
-    object ground{ plane, -1, vec3(0, 0, 0) }; // 평면 모델을 쓰고, 색칠은 텍스쳐를 이용하며, 원점에 존재한다.
+    object ground{plane, -1, vec3(0, 0, 0)}; // 평면 모델을 쓰고, 색칠은 텍스쳐를 이용하며, 원점에 존재한다.
     ground.texture = groundTexture; // Z, X가 표시된 텍스쳐를 씌운다.
     ground.MoveToPosition();
     ground.Scale(10.0f, 1.0f, 10.0f);
     ground.Rotate(0.0f, 0.0f, 3.14159f); // 눕힌다.
 
     // 트랙터 밑 부분 차체
-    object body{ cube, -1, 0.0f, 2.0f, 0.0f }; //위로 살짝 떠 있다.
-    body.texture = bodyTexture; // 알맞은 텍스쳐 가져온다.
+    object body{cube, -1, 0.0f, 2.0f, 0.0f}; // 위로 살짝 떠 있다.
+    body.texture = bodyTexture;              // 알맞은 텍스쳐 가져온다.
 
     // 운전수가 타는 위쪽 부분.
-    object cabin{ cube, -1, 0.0f, 3.2f, 0.0f };
+    object cabin{cube, -1, 0.0f, 3.2f, 0.0f};
     cabin.texture = cabinTexture;
 
     // 무한궤도를 토러스로 표현했다. 두개가 한 쌍이므로 배열로 묶었다.
-    object track[] = {
-        { torus, -1, +10.0f, 6.0f, 0.0f },
-        { torus, -1, -10.0f, 6.0f, 0.0f }
-    };
+    object track[] = {{torus, -1, +10.0f, 6.0f, 0.0f}, {torus, -1, -10.0f, 6.0f, 0.0f}};
     track[0].texture = track[1].texture = trackTexture;
 
     // 핸들과 버켓.
     // 맨 뒤쪽 두 파라메터는 localAngle과 animationRotate이다.
-    //처음에는 X축 기준 localAngle도 기울어져 있고, 애니메이션 시작 시 총 animationRotate도 기울어지다 다시 돌아온다.
-    rotateObject arm1{ cube, 2, vec3(0.0f, 1.7f, 1.9f), -60.0f, 20.0f }; // 핸들은 단색을 사용한다.
-    rotateObject arm2{ cube, 1, vec3(0.0f, 1.7f, 3.9f), 40.0f, 20.0f };
-    rotateObject arm3{ cube, 3, vec3(0.0f, 1.7f, 5.8f), 100.0f, -50.0f };
-    // 버켓은 도넛 모양으로 
-    rotateObject bucket{ torus, -1, vec3(0.0f, 1.9f, 7.5f), 10.0f, 30.0f };
+    // 처음에는 X축 기준 localAngle도 기울어져 있고, 애니메이션 시작 시 총 animationRotate도 기울어지다 다시 돌아온다.
+    rotateObject arm1{cube, 2, vec3(0.0f, 1.7f, 1.9f), -60.0f, 20.0f}; // 핸들은 단색을 사용한다.
+    rotateObject arm2{cube, 1, vec3(0.0f, 1.7f, 3.9f), 40.0f, 20.0f};
+    rotateObject arm3{cube, 3, vec3(0.0f, 1.7f, 5.8f), 100.0f, -50.0f};
+    // 버켓은 도넛 모양으로
+    rotateObject bucket{torus, -1, vec3(0.0f, 1.9f, 7.5f), 10.0f, 30.0f};
     // 도넛은 뒤가 뚫려 있으므로, plane을 하나 써서 뒤를 막아 준다.
-    rotateObject bucketBackPlane{ plane, -1, vec3(0.0f, 2.2f, 7.5f), 10.0f, 0.0f }; // 토러스에 종속되므로 애니메이션 간 회전하지 않는다.
+    rotateObject bucketBackPlane{plane, -1, vec3(0.0f, 2.2f, 7.5f), 10.0f,
+                                 0.0f}; // 토러스에 종속되므로 애니메이션 간 회전하지 않는다.
     // 사실상 같은 물체를 구성하므로, 텍스쳐를 같이 쓴다.
     bucket.texture = bucketBackPlane.texture = scoopTexture;
 
-    //glBindTexture(9999, 9999);
-
     // ---------------렌더링 루프---------------//
     do {
+        checkGLerror("Loop start point"); // 에러가 있는지 체크한다.
+
         // ---------------애니메이션 처리---------------//
-        if (animationStartTime > 0.0) { //애니메이션이 시작했다면..
+        if (animationStartTime > 0.0) { // 애니메이션이 시작했다면..
             double currentTime = glfwGetTime();
             // 프레임 간 시간 차이
-            float deltaTime = float(currentTime - lastFrameTime);;
+            double deltaTime = currentTime - lastFrameTime;
             lastFrameTime = currentTime;
 
             // 애니메이션 시작으로부터 몇 초 지났는가?
-            float timeInterval = float(currentTime - animationStartTime);
+            float timeInterval = currentTime - animationStartTime;
 
             // 애니메이션 시작 후 keyframe초 동안 총 animationRotate도 돌아간다.
             if (timeInterval < keyframe) {
@@ -361,47 +286,44 @@ static void start() {
                 arm3.localAngle -= (arm3.animationRotate / keyframe) * deltaTime;
                 bucket.localAngle -= (bucket.animationRotate / keyframe) * deltaTime;
                 bucketBackPlane.localAngle -= (bucketBackPlane.animationRotate / keyframe) * deltaTime;
-            }
-            else {
-                //회전이 모두 완료되었다면, 두 값을 음수로 설정해 애니메이션이 끝났음을 나타낸다.
+            } else {
+                // 회전이 모두 완료되었다면, 두 값을 음수로 설정해 애니메이션이 끝났음을 나타낸다.
                 animationStartTime = lastFrameTime = -1;
             }
-
         }
 
         // ---------------모델 변환---------------//
-        //트랙터 오브젝트를 위한 Model matrix의 초깃값. tractorPosition만큼 이동한다.
+        // 트랙터 오브젝트를 위한 Model matrix의 초깃값. tractorPosition만큼 이동한다.
         glm::mat4 world = translate(mat4(1.0f), tractorPosition);
 
         // 크기에 맞게 스케일 후, 이동한다.
         body.modelMatrix = world;
-        body.Scale(0.7f, 0.6f, 1.0f);
+        body.Scale(0.7, 0.6, 1.0);
         body.MoveToPosition();
 
         cabin.modelMatrix = world;
-        cabin.Scale(0.4f, 0.8f, 0.6f);
+        cabin.Scale(0.4, 0.8, 0.6);
         cabin.MoveToPosition();
 
         track[0].modelMatrix = track[1].modelMatrix = world;
-        //토러스 모델이 매우 크므로 작게 줄인다
+        // 토러스 모델이 매우 크므로 작게 줄인다
         track[0].Scale(TORUS_BASE_SCALE, TORUS_BASE_SCALE, TORUS_BASE_SCALE);
         track[1].Scale(TORUS_BASE_SCALE, TORUS_BASE_SCALE, TORUS_BASE_SCALE);
-        track[0].MoveToPosition(); track[1].MoveToPosition();
+        track[0].MoveToPosition();
+        track[1].MoveToPosition();
         // 토러스를 세운다.
         track[0].Rotate(90.0f, glm::vec3(0, 0, 1));
         track[1].Rotate(90.0f, glm::vec3(0, 0, 1));
         // 찌그러뜨리기
-        track[0].Scale(
-            0.32f, // 찌그러짐
-            0.8f, // 무한궤도 너비
-            0.9f   // 무한궤도 길이
+        track[0].Scale(0.32f, // 찌그러짐
+                       0.8f,  // 무한궤도 너비
+                       0.9f   // 무한궤도 길이
         );
         track[1].Scale(0.32f, 0.8f, 0.9f);
         // Q, E키를 누르면 트랙터가 앞으로 간다, 이에 맞춰서 바퀴도 굴려 주면,
         // 텍스쳐가 줄무늬 모양이므로 무한궤도가 돌아가는 것처럼 보이게 된다.
-        track[0].Rotate((float)fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
-        track[1].Rotate((float)fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
-
+        track[0].Rotate(fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
+        track[1].Rotate(fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
 
         // 월드 기준 (tractorPosition)
         arm1.modelMatrix = world;
@@ -448,7 +370,6 @@ static void start() {
         bucket.Scale(vec3(0.4f, 0.8f, 0.4f) * TORUS_BASE_SCALE);
         bucketBackPlane.Scale(vec3(0.5f));
 
-
         // ---------------렌더링---------------//
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -462,18 +383,14 @@ static void start() {
             // cabin, 즉 운전석의 앞쪽 면을 카메라 좌표로 한다.
             vec3 cpos = vec3(cabinWorld[3]) + vec3(0.0f, 0.0f, 0.61f); // 너비가 0.6이므로, 그보다 살짝 앞
             View = glm::lookAt(
-                cpos,
-                cpos + vec3(0.0f, 0.0f, 1.0f), // Z축 방향을 본다. 문제에서는 트랙터의 회전을 요구하지 않았으므로...
-                vec3(0, 1, 0)
-            );
-        }
-        else {
+              cpos, cpos + vec3(0.0f, 0.0f, 1.0f), // Z축 방향을 본다. 문제에서는 트랙터의 회전을 요구하지 않았으므로...
+              vec3(0, 1, 0));
+        } else {
             View = ThirdView;
         }
 
         // Use our shader
         glUseProgram(programID);
-
 
         // 트랙터의 위치를 뽑아 정확히 앞에서 오도록 계산할 수도 있지만,
         // 이렇게 두면 트랙터를 움직이며 specular를 관찰하기 편하다.
@@ -487,44 +404,39 @@ static void start() {
         glUniform3fv(ViewPosUniformID, 1, &viewPos[0]);
         glUniform3fv(LightColorUniformID, 1, &lightColor[0]);
 
-
         // 모든 물체를 그린다.
         ground.draw();
         body.draw();
         cabin.draw();
-        track[0].draw(); track[1].draw();
-        arm1.draw(); arm2.draw(); arm3.draw();
-        bucket.draw(); bucketBackPlane.draw();
-
-
-        if (g_makeError) {
-            glBindVertexArray(cabin.model.vao);
-            glUniform3fv(99999999, 1, &lightPos[0]);
-            glBindVertexArray(0);
-            g_makeError = false;
-        }
+        track[0].draw();
+        track[1].draw();
+        arm1.draw();
+        arm2.draw();
+        arm3.draw();
+        bucket.draw();
+        bucketBackPlane.draw();
 
         // Swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
 
     } // Check if the ESC key was pressed or the window was closed
-    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-        glfwWindowShouldClose(window) == 0);
+    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
     // Cleanup VBO and shader
     glDeleteProgram(programID);
+    glDeleteVertexArrays(1, &VertexArrayID);
 
     // model객체의 소멸자가 호출되어, vertexbuffer, uvbuffer, normalbuffer도 삭제된다.
     // (start와 main을 분리한 이유)
 }
 
-int main(void)
-{
+int main(void) {
     // 초기화 코드가 길어, 따로 분리했다.
     int ret = glinit();
-    if (ret) return ret;
-    
+    if (ret)
+        return ret;
+
     start();
     // 모든 opengl 데이터가 cleanup된 것 확인
 
@@ -542,10 +454,10 @@ static bool firstPress = true;
 static double xpos_prev = 0.0, ypos_prev = 0.0;
 
 /*
-* 마우스의 움직임을 계산하고, 뷰 행렬을 회전한다. 
-* 환경에 따라 속도가 다르거나 시점 회전이 직관적이지 않아,
-* 화살표 키를 통한 시점 회전을 따로 제작했다.
-*/
+ * 마우스의 움직임을 계산하고, 뷰 행렬을 회전한다.
+ * 환경에 따라 속도가 다르거나 시점 회전이 직관적이지 않아,
+ * 화살표 키를 통한 시점 회전을 따로 제작했다.
+ */
 static void computeMouseRotates(glm::mat4& mat) {
     // Initial horizontal angle : toward -Z
     float horizontalAngle = 0.0f;
@@ -585,8 +497,7 @@ static void computeMouseRotates(glm::mat4& mat) {
 
 static bool spacePrev = false;
 
-static void computeKeyboardTranslates(glm::mat4& view, glm::vec3& tractorPosition)
-{
+static void computeKeyboardTranslates(glm::mat4& view, glm::vec3& tractorPosition) {
     // 1번을 누르면 WireFrame형태로 보여지며, 2번을 누르면 다시 돌아온다.
     // 모델이 파뭍히거나 가려져 안 보이는 경우 디버깅을 용이하게 한다.
     if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
@@ -595,25 +506,25 @@ static void computeKeyboardTranslates(glm::mat4& view, glm::vec3& tractorPositio
     if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-    
+
     // 엔터 키를 눌렀고, 애니메이션이 이미 시작하지 않았고, thirdView라면
     // 애니메이션 타임을 리셋, 즉 0으로 한다.
     if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
-        if(animationStartTime < 0.0 && thirdView) lastFrameTime = animationStartTime = glfwGetTime();
+        if (animationStartTime < 0.0 && thirdView)
+            lastFrameTime = animationStartTime = glfwGetTime();
     }
 
     // 스페이스를 누른 경우 시점을 변환한다. 애니메이션이 시작하지 않았어야 한다.
     bool spaceNow = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
     if (spaceNow && !spacePrev) {
-        if (animationStartTime < 0.0) thirdView = !thirdView;
+        if (animationStartTime < 0.0)
+            thirdView = !thirdView;
     }
     spacePrev = spaceNow;
-
 
     // Compute time difference between current and last frame
     double currentTime = glfwGetTime();
     float deltaTime = float(currentTime - lastTime);
-
 
     glm::vec3 modelMove(0.0f);
     // 굴삭기 이동
@@ -643,7 +554,6 @@ static void computeKeyboardTranslates(glm::mat4& view, glm::vec3& tractorPositio
         modelMove = glm::normalize(modelMove);
         tractorPosition += modelMove * modelSpeed * deltaTime;
     }
-    
 
     if (thirdView) {
         // 화살표 키 입력에 따른 시선 회전. 방향키 방향에 맞게 움직어 조금 더 직관적이다.
@@ -662,12 +572,11 @@ static void computeKeyboardTranslates(glm::mat4& view, glm::vec3& tractorPositio
         }
         view = glm::eulerAngleYXZ(horizontalAngle, -verticalAngle, 0.0f) * view;
 
-
         // 카메라의 방향 벡터 추출
         glm::mat4 cameraWorldMatrix = glm::inverse(view);
         glm::vec3 forward = glm::normalize(glm::vec3(cameraWorldMatrix[2])); // 카메라의 시선 방향
-        glm::vec3 right = -glm::normalize(glm::vec3(cameraWorldMatrix[0]));   // 카메라의 오른쪽 방향
-        glm::vec3 up = -glm::normalize(glm::vec3(cameraWorldMatrix[1]));      // 카메라의 위쪽 방향
+        glm::vec3 right = -glm::normalize(glm::vec3(cameraWorldMatrix[0]));  // 카메라의 오른쪽 방향
+        glm::vec3 up = -glm::normalize(glm::vec3(cameraWorldMatrix[1]));     // 카메라의 위쪽 방향
 
         glm::vec3 translateFactor = glm::vec3(0.0f);
 
@@ -694,26 +603,22 @@ static void computeKeyboardTranslates(glm::mat4& view, glm::vec3& tractorPositio
 
         view *= glm::translate(glm::mat4(1.0f), translateFactor);
     }
-
-    // v키를 누르면 에러 생성
-    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && !g_makeErrorPressedLastFrame) {
-        g_makeError = true;  // 한 번만 true로 변경
-        g_makeErrorPressedLastFrame = true;
-    } else if (glfwGetKey(window, GLFW_KEY_V) == GLFW_RELEASE) {
-        g_makeErrorPressedLastFrame = false;
-    }
-
     // For the next frame, the "last time" will be "now"
     lastTime = currentTime;
 }
 
-static void processKeyboardMouseInput(glm::mat4& view, glm::vec3& tractorPosition)
-{
+void checkGLerror(const char* msg) {
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        fprintf(stderr, "GL ERROR %d : %s\n", err, msg);
+    }
+}
+
+static void processKeyboardMouseInput(glm::mat4& view, glm::vec3& tractorPosition) {
     // Compute the Model matrix from keyboard and mouse input
-    if (thirdView && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-    { // 삼인칭 뷰인 경우에만 마우스 입력 활성화
-        if (firstPress)
-        {
+    if (thirdView &&
+        glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) { // 삼인칭 뷰인 경우에만 마우스 입력 활성화
+        if (firstPress) {
             glfwGetCursorPos(window, &xpos_prev, &ypos_prev);
             firstPress = false;
         }
@@ -728,12 +633,10 @@ static void processKeyboardMouseInput(glm::mat4& view, glm::vec3& tractorPositio
 }
 
 // opengl 라이브러리 초기화 작업
-static int glinit()
-{
+static int glinit() {
 
     // Initialise GLFW
-    if (!glfwInit())
-    {
+    if (!glfwInit()) {
         fprintf(stderr, "Failed to initialize GLFW\n");
         (void)getchar();
         return -1;
@@ -746,10 +649,10 @@ static int glinit()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Open a window and create its OpenGL context
-    window = glfwCreateWindow(1024, 768, u8"Test - Poclain", NULL, NULL);
-    if (window == NULL)
-    {
-        fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
+    window = glfwCreateWindow(1024, 768, u8"12211723 홍성민 - 굴삭기 시뮬레이터", NULL, NULL);
+    if (window == NULL) {
+        fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the "
+                        "2.1 version of the tutorials.\n");
         (void)getchar();
         glfwTerminate();
         return -1;
@@ -757,16 +660,17 @@ static int glinit()
     glfwMakeContextCurrent(window);
 
     // Initialize GLAD
-    if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress))
-    {
-        fprintf(stderr, "Failed to initialize GLAD\n");
+    if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD" << std::endl;
+        glfwDestroyWindow(window);
         (void)getchar();
         glfwTerminate();
         return -1;
     }
+    printf("OpenGL Version: %s\n", glGetString(GL_VERSION));
 
-    glutil::debug::init();
-    glutil::debug::printRuntimeInfo();
+    glGetError(); // 처음에 1280 에러 발생하긴 하지만, 별로 중요한 오류 같진 않음
+    checkGLerror("GL init");
 
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -778,38 +682,10 @@ static int glinit()
     glEnable(GL_DEPTH_TEST);
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS);
-    
+
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
-    
+
     return 0;
-}
-
-static GLuint loadBMP(const char* path) {
-    const glutil::TextureImage& image = glutil::ImageLoader::loadImage(path, false);
-    if (!image.ok)
-        return 0;
-
-    GLuint tex = 0;
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 image.internalFormat(),
-                 image.width(),
-                 image.height(),
-                 0,
-                 image.format(),
-                 GL_UNSIGNED_BYTE,
-                 image.data());
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    return tex;
 }
