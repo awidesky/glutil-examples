@@ -68,7 +68,7 @@ public:
     ViewModelRenderer(Mesh* mesh = nullptr, Material* material = nullptr) : MeshRenderer(mesh, material) {}
 
     void Render() override {
-        glClear(GL_DEPTH_BUFFER_BIT); // 이거 이후로 다른 3D 렌더링이 안됨. TODO : depth test 끄고, 렌더링 끝나고 다시 켜는 식으로 바꾸기
+        glClear(GL_DEPTH_BUFFER_BIT); // 이거 이후로 다른 3D 렌더링이 안됨.
         MeshRenderer::Render();
     }
 
