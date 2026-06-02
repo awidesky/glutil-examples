@@ -98,7 +98,7 @@ private:
 
 class TargetObject : public GameObject {
 public:
-    float radius = 0.5f;
+    float radius = 1.0f;
     bool isAlive = true;
     float spawnTime = 0.f;
 
@@ -284,20 +284,36 @@ public:
         currentAmmo--;
         fireCooldown = fireInterval;
 
+       
         const Camera& camera = Camera::Get();
         PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
         float t;
-        for (auto* obj : *targets) {
-            if (!obj->active) continue;
-            auto* target = dynamic_cast<TargetObject*>(obj);
-            if (!target || !target->isAlive) continue;
+        glutil::ModelData cpuMesh = glutil::ModelLoader::loadOBJ(glutil::PROJECT_ROOT / "model" / "target.obj");
 
-            if (PhysicsSystem::Get().RaySphereIntersect(ray, obj->transform.position, target->radius, t)) {
-                target->OnHit();
-                break;
+        double start = glfwGetTime();
+        for (auto* obj : *targets) {
+            if (!obj->active)
+                continue;
+            auto* target = dynamic_cast<TargetObject*>(obj);
+            if (!target || !target->isAlive)
+                continue;
+           
+            if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius, t))
+            {
+                if (PhysicsSystem::Get().RayMeshIntersect(ray, cpuMesh, target->transform.GetWorldMatrix(), t)) {
+                    target->OnHit();
+                }
             }
+           
+            
+            for (auto* fireListener : fireListeners)
+                fireListener->Fire();
+       
         }
-        for(auto* fireListener : fireListeners) fireListener->Fire();
+        double end = glfwGetTime();
+        printf("loadOBJ time: %.3f ms\n", (end - start) * 1000.0);
+       
+
     }
 
     void Reload() {
