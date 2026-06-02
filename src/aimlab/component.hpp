@@ -244,7 +244,10 @@ private:
     bool m_prevC = false;
     bool m_prevEsc = false;
 };
-
+struct FireListener {
+    virtual void Fire() = 0;
+    virtual void Reload() = 0;
+};
 class WeaponSystem : public Component {
 public:
     int maxAmmo = 30;
@@ -252,9 +255,14 @@ public:
     bool isReloading = false;
     float reloadTime = 1.5f;
     float reloadTimer = 0.f;
+    float fireInterval = 0.1f; // 600 RPM
+    float fireCooldown = 0.f;
     std::vector<GameObject*>* targets = nullptr;
+    std::vector<FireListener*> fireListeners;
 
     void Update(float dt) override {
+        if (fireCooldown > 0.f)
+            fireCooldown -= dt;
         if (isReloading) {
             reloadTimer -= dt;
             if (reloadTimer <= 0.f) {
@@ -268,10 +276,13 @@ public:
             Reload();
     }
 
+    void addFireListener(FireListener* listener) { fireListeners.push_back(listener); }
+
     void Fire() {
-        if (currentAmmo <= 0 || isReloading || !targets)
+        if (currentAmmo <= 0 || isReloading || !targets || fireCooldown > 0.f)
             return;
         currentAmmo--;
+        fireCooldown = fireInterval;
 
         const Camera& camera = Camera::Get();
         PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
@@ -286,12 +297,14 @@ public:
                 break;
             }
         }
+        for(auto* fireListener : fireListeners) fireListener->Fire();
     }
 
     void Reload() {
         if (!isReloading && currentAmmo < maxAmmo) {
             isReloading = true;
             reloadTimer = reloadTime;
+            for(auto* fireListener : fireListeners) fireListener->Reload();
         }
     }
 };
@@ -310,7 +323,7 @@ public:
         pOwner->transform.position.z = 0.0f;
     }
 };
-class GunController : public Component {
+class GunController : public Component, FireListener {
 public:
     glm::vec3 offset = {0.5f, -0.5f, 0.6f};
 
@@ -318,18 +331,16 @@ public:
     float recoilUp = 0.0f;
     float recoilPitch = 0.0f;
 
-    void Fire() {
-        recoilBack = std::min(recoilBack + 0.03f, 0.08f);
-        recoilUp = std::min(recoilUp + 0.05f, 0.1f);
-        recoilPitch = std::min(recoilPitch + 5.0f, 20.0f);
+    GunController(WeaponSystem* ws) { ws->addFireListener(this); }
+
+    void Fire() override {
+        recoilBack = std::min(recoilBack + 0.07f, 0.08f);
+        recoilUp = std::min(recoilUp + 0.08f, 0.1f);
+        recoilPitch = std::min(recoilPitch + 9.0f, 20.0f);
     }
+    void Reload() override {}
 
     void Update(float dt) override {
-        if (InputManager::Get().IsMouseDown(GLFW_MOUSE_BUTTON_LEFT))
-            Fire();
-        //if (InputManager::Get().IsKeyDown(GLFW_KEY_R)) TODO : Fire와 reload를 가지는 컴포넌트를 만들고, 그걸 상속받음
-        //    Reload();
-
         recoilBack = std::max(0.0f, recoilBack - 1.f * dt);
         recoilUp = std::max(0.0f, recoilUp - 1.9f * dt);
         recoilPitch = std::max(0.0f, recoilPitch - 90.0f * dt);

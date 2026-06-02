@@ -16,7 +16,7 @@ set(GDM_DIR "${EXTERNAL_DIR}/gdm")
 if(NOT EXISTS "${GDM_DIR}/CMakeLists.txt")
     message(STATUS "[${PROJECT_NAME}] Fetching gdm...")
 
-    set(GDM_URL "https://github.com/awidesky/gdm/archive/refs/heads/label.tar.gz")
+    set(GDM_URL "https://github.com/awidesky/gdm/archive/refs/heads/debug.tar.gz")
     set(GDM_ARCHIVE "${CMAKE_BINARY_DIR}/gdm.tar.gz")
     set(GDM_EXTRACT_DIR "${CMAKE_BINARY_DIR}/gdm_extract")
 
@@ -201,6 +201,7 @@ add_gdm_example(01_ManyCubes
     shader/manyCubes.frag
 )
 add_gdm_example(02_Excavator_bad
+    src/excavator_bad_utils.hpp
     src/excavator_bad.cpp
 
     shader/excvator.vert
