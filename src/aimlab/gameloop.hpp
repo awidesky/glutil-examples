@@ -7,32 +7,42 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 
+
 class GameLoop {
 public:
-    std::vector<GameObject*> world;
+    std::vector<GameObject*> system;
+    std::vector<GameObject*> world3d;
+    std::vector<GameObject*> world2d;
+    std::vector<TargetObject*> targetsToSpawn;
     bool isRunning = true;
 
 
     ~GameLoop() {
-        for (auto* obj : world)
-            delete obj;
-        world.clear();
+        for (auto* obj : system) delete obj;
+        for (auto* obj : world3d) delete obj;
+        for (auto* obj : world2d) delete obj;
+        system.clear();
+        world3d.clear();
+        world2d.clear();
     }
 
     void Input() {
-        for (auto* obj : world)
-            obj->Input();
+        for (auto* obj : system)  obj->Input();
+        for (auto* obj : world3d) obj->Input();
+        for (auto* obj : world2d) obj->Input();
     }
 
     void Update(float dt) {
-        for (auto* obj : world)
-            obj->Update(dt);
+        for(auto* obj : system) obj->Update(dt);
+        for (auto* obj : world3d) obj->Update(dt);
+        for (auto* obj : world2d) obj->Update(dt);
     }
 
     void Render() {
         GraphicsContext::Get().Clear();
-        for (auto* obj : world)
-            obj->Render();
+        for (auto* obj : system) obj->Render();
+        for (auto* obj : world3d) obj->Render();
+        for (auto* obj : world2d) obj->Render();
         GraphicsContext::Get().Present();
     }
 
@@ -48,6 +58,10 @@ public:
             Update(dt);
             InputManager::Get().ResetMouseDelta(); // TODO : 컴포넌트로 빼거나 3함수 중 하나에 넣기?
             Render();
+
+            for (auto* t : targetsToSpawn)
+                world3d.push_back(t);
+            targetsToSpawn.clear();
         }
     }
 };
