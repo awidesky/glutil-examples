@@ -729,7 +729,7 @@
 
 
 
-#define AIMLAB_OPTION_GL_DEBUG
+// #define AIMLAB_OPTION_GL_DEBUG
 
 
 #include "config.hpp"
@@ -808,17 +808,6 @@ int main() {
     // Target ResourceRenderer
     rm.AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
     rm.AddTexture("target", glutil::PROJECT_ROOT / "texture" / "target.png");
-    //GameObject* target = new GameObject();
-    //target->transform.scale = glm::vec3(10.f, 10.f, 0.2f);
-
-    //Mesh* mesh = ResourceManager::Get().GetMesh("target");
-    //Texture* tex = ResourceManager::Get().GetTexture("target");
-
-    //target->AddComponent(new TargetLogic());
-    //target->AddComponent(new MeshRenderer(mesh, new Material(tex)));
-
-    //gEngine.world.push_back(target);
-
     
     GameObject* TargetSpawner = new GameObject();
     TargetSpawner->transform.position = glm::vec3(0.f, 0.f, 0.f);
@@ -833,20 +822,18 @@ int main() {
     gun->AddComponent(new MeshRenderer(
       rm.AddMesh("gun", glutil::PROJECT_ROOT / "model" / "ak47" / "ak47.obj"),
       new Material(rm.AddTexture("gun", glutil::PROJECT_ROOT / "model" / "ak47" / "123456_wire_115115115_color.png"))));
-    //gun->AddComponent(new TargetLogic());
     gEngine.world.push_back(gun);
-    
 
-    //GameObject* crosshair = new GameObject();
-    //crosshair->AddComponent(
-    //  new OrthogonalRenderer(rm.AddMesh("crosshair", glutil::PROJECT_ROOT / "model" / "crosshair.obj"),
-    //                   new Material(rm.AddTexture("crosshair", glutil::PROJECT_ROOT / "texture" / "crosshair.png"))));
-    //gEngine.world.push_back(crosshair);
+    GameObject* crosshair = new GameObject();
+    crosshair->AddComponent(
+     new OrthogonalRenderer(rm.AddMesh("crosshair", glutil::PROJECT_ROOT / "model" / "crosshair.obj"),
+                      new Material(rm.AddTexture("crosshair", glutil::PROJECT_ROOT / "texture" / "crosshair.png"))));
+    gEngine.world.push_back(crosshair);
 
 
-//#ifdef AIMLAB_OPTION_GL_DEBUG
-//    glutil::debug::snapshot(true).bufferVAOInfo(true, true, true).capture();
-//#endif
+#ifdef AIMLAB_OPTION_GL_DEBUG
+    glutil::debug::snapshot(true).bufferVAOInfo(true, true, true).capture();
+#endif
 
     gEngine.Run();
 

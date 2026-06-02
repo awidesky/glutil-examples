@@ -67,7 +67,7 @@ public:
     float remainTime = 60.f;
     bool  isRunning = false;
 
-    void Start(float d) {
+    void StartRound(float d) {
         duration = remainTime = d;
         isRunning = true;
     }
@@ -80,6 +80,8 @@ public:
     void Reset() {
         remainTime = duration;
         isRunning = false;
+        //TODO : ScoreManager::Get().Reset()도 여기서 같이 해도 될듯?
+        //TODO : world의 타겟들 다 지우는 거 
     }
 };
 
@@ -115,7 +117,7 @@ public:
 
         int alive = 0;
         for (auto* obj : *world)
-            if (obj->active && obj->GetComponent<TargetLogic>())
+            if (obj->active && dynamic_cast<TargetObject*>(obj))
                 alive++;
 
         if (alive >= maxTargets) return;
@@ -126,14 +128,13 @@ public:
         float x = ((float)rand() / RAND_MAX * 2.f - 1.f) * spawnRange;
         float y = ((float)rand() / RAND_MAX * 2.f - 1.f) * spawnRange;
 
-        GameObject* target = new GameObject();
+        TargetObject* target = new TargetObject();
         target->transform.position = glm::vec3(x, 1.0f, y);
         target->transform.scale = glm::vec3(0.2f, 0.2f, 0.05f);
 
         Mesh* mesh = ResourceManager::Get().GetMesh("target");
         Texture* tex = ResourceManager::Get().GetTexture("target");
 
-        target->AddComponent(new TargetLogic());
         target->AddComponent(new MeshRenderer(mesh, new Material(tex)));
 
         world->push_back(target);

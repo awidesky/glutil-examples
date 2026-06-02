@@ -44,7 +44,7 @@ public:
     Transform transform;
     bool active = true;
 
-    ~GameObject() {
+    virtual ~GameObject() {
         for (auto c : m_components)
             delete c;
     }
@@ -90,6 +90,24 @@ public:
 private:
     std::vector<Component*> m_components;
 };
+
+
+class TargetObject : public GameObject {
+public:
+    float radius = 0.5f;
+    bool isAlive = true;
+    float spawnTime = 0.f;
+
+    TargetObject() { spawnTime = (float)glfwGetTime(); }
+
+    void OnHit() {
+        isAlive = false;
+        active = false;
+    }
+
+    float GetReactionTime() const { return (float)glfwGetTime() - spawnTime; }
+};
+
 
 class CameraController : public Component {
 public:
@@ -223,22 +241,6 @@ private:
     bool m_prevEsc = false;
 };
 
-class TargetLogic : public Component {
-public:
-    float radius = 0.5f;
-    bool isAlive = true;
-    float spawnTime = 0.f;
-
-    void Start() override { spawnTime = (float)glfwGetTime(); }
-
-    void OnHit() {
-        isAlive = false;
-        pOwner->active = false;
-    }
-
-    float GetReactionTime() const { return (float)glfwGetTime() - spawnTime; }
-};
-
 class WeaponSystem : public Component {
 public:
     int maxAmmo = 30;
@@ -271,13 +273,12 @@ public:
         PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
         float t;
         for (auto* obj : *targets) {
-            if (!obj->active)
-                continue;
-            auto* logic = obj->GetComponent<TargetLogic>();
-            if (!logic || !logic->isAlive)
-                continue;
-            if (PhysicsSystem::Get().RaySphereIntersect(ray, obj->transform.position, logic->radius, t)) {
-                logic->OnHit();
+            if (!obj->active) continue;
+            auto* target = dynamic_cast<TargetObject*>(obj);
+            if (!target || !target->isAlive) continue;
+
+            if (PhysicsSystem::Get().RaySphereIntersect(ray, obj->transform.position, target->radius, t)) {
+                target->OnHit();
                 break;
             }
         }
