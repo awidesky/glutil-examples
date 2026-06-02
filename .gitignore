@@ -526,3 +526,4 @@ external/
 build/
 build*/
 !model/*.obj
+assets/

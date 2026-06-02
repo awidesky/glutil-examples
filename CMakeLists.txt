@@ -76,6 +76,96 @@ configure_file(
 )
 
 
+# Resource Downloader
+function(fetch_example_asset ASSET_NAME)
+    set(_asset_dir "${PROJECT_SOURCE_DIR}/assets/${ASSET_NAME}")
+
+    # Already available
+    if (EXISTS "${_asset_dir}")
+        return()
+    endif()
+
+    message(STATUS "[${PROJECT_NAME}] Fetching asset: ${ASSET_NAME}")
+
+    # Download cache
+    set(_download_dir "${CMAKE_BINARY_DIR}/_downloads")
+    file(MAKE_DIRECTORY "${_download_dir}")
+
+    set(_archive "${_download_dir}/${ASSET_NAME}.zip")
+
+    # Download
+    if (NOT EXISTS "${_archive}")
+        set(_url
+            "https://github.com/awidesky/glutil-examples/releases/download/0.0.1/${ASSET_NAME}.zip"
+        )
+
+        file(DOWNLOAD
+            "${_url}"
+            "${_archive}"
+            STATUS _dl_status
+            TLS_VERIFY ON
+        )
+        list(GET _dl_status 0 _dl_code)
+
+        if (NOT _dl_code EQUAL 0)
+            file(REMOVE "${_archive}")
+        
+            list(GET _dl_status 1 _dl_msg)
+            message(FATAL_ERROR
+                "[${PROJECT_NAME}] Failed to download asset '${ASSET_NAME}'\n"
+                "URL: ${_url}\n"
+                "Reason: ${_dl_msg}"
+            )
+        endif()
+    else()
+        message(STATUS "[${PROJECT_NAME}] Using cached archive: ${_archive}")
+    endif()
+
+    # Extract
+    file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}/assets")
+    set(_extract_dir "${CMAKE_BINARY_DIR}/_extract/${ASSET_NAME}")
+
+    file(REMOVE_RECURSE "${_extract_dir}")
+    file(MAKE_DIRECTORY "${_extract_dir}")
+
+    file(ARCHIVE_EXTRACT INPUT "${_archive}" DESTINATION "${_extract_dir}")
+    
+    # Move extracted content
+    file(GLOB _children
+        LIST_DIRECTORIES TRUE
+        "${_extract_dir}/*"
+    )
+
+    set(_root "")
+
+    foreach(p IN LISTS _children)
+        if(IS_DIRECTORY "${p}")
+            set(_root "${p}")
+            break()
+        endif()
+    endforeach()
+
+    # root folder exist
+    if (_root)
+        file(RENAME "${_root}" "${_asset_dir}")
+    else()
+        # no root folder
+        file(MAKE_DIRECTORY "${_asset_dir}")
+        file(GLOB _files "${_extract_dir}/*")
+
+        foreach(f IN LISTS _files)
+            get_filename_component(_name "${f}" NAME)
+            file(RENAME "${f}" "${_asset_dir}/${_name}")
+        endforeach()
+    endif()
+    file(REMOVE_RECURSE "${_extract_dir}")
+
+    if (NOT EXISTS "${_asset_dir}")
+        message(FATAL_ERROR "[${PROJECT_NAME}] Failed to extract asset '${ASSET_NAME}'")
+    endif()
+endfunction()
+
+
 # Example targets
 function(add_gdm_example TARGET_NAME)
     add_executable(${TARGET_NAME} ${ARGN})
@@ -135,6 +225,8 @@ add_gdm_example(04_AIMLAB
     shader/aimlab.vert
     shader/aimlab.frag
 )
+
+fetch_example_asset(ak47)
 
 source_group("Shaders"
     REGULAR_EXPRESSION ".*\\.(frag|vert)$"

@@ -820,8 +820,8 @@ int main() {
     gun->transform.scale = glm::vec3(0.01f);
     gun->transform.position = glm::vec3(-0.2f, 0.5f, 0.2f);
     gun->AddComponent(new MeshRenderer(
-      rm.AddMesh("gun", glutil::PROJECT_ROOT / "model" / "ak47" / "ak47.obj"),
-      new Material(rm.AddTexture("gun", glutil::PROJECT_ROOT / "model" / "ak47" / "123456_wire_115115115_color.png"))));
+      rm.AddMesh("gun", glutil::PROJECT_ROOT / "assets" / "ak47" / "ak47.obj"),
+      new Material(rm.AddTexture("gun", glutil::PROJECT_ROOT / "assets" / "ak47" / "123456_wire_115115115_color.png"))));
     gEngine.world.push_back(gun);
 
     GameObject* crosshair = new GameObject();
