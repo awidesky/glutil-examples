@@ -29,7 +29,7 @@ public:
 class MeshRenderer : public Component {
 public:
     MeshRenderer(Mesh* mesh = nullptr, Material* material = nullptr) : pMeshData(mesh), pMaterial(material) {}
-    ~MeshRenderer() override { delete pMaterial; }
+    virtual ~MeshRenderer() override { delete pMaterial; }
 
     Mesh* pMeshData = nullptr;
     Material* pMaterial = nullptr;
@@ -46,7 +46,7 @@ public:
         if (!pMeshData || !pMaterial) return;
         pMaterial->Bind();
 
-        const glm::mat4 model = pOwner ? pOwner->transform.GetWorldMatrix() : glm::mat4(1.0f);
+        const glm::mat4 model = GetModelMatrix();
         glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 
         for (const auto& meshData : pMeshData->meshes) {
@@ -56,6 +56,36 @@ public:
             glDrawElements(GL_TRIANGLES, meshData.indexCount, GL_UNSIGNED_INT, nullptr);
         }
         glBindVertexArray(0);
+    }
+
+protected:
+    virtual glm::mat4 GetModelMatrix() const {
+        return pOwner ? pOwner->transform.GetWorldMatrix() : glm::mat4(1.0f);
+    }
+};
+class ViewModelRenderer : public MeshRenderer {
+public:
+    ViewModelRenderer(Mesh* mesh = nullptr, Material* material = nullptr) : MeshRenderer(mesh, material) {}
+
+    void Render() override {
+        glClear(GL_DEPTH_BUFFER_BIT); // 이거 이후로 다른 3D 렌더링이 안됨. TODO : depth test 끄고, 렌더링 끝나고 다시 켜는 식으로 바꾸기
+        MeshRenderer::Render();
+    }
+
+protected:
+    glm::mat4 GetModelMatrix() const override {
+        glm::mat4 model(1.0f);
+
+        if (pOwner) {
+            const auto& t = pOwner->transform;
+            model = glm::translate(model, t.position);
+            model = glm::rotate(model, glm::radians(t.rotation.y), glm::vec3(0, 1, 0));
+            model = glm::rotate(model, glm::radians(t.rotation.x), glm::vec3(1, 0, 0));
+            model = glm::rotate(model, glm::radians(t.rotation.z), glm::vec3(0, 0, 1));
+            model = glm::scale(model, t.scale);
+        }
+
+        return model;
     }
 };
 class OrthogonalRenderer : public Component {
@@ -93,18 +123,18 @@ public:
 
         glDisable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
-        glEnable(GL_BLEND);
+        glEnable(GL_BLEND); //TODO :init으로 옮기기
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         pMaterial->Bind();
 
-        glm::mat4 projection = glm::ortho(0.0f, (float)w, (float)h, 0.0f, -1.0f, 1.0f);
+        glm::mat4 projection = glm::ortho(0.0f, (float)w, 0.0f, (float)h, -1.0f, 1.0f);
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 model = glm::mat4(1.0f);
 
-        float size = 32.0f; //TODO some might need to move into new concept of material
-        model = glm::translate(model, glm::vec3(w * 0.5f, h * 0.5f, 0.0f));
-        model = glm::scale(model, glm::vec3(size, size, 1.0f));
+        model = glm::translate(model,
+            glm::vec3(pOwner->transform.position.x, pOwner->transform.position.y, pOwner->transform.position.z));
+        model = glm::scale(model, glm::vec3(pOwner->transform.scale.x, pOwner->transform.scale.y, 1.0f));
 
         glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
