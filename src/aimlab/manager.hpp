@@ -106,17 +106,18 @@ public:
     float spawnTimer    = 0.f;
     float spawnRange    = 10.0f;
 
-    std::vector<GameObject*>* world = nullptr;
+    std::vector<TargetObject*>* targetsToSpawn = nullptr;
 
     virtual void Update(float dt) override{
-        if (!world) return;
+        if (!targetsToSpawn)
+            return;
 
         spawnTimer += dt;
         if (spawnTimer < spawnInterval) return;
         spawnTimer = 0.f;
 
         int alive = 0;
-        for (auto* obj : *world)
+        for (auto* obj : *targetsToSpawn)
             if (obj->active && dynamic_cast<TargetObject*>(obj))
                 alive++;
 
@@ -137,7 +138,7 @@ public:
 
         target->AddComponent(new MeshRenderer(mesh, new Material(tex)));
 
-        world->push_back(target);
+        targetsToSpawn->push_back(target);
     }
 };
 
