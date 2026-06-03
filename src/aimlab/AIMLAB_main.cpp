@@ -729,7 +729,7 @@
 
 
 
-//#define AIMLAB_OPTION_GL_DEBUG
+#define AIMLAB_OPTION_GL_DEBUG
 
 
 #include "config.hpp"

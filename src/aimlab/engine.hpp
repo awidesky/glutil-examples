@@ -56,6 +56,7 @@ public:
         // glCullFace(GL_BACK);
 
 #ifdef AIMLAB_OPTION_GL_DEBUG
+        glutil::debug::printRuntimeInfo();
         glutil::debug::debugCallbackSeverityThreshold = GL_DEBUG_SEVERITY_LOW;
         glutil::debug::init();
         lastPrint = frameBegin = std::chrono::steady_clock::now();
