@@ -288,36 +288,31 @@ public:
         const Camera& camera = Camera::Get();
         PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
         float t;
-
+        bool bHit = false;
         // TODO : 로드는 한번만
         glutil::ModelData cpuMesh = glutil::ModelLoader::loadOBJ(glutil::PROJECT_ROOT / "model" / "target.obj");
 
-        double start = glfwGetTime();
         for (auto* obj : *targets) {
             if (!obj->active)
                 continue;
             auto* target = dynamic_cast<TargetObject*>(obj);
             if (!target || !target->isAlive)
                 continue;
+            if (bHit)
+                break;
            
-            // TODO : 맞았을 시 바로 리턴, 관통 X
-            if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius, t))
-            {
+            // TODO : 맞았을 시 바로 리턴, 관통 X     << 구현 완료
+            if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius, t)) {
                 if (PhysicsSystem::Get().RayMeshIntersect(ray, cpuMesh, target->transform.GetWorldMatrix(), t)) {
                     target->OnHit();
+                    bHit = true;
                 }
             }
-           
-            
-            for (auto* fireListener : fireListeners)
-                fireListener->Fire();
-       
         }
-        double end = glfwGetTime();
-        printf("loadOBJ time: %.3f ms\n", (end - start) * 1000.0);
+        for (auto* fireListener : fireListeners)
+            fireListener->Fire();
     }
 
-    // TODO :  장전시 총 위치 아래로
     void Reload() {
         if (!isReloading && currentAmmo < maxAmmo) {
             isReloading = true;
@@ -356,6 +351,8 @@ public:
         recoilUp = std::min(recoilUp + 0.08f, 0.1f);
         recoilPitch = std::min(recoilPitch + 9.0f, 20.0f);
     }
+
+    // TODO :  장전시 총 위치 아래로
     void Reload() override {}
 
     void Update(float dt) override {
