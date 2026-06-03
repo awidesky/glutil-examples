@@ -287,8 +287,8 @@ public:
        
         const Camera& camera = Camera::Get();
         PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
-        float t;
-        bool bHit = false;
+        TargetObject* nearestHitTarget = NULL;
+        float minHitDist = FLT_MAX;
         // TODO : 로드는 한번만
         glutil::ModelData cpuMesh = glutil::ModelLoader::loadOBJ(glutil::PROJECT_ROOT / "model" / "target.obj");
 
@@ -298,16 +298,20 @@ public:
             auto* target = dynamic_cast<TargetObject*>(obj);
             if (!target || !target->isAlive)
                 continue;
-            if (bHit)
-                break;
   
-            if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius, t)) {
-                if (PhysicsSystem::Get().RayMeshIntersect(ray, cpuMesh, target->transform.GetWorldMatrix(), t)) {
-                    target->OnHit();
-                    bHit = true;
+            if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius)) {
+                if (PhysicsSystem::Get().RayMeshIntersect(ray, cpuMesh, target->transform.GetWorldMatrix())) {
+                    float dist = glm::distance(camera.position, target->transform.position);
+                    if (dist < minHitDist) {
+                        nearestHitTarget = target;
+                        minHitDist = dist;     
+                    }
+
                 }
             }
         }
+        if (nearestHitTarget != nullptr)
+            nearestHitTarget->OnHit();
         for (auto* fireListener : fireListeners)
             fireListener->Fire();
     }
