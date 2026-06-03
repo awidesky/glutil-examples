@@ -246,7 +246,7 @@ private:
 };
 struct FireListener {
     virtual void Fire() = 0;
-    virtual void Reload() = 0;
+    virtual void Reload(float reloadTime) = 0;
 };
 class WeaponSystem : public Component {
 public:
@@ -300,8 +300,7 @@ public:
                 continue;
             if (bHit)
                 break;
-           
-            // TODO : 맞았을 시 바로 리턴, 관통 X     << 구현 완료
+  
             if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius, t)) {
                 if (PhysicsSystem::Get().RayMeshIntersect(ray, cpuMesh, target->transform.GetWorldMatrix(), t)) {
                     target->OnHit();
@@ -317,7 +316,8 @@ public:
         if (!isReloading && currentAmmo < maxAmmo) {
             isReloading = true;
             reloadTimer = reloadTime;
-            for(auto* fireListener : fireListeners) fireListener->Reload();
+            for (auto* fireListener : fireListeners)
+                fireListener->Reload(reloadTime / 2.f);
         }
     }
 };
@@ -344,6 +344,10 @@ public:
     float recoilUp = 0.0f;
     float recoilPitch = 0.0f;
 
+    float reloadOffset = 0.f;
+    float reloadRotZ = 0.f;
+    float reloadTimer = 0.f;
+
     GunController(WeaponSystem* ws) { ws->addFireListener(this); }
 
     void Fire() override {
@@ -352,25 +356,36 @@ public:
         recoilPitch = std::min(recoilPitch + 9.0f, 20.0f);
     }
 
-    // TODO :  장전시 총 위치 아래로
-    void Reload() override {}
+    // TODO :  장전시 총 위치 아래로 + 살짝 회전
+    void Reload(float reloadTime) override { 
+        reloadTimer = reloadTime;
+    }
 
     void Update(float dt) override {
         recoilBack = std::max(0.0f, recoilBack - 1.f * dt);
         recoilUp = std::max(0.0f, recoilUp - 1.9f * dt);
         recoilPitch = std::max(0.0f, recoilPitch - 90.0f * dt);
 
+         if (reloadTimer > 0.f) {
+            reloadTimer -= dt;
+            reloadOffset = std::min(reloadOffset + 1.f * dt, 0.2f);
+            reloadRotZ = std::min(reloadRotZ + 30.f * dt, 45.f);
+        } else {
+            reloadOffset = std::max(0.0f, reloadOffset - 1.f * dt);
+            reloadRotZ = std::max(0.0f, reloadRotZ - 90.f * dt);
+        }
+
         const Camera& camera = Camera::Get();
         glm::vec3 forward = camera.GetForward();
         glm::vec3 right = glm::normalize(glm::cross(forward, camera.up));
         glm::vec3 up = glm::normalize(glm::cross(right, forward));
-        glm::vec3 finalOffset = offset + glm::vec3(0.0f, recoilUp, -recoilBack);
+        glm::vec3 finalOffset = offset + glm::vec3(0.0f, recoilUp - reloadOffset, -recoilBack);
         pOwner->transform.position =
           camera.position + right * finalOffset.x + up * finalOffset.y + forward * finalOffset.z;
 
         pOwner->transform.rotation.x = -camera.pitch - recoilPitch;
         pOwner->transform.rotation.y = 90.0f - camera.yaw;
-        pOwner->transform.rotation.z = 0.0f;
+        pOwner->transform.rotation.z = reloadRotZ;
     }
 };
 #endif // AIMLAB_COMPONENT_HPP
