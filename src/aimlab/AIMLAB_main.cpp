@@ -817,7 +817,7 @@ int main() {
     gEngine.system.push_back(TargetSpawner);
 
     GameObject* gun = new GameObject();
-    gun->transform.scale = glm::vec3(0.007f);
+    gun->transform.scale = glm::vec3(0.006f);
     gun->AddComponent(new GunController(weaponsystem, {0.35f, -0.4f, 0.8f}));
     gun->AddComponent(new ViewModelRenderer(
       rm.AddMesh("gun", glutil::PROJECT_ROOT / "assets" / "ak47" / "ak47.obj"),

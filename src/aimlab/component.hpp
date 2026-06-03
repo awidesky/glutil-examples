@@ -406,7 +406,7 @@ public:
     }
 
     void Update(float dt) override {
-        recoilBack = std::max(0.0f, recoilBack - 1.f * dt);
+        recoilBack = std::max(0.0f, recoilBack - 0.6f * dt);
         recoilUp = std::max(0.0f, recoilUp - 1.9f * dt);
         recoilPitch = std::max(0.0f, recoilPitch - 90.0f * dt);
 
