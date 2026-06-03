@@ -290,7 +290,7 @@ public:
         TargetObject* nearestHitTarget = NULL;
         float minHitDist = FLT_MAX;
         // TODO : 로드는 한번만
-        glutil::ModelData cpuMesh = glutil::ModelLoader::loadOBJ(glutil::PROJECT_ROOT / "model" / "target.obj");
+        CpuMesh* cpuMesh = ResourceManager::Get().GetCpuMesh("target");
 
         for (auto* obj : *targets) {
             if (!obj->active)
@@ -300,7 +300,7 @@ public:
                 continue;
   
             if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius)) {
-                if (PhysicsSystem::Get().RayMeshIntersect(ray, cpuMesh, target->transform.GetWorldMatrix())) {
+                if (PhysicsSystem::Get().RayMeshIntersect(ray, *cpuMesh, target->transform.GetWorldMatrix())) {
                     float dist = glm::distance(camera.position, target->transform.position);
                     if (dist < minHitDist) {
                         nearestHitTarget = target;

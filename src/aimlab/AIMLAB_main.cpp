@@ -806,6 +806,7 @@ int main() {
 
     // Target ResourceRenderer
     rm.AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
+    rm.AddCpuMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
     rm.AddTexture("target", glutil::PROJECT_ROOT / "texture" / "target.png");
     
     GameObject* TargetSpawner = new GameObject();

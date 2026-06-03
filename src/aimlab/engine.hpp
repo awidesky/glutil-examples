@@ -223,6 +223,7 @@ private:
 
 
 using Mesh = glutil::GLModelData;
+using CpuMesh = glutil::ModelData;
 struct Texture {
     glutil::GLTexture2D tex;
     Texture(glutil::GLTexture2D&& loadedTex) : tex(std::move(loadedTex)) {
@@ -261,6 +262,15 @@ public:
         return it->second;
     }
 
+    CpuMesh* GetCpuMesh(const std::string& name) {
+        auto it = _cpuMeshes.find(name);
+
+        if (it == _cpuMeshes.end())
+            return nullptr;
+
+        return it->second;
+    }
+
     Texture* GetTexture(const std::string& name) {
         auto it = _textures.find(name);
 
@@ -282,6 +292,9 @@ public:
     Mesh* AddMesh(const std::string& name, const std::filesystem::path& path) {
         return _meshes[name] = new Mesh(glutil::ModelLoader::loadOBJtoGL(path));
     }
+    CpuMesh* AddCpuMesh(const std::string& name, const std::filesystem::path& path) {
+        return _cpuMeshes[name] = new CpuMesh(glutil::ModelLoader::loadOBJ(path));
+    }
     Texture* AddTexture(const std::string& name, const std::filesystem::path& path) {
         return _textures[name] = new Texture(glutil::ImageLoader::loadImageToGL(path));
     }
@@ -294,6 +307,9 @@ public:
         _defaultTexture = nullptr;
 
         for (auto& pair : _meshes)
+            delete pair.second;
+
+        for (auto& pair : _cpuMeshes)
             delete pair.second;
 
         for (auto& pair : _textures)
@@ -311,6 +327,7 @@ private:
     ResourceManager() = default;
     Texture* _defaultTexture = nullptr;
     std::unordered_map<std::string, Mesh*> _meshes;
+    std::unordered_map<std::string, CpuMesh*> _cpuMeshes;
     std::unordered_map<std::string, Texture*> _textures;
     std::unordered_map<std::string, Program*> _programs;
 };
