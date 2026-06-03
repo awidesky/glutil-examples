@@ -121,6 +121,8 @@ public:
         viewPosLocation = glGetUniformLocation(program, "viewPos");
     }
 
+    void Input() override { crouching = InputManager::Get().IsKeyDown(GLFW_KEY_LEFT_SHIFT); }
+    
     void Update(float dt) override {
         auto& gc = GraphicsContext::Get();
         auto& camera = Camera::Get();
@@ -134,6 +136,16 @@ public:
         glm::vec3 flatDir = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z));
         glm::vec3 right = glm::normalize(glm::cross(flatDir, camera.up));
 
+        /* TODO : 점프와 웅크리기.
+         점프: 간단한 물리 계산을 update에서 수행. 
+         playerYV가 0이 아니라면 1/2 * g * dt^2 + vdt계산 후 현재 카메라의 y값에 삽입(단, camera.playerHeight)보다 내려가지는 않게.
+         점프 키를 누른 상황에선 playerYV를 임의의 값으로 대입(단, playerYV가 0이 아닌 경우에는 하면 안됨)
+         웅크리기 : 쉬프트 누르면 crouching = true; 
+         udpate에선 iscrawling이 참인 경우 일정 속도만큼 밑으로 내려가게(camera.playerHeight의 30% 정도만)
+         거짓인 경우 같은 속도로 위로 올라가게(최대 camera.playerHeight만큼)
+
+         */
+        // 이동 처리
         if (InputManager::Get().IsKeyDown(GLFW_KEY_W))
             camera.position += flatDir * camera.speed * dt;
         if (InputManager::Get().IsKeyDown(GLFW_KEY_S))
@@ -142,6 +154,18 @@ public:
             camera.position -= right * camera.speed * dt;
         if (InputManager::Get().IsKeyDown(GLFW_KEY_D))
             camera.position += right * camera.speed * dt;
+
+        //웅크리기 처리
+        float targetHeight = Camera::playerHeight;
+        if (crouching) targetHeight *= crouchRatio;
+
+        if (camera.position.y < targetHeight) {
+            camera.position.y += crouchSpeed * dt;
+            camera.position.y = std::min(camera.position.y, targetHeight);
+        } else if (camera.position.y > targetHeight) {
+            camera.position.y -= crouchSpeed * dt;
+            camera.position.y = std::max(camera.position.y, targetHeight);
+        }
     }
 
     void Render() override {
@@ -153,6 +177,10 @@ public:
 private:
     GLint viewLocation = -1;
     GLint viewPosLocation = -1;
+
+    bool crouching = false;
+    static constexpr float crouchRatio = 0.7f;
+    static constexpr float crouchSpeed = 4.5f;
 };
 
 class SystemController : public Component {

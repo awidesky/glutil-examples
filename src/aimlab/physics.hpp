@@ -1,6 +1,7 @@
 ﻿#ifndef AIMLAB_PHYSICS_HPP
 #define AIMLAB_PHYSICS_HPP
 #include <glm/glm.hpp>
+#include <glutil/model.hpp>
 
 class PhysicsSystem {
 public:
