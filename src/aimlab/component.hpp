@@ -380,7 +380,7 @@ public:
 };
 class GunController : public Component, FireListener {
 public:
-    glm::vec3 offset = {0.5f, -0.5f, 0.6f};
+    glm::vec3 offset;
 
     float recoilBack = 0.0f;
     float recoilUp = 0.0f;
@@ -390,12 +390,14 @@ public:
     float reloadRotZ = 0.f;
     float reloadTimer = 0.f;
 
-    GunController(WeaponSystem* ws) { ws->addFireListener(this); }
+    GunController(WeaponSystem* ws, glm::vec3 offset) : offset(offset) {
+        ws->addFireListener(this);
+    }
 
     void Fire() override {
-        recoilBack = std::min(recoilBack + 0.07f, 0.08f);
-        recoilUp = std::min(recoilUp + 0.08f, 0.1f);
-        recoilPitch = std::min(recoilPitch + 9.0f, 20.0f);
+        recoilBack = std::min(recoilBack + 0.15f, 0.25f);
+        recoilUp = std::min(recoilUp + 0.05f, 0.11f);
+        recoilPitch = std::min(recoilPitch + 3.0f, 6.0f);
     }
 
     // TODO :  장전시 총 위치 아래로 + 살짝 회전

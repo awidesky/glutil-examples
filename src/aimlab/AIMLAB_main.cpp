@@ -729,7 +729,7 @@
 
 
 
-#define AIMLAB_OPTION_GL_DEBUG
+//#define AIMLAB_OPTION_GL_DEBUG
 
 
 #include "config.hpp"
@@ -817,9 +817,8 @@ int main() {
     gEngine.system.push_back(TargetSpawner);
 
     GameObject* gun = new GameObject();
-    gun->transform.scale = glm::vec3(0.01f);
-    gun->transform.position = glm::vec3(-0.2f, 0.5f, 0.2f);
-    gun->AddComponent(new GunController(weaponsystem));
+    gun->transform.scale = glm::vec3(0.007f);
+    gun->AddComponent(new GunController(weaponsystem, {0.35f, -0.4f, 0.8f}));
     gun->AddComponent(new ViewModelRenderer(
       rm.AddMesh("gun", glutil::PROJECT_ROOT / "assets" / "ak47" / "ak47.obj"),
       new Material(rm.AddTexture("gun", glutil::PROJECT_ROOT / "assets" / "ak47" / "123456_wire_115115115_color.png"))));
