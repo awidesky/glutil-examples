@@ -23,13 +23,15 @@ if(NOT EXISTS "${GDM_DIR}/CMakeLists.txt")
     file(DOWNLOAD
         "${GDM_URL}"
         "${GDM_ARCHIVE}"
-        TLS_VERIFY ON
         STATUS _dl_status
+        LOG _dl_log
     )
 
     list(GET _dl_status 0 _dl_code)
     if(NOT _dl_code EQUAL 0)
-        message(FATAL_ERROR "Failed to download gdm")
+        message(FATAL_ERROR
+            "Failed to download gdm"
+            "Download status: ${_dl_status}, Log : ${_dl_log}")
     endif()
 
     file(REMOVE_RECURSE "${GDM_EXTRACT_DIR}")
@@ -103,8 +105,9 @@ function(fetch_example_asset ASSET_NAME)
             "${_url}"
             "${_archive}"
             STATUS _dl_status
-            TLS_VERIFY ON
+            LOG _dl_log
         )
+
         list(GET _dl_status 0 _dl_code)
 
         if (NOT _dl_code EQUAL 0)
@@ -115,6 +118,7 @@ function(fetch_example_asset ASSET_NAME)
                 "[${PROJECT_NAME}] Failed to download asset '${ASSET_NAME}'\n"
                 "URL: ${_url}\n"
                 "Reason: ${_dl_msg}"
+                "Log : ${_dl_log}"
             )
         endif()
     else()
@@ -207,6 +211,17 @@ add_gdm_example(02_Excavator_bad
     shader/excvator.vert
     shader/excvator.frag
 )
+if(MSVC)
+    set_source_files_properties(
+        src/excavator_bad_utils.hpp
+        PROPERTIES COMPILE_OPTIONS "/w"
+    )
+else()
+    set_source_files_properties(
+        src/excavator_bad_utils.hpp
+        PROPERTIES COMPILE_OPTIONS "-w"
+    )
+endif()
 add_gdm_example(03_Excavator_good
     src/excavator_good.cpp
 

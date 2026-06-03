@@ -56,6 +56,7 @@ public:
         // glCullFace(GL_BACK);
 
 #ifdef AIMLAB_OPTION_GL_DEBUG
+        glutil::debug::debugCallbackSeverityThreshold = GL_DEBUG_SEVERITY_LOW;
         glutil::debug::init();
         lastPrint = std::chrono::steady_clock::now();
 #endif
@@ -72,6 +73,7 @@ public:
 #ifdef AIMLAB_OPTION_GL_DEBUG
         const auto renderEnd = std::chrono::steady_clock::now();
 #endif
+        glFinish();
         glfwSwapBuffers(m_window);
 #ifdef AIMLAB_OPTION_GL_DEBUG
         const std::chrono::duration<double> renderElapsed = renderEnd - frameBegin;
