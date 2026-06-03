@@ -16,20 +16,18 @@ public:
         glm::vec3 direction;
     };
 
-    bool RaySphereIntersect(const Ray& ray, const glm::vec3& center, float radius, float& t) {
+    bool RaySphereIntersect(const Ray& ray, const glm::vec3& center, float radius) {
         glm::vec3 oc = ray.origin - center;
         float a = glm::dot(ray.direction, ray.direction);
         float b = 2.f * glm::dot(oc, ray.direction);
         float c = glm::dot(oc, oc) - radius * radius;
         float disc = b*b - 4*a*c;
         if (disc < 0) return false;
-        t = (-b - sqrt(disc)) / (2.f * a);
+        float t = (-b - sqrt(disc)) / (2.f * a);
         return t > 0;
     }
 
-    bool RayMeshIntersect(const Ray& ray, const glutil::ModelData& cpuMesh, const glm::mat4& modelMatrix, float& tMin) {
-        tMin = FLT_MAX;
-        bool hit = false;
+    bool RayMeshIntersect(const Ray& ray, const glutil::ModelData& cpuMesh, const glm::mat4& modelMatrix) {
 
         for (const auto& meshData : cpuMesh.meshes) {
             const glutil::VertexPNT* verts = static_cast<const glutil::VertexPNT*>(meshData.vertexData());
@@ -44,15 +42,12 @@ public:
                                                                  verts[indices[i + 2]].z, 1.0f));
 
                 float t;
-                if (RayTriangleIntersect(ray, v0, v1, v2, t))
-                    if (t < tMin) {
-                        tMin = t;
-                        hit = true;
-                        return hit;
-                    }
+                if (RayTriangleIntersect(ray, v0, v1, v2, t)) {
+                    return true;
+                }
             }
         }
-        return hit;
+        return false;
     }
 
 private:
