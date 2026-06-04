@@ -11,6 +11,11 @@
 
 #include "config.hpp"
 
+#pragma warning(disable : 4996) // unsafe scanf
+#pragma warning(disable : 6031) // scanf return ignore
+#pragma warning(disable : 6387) // malloc'ed buffer may be NULL
+#pragma warning(disable : 6054) // parameter of strncmp may not be NULL terminated
+
 GLuint LoadShaders(const char * vertex_file_path1,const char * fragment_file_path1){
 
 	std::string path1 = (glutil::PROJECT_ROOT / vertex_file_path1).string();
@@ -130,7 +135,7 @@ bool loadOBJ(
 ){
     std::string spath = (glutil::PROJECT_ROOT / objpath).string();
     const char* path = spath.c_str();
-	printf("Loading OBJ file %s...\n", spath);
+	printf("Loading OBJ file %s...\n", path);
 
 	std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
 	std::vector<glm::vec3> temp_vertices; 
@@ -377,7 +382,7 @@ GLuint loadDDS(const char * imagepath){
 	/* close the file pointer */ 
 	fclose(fp);
 
-	unsigned int components  = (fourCC == FOURCC_DXT1) ? 3 : 4; 
+	//unsigned int components  = (fourCC == FOURCC_DXT1) ? 3 : 4; 
 	unsigned int format;
 	switch(fourCC) 
 	{ 

@@ -197,7 +197,7 @@ void start() {
     GLuint groundTexture = loadBMP_custom("textures/grid.bmp");
     GLuint trackTexture = loadBMP_custom("textures/track.bmp");
     GLuint scoopTexture = loadBMP_custom("textures/scoop.bmp");
-    GLuint diceTexture = loadDDS("textures/dice.DDS"); // 테스트용
+    //GLuint diceTexture = loadDDS("textures/dice.DDS"); // 테스트용
     GLuint cabinTexture = loadBMP_custom("textures/cabin.bmp");
     GLuint bodyTexture = loadBMP_custom("textures/body.bmp");
 
@@ -265,11 +265,11 @@ void start() {
         if (animationStartTime > 0.0) { // 애니메이션이 시작했다면..
             double currentTime = glfwGetTime();
             // 프레임 간 시간 차이
-            double deltaTime = currentTime - lastFrameTime;
+            float deltaTime = (float)(currentTime - lastFrameTime);
             lastFrameTime = currentTime;
 
             // 애니메이션 시작으로부터 몇 초 지났는가?
-            float timeInterval = currentTime - animationStartTime;
+            double timeInterval = currentTime - animationStartTime;
 
             // 애니메이션 시작 후 keyframe초 동안 총 animationRotate도 돌아간다.
             if (timeInterval < keyframe) {
@@ -298,11 +298,11 @@ void start() {
 
         // 크기에 맞게 스케일 후, 이동한다.
         body.modelMatrix = world;
-        body.Scale(0.7, 0.6, 1.0);
+        body.Scale(0.7f, 0.6f, 1.0f);
         body.MoveToPosition();
 
         cabin.modelMatrix = world;
-        cabin.Scale(0.4, 0.8, 0.6);
+        cabin.Scale(0.4f, 0.8f, 0.6f);
         cabin.MoveToPosition();
 
         track[0].modelMatrix = track[1].modelMatrix = world;
@@ -322,8 +322,8 @@ void start() {
         track[1].Scale(0.32f, 0.8f, 0.9f);
         // Q, E키를 누르면 트랙터가 앞으로 간다, 이에 맞춰서 바퀴도 굴려 주면,
         // 텍스쳐가 줄무늬 모양이므로 무한궤도가 돌아가는 것처럼 보이게 된다.
-        track[0].Rotate(fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
-        track[1].Rotate(fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
+        track[0].Rotate((float)fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
+        track[1].Rotate((float)fmod(tractorPosition.z, 10.0) * 36, glm::vec3(0, -1, 0));
 
         // 월드 기준 (tractorPosition)
         arm1.modelMatrix = world;
