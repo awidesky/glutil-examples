@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstring>
 #include <fstream>
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
@@ -18,9 +19,9 @@
 
 GLuint LoadShaders(const char * vertex_file_path1,const char * fragment_file_path1){
 
-	std::string path1 = (glutil::PROJECT_ROOT / vertex_file_path1).string();
+	std::string path1 = std::filesystem::absolute(glutil::PROJECT_ROOT / vertex_file_path1).string();
     const char* vertex_file_path = path1.c_str();
-    std::string path2 = (glutil::PROJECT_ROOT / fragment_file_path1).string();
+    std::string path2 = std::filesystem::absolute(glutil::PROJECT_ROOT / fragment_file_path1).string();
     const char* fragment_file_path = path2.c_str();
 
 	// Create the shaders
@@ -133,7 +134,7 @@ bool loadOBJ(
 	std::vector<glm::vec2> & out_uvs,
 	std::vector<glm::vec3> & out_normals
 ){
-    std::string spath = (glutil::PROJECT_ROOT / objpath).string();
+    std::string spath = std::filesystem::absolute(glutil::PROJECT_ROOT / objpath).string();
     const char* path = spath.c_str();
 	printf("Loading OBJ file %s...\n", path);
 
@@ -224,7 +225,7 @@ bool loadOBJ(
 
 GLuint loadBMP_custom(const char * imagePath){
 
-	std::string path = (glutil::PROJECT_ROOT / imagePath).string();
+	std::string path = std::filesystem::absolute(glutil::PROJECT_ROOT / imagePath).string();
     const char* imagepath = path.c_str();
 
 	printf("Reading image %s\n", imagepath);
@@ -278,6 +279,27 @@ GLuint loadBMP_custom(const char * imagePath){
 
 	// Read the actual data from the file into the buffer
 	fread(data,1,imageSize,file);
+#if STEP > 1
+#if STEP > 2
+    int rowSize = ((width * 3 + 3) / 4) * 4; // GL_RGB 기준 (BMP 24bit)
+#else
+    int rowSize = width * 3; // GL_RGB 기준 (BMP 24bit)
+#endif
+
+    unsigned char* tempRow = new unsigned char[rowSize];
+
+    for (unsigned int y = 0; y < height / 2; y++) {
+        unsigned char* row1 = data + y * rowSize;
+        unsigned char* row2 = data + (height - 1 - y) * rowSize;
+
+        // swap row1 <-> row2
+        memcpy(tempRow, row1, rowSize);
+        memcpy(row1, row2, rowSize);
+        memcpy(row2, tempRow, rowSize);
+    }
+
+    delete[] tempRow;
+#endif
 
 	// Everything is in memory now, the file can be closed.
 	fclose (file);

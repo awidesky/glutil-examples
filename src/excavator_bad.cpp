@@ -1,4 +1,6 @@
-﻿// Include standard headers
+﻿#define STEP 3
+
+// Include standard headers
 #include <stdio.h>
 #include <stdlib.h>
 #include <utility>
@@ -136,16 +138,16 @@ struct object {
                               (void*)0  // array buffer offset
         );
 
-        // uv
-        glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, model.uvbuffer);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
         // normal
-        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(1);
         glBindBuffer(GL_ARRAY_BUFFER, model.normalbuffer);
-        glVertexAttribPointer(2, // layout(location = 2)
+        glVertexAttribPointer(1, // layout(location = 1)
                               3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+        // uv
+        glEnableVertexAttribArray(2);
+        glBindBuffer(GL_ARRAY_BUFFER, model.uvbuffer);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
         // Draw the model !
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.vertices.size());
@@ -180,9 +182,9 @@ bool thirdView = true;
 
 void start() {
     // 모델 객체를 만든다.
-    modelData cube{"models/cube.obj"};
-    modelData plane{"models/plane.obj"};
-    modelData torus{"models/torus.obj"};
+    modelData cube{"model/cube.obj"};
+    modelData plane{"model/plane.obj"};
+    modelData torus{"model/torus.obj"};
 
     // VAO
     GLuint VertexArrayID;
@@ -190,16 +192,20 @@ void start() {
     glBindVertexArray(VertexArrayID);
 
     // Create and compile our GLSL program from the shaders
-    GLuint programID = LoadShaders("TransformVertexShader.vertexshader", "ColorFragmentShader.fragmentshader");
+#if STEP == 0
+    GLuint programID = LoadShaders("shader/excvator.vert", "shader/excvator.frag");
+#else
+    GLuint programID = LoadShaders("shader/excvator_noBOM.vert", "shader/excvator.frag");
+#endif
 
     // 각 오브젝트에 맞는 텍스쳐를 가져온다.
-    defaultTexture = loadBMP_custom("textures/default.bmp");
-    GLuint groundTexture = loadBMP_custom("textures/grid.bmp");
-    GLuint trackTexture = loadBMP_custom("textures/track.bmp");
-    GLuint scoopTexture = loadBMP_custom("textures/scoop.bmp");
-    //GLuint diceTexture = loadDDS("textures/dice.DDS"); // 테스트용
-    GLuint cabinTexture = loadBMP_custom("textures/cabin.bmp");
-    GLuint bodyTexture = loadBMP_custom("textures/body.bmp");
+    defaultTexture = loadBMP_custom("texture/default.bmp");
+    GLuint groundTexture = loadBMP_custom("texture/grid.bmp");
+    GLuint trackTexture = loadBMP_custom("texture/track.bmp");
+    GLuint scoopTexture = loadBMP_custom("texture/scoop.bmp");
+    //GLuint diceTexture = loadDDS("texture/dice.DDS"); // 테스트용
+    GLuint cabinTexture = loadBMP_custom("texture/cabin.bmp");
+    GLuint bodyTexture = loadBMP_custom("texture/body.bmp");
 
     // 모든 유니폼 변수 ID를 가져온다
     TextureUniformID = glGetUniformLocation(programID, "myTextureSampler");
@@ -632,6 +638,7 @@ static void processKeyboardMouseInput(glm::mat4& view, glm::vec3& tractorPositio
     computeKeyboardTranslates(view, tractorPosition);
 }
 
+void noopPostCallback(void*, const char*, GLADapiproc, int, ...) {}
 // opengl 라이브러리 초기화 작업
 static int glinit() {
 
@@ -667,6 +674,9 @@ static int glinit() {
         glfwTerminate();
         return -1;
     }
+#ifdef GLAD_OPTION_GL_DEBUG
+    gladSetGLPostCallback(noopPostCallback);
+#endif
     printf("OpenGL Version: %s\n", glGetString(GL_VERSION));
 
     glGetError(); // 처음에 1280 에러 발생하긴 하지만, 별로 중요한 오류 같진 않음
