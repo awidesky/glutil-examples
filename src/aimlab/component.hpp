@@ -442,13 +442,16 @@ public:
     float radius = 1.0f;
     bool canMove = false;
     glm::vec3 cachedOwnerLocation;
-    float moveTimer = 0.f;
-    float moveRange = 9.f;
-    float moveSpeed = 1.f;
+    float maxRange = 9.5f;
+    float moveSpeed = 5.f;
+    float leftDistance = 0.f;
+    int dir = 1.0f;
     void Start()
     { 
         cachedOwnerLocation = pOwner->transform.position;
         angle = pOwner->transform.rotation.x;
+        dir = rand() % 2 * 2 - 1;
+        leftDistance = std::abs(dir * maxRange - cachedOwnerLocation.x);
     }
 
     void Update(float dt) override
@@ -468,8 +471,14 @@ public:
 
         if (canMove)
         {
-            moveTimer += dt;
-            pOwner->transform.position.x = cachedOwnerLocation.x + sin(moveTimer * moveSpeed)  * moveRange;
+            leftDistance -= moveSpeed * dt;
+            if (leftDistance <= 0)
+            {
+                pOwner->transform.position.x = dir * maxRange;
+                dir = -dir;
+                leftDistance = 2 * maxRange;
+            }
+            pOwner->transform.position.x +=  moveSpeed * dir * dt;
         }
 
         float rad = angle * (3.14159f / 180.f);
