@@ -3,12 +3,12 @@
 
 #include "component.hpp"
 #include "mesh.hpp"
+#include <vector>
+#include <cstdlib>
+#include <cstdio>
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <config.hpp>
-#include <cstdio>
-#include <cstdlib>
-#include <vector>
 
 // ScoreManager
 // 싱글톤. 게임 점수, 정확도 관리.
@@ -27,9 +27,9 @@ public:
     ScoreManager(const ScoreManager&) = delete;
     ScoreManager& operator=(const ScoreManager&) = delete;
 
-    int score = 0;
-    int totalShot = 0;
-    int hit = 0;
+    int   score      = 0;
+    int   totalShot  = 0;
+    int   hit        = 0;
 
     void RecordHit(float reactionTime) {
         hit++;
@@ -39,8 +39,7 @@ public:
     void RecordMiss() { totalShot++; }
 
     float GetAccuracy() const {
-        if (totalShot == 0)
-            return 0.f;
+        if (totalShot == 0) return 0.f;
         return (float)hit / (float)totalShot * 100.f;
     }
 
@@ -64,24 +63,25 @@ private:
 //   Reset()     - 타이머 초기화
 class RoundTimerComponent : public Component {
 public:
-    float duration = 60.f;
+    float duration  = 60.f;
     float remainTime = 60.f;
-    bool isRunning = false;
+    bool  isRunning = false;
 
     void StartRound(float d) {
         duration = remainTime = d;
         isRunning = true;
     }
-    virtual void Update(float dt) override {
+    virtual void Update(float dt) override{
         if (isRunning)
             remainTime -= dt;
     }
-    bool IsExpired() const { return isRunning && remainTime <= 0.f; }
+    bool IsExpired() const { return isRunning && remainTime <= 0.f;
+    }
     void Reset() {
         remainTime = duration;
         isRunning = false;
-        // TODO : ScoreManager::Get().Reset()도 여기서 같이 해도 될듯?
-        // TODO : world의 타겟들 다 지우는 거
+        //TODO : ScoreManager::Get().Reset()도 여기서 같이 해도 될듯?
+        //TODO : world의 타겟들 다 지우는 거 
     }
 };
 
@@ -94,7 +94,7 @@ public:
 //   spawnTimer    - 누적 시간
 //   spawnRange    - 생성 범위 (기본 ±5)
 //   world*        - GameLoop의 world 포인터. 생성한 타겟 여기에 추가
-//
+// 
 // 함수:
 //   Update(dt)   - 매 프레임 호출. 타이머 누적 후 조건 맞으면 SpawnTarget()
 //   SpawnTarget() - 랜덤 위치에 GameObject 생성 + TargetLogic 붙여서 world에 추가
@@ -102,19 +102,17 @@ public:
 class TargetSpawnerComponent : public Component {
 public:
     float spawnInterval = 2.0f;
-    int maxTargets = 10;
-    float spawnTimer = 0.f;
-    float spawnRange = 10.0f;
+    int   maxTargets    = 10;
+    float spawnTimer    = 0.f;
 
     std::vector<TargetObject*>* targetsToSpawn = nullptr;
 
-    virtual void Update(float dt) override {
+    virtual void Update(float dt) override{
         if (!targetsToSpawn)
             return;
 
         spawnTimer += dt;
-        if (spawnTimer < spawnInterval)
-            return;
+        if (spawnTimer < spawnInterval) return;
         spawnTimer = 0.f;
 
         int alive = 0;
@@ -122,19 +120,18 @@ public:
             if (obj->state == ETargetState::Spawned && dynamic_cast<TargetObject*>(obj))
                 alive++;
 
-        if (alive >= maxTargets)
-            return;
+        if (alive >= maxTargets) return;
         SpawnTarget();
     }
 
     void SpawnTarget() {
-        float x = ((float)rand() / RAND_MAX * 2.f - 1.f) * spawnRange;
-        float y = ((float)rand() / RAND_MAX * 2.f - 1.f) * spawnRange;
+        float x = ((float)rand() / RAND_MAX * 2.f - 1.f) * 9.5f;
+        float z = round(-(float)rand() / RAND_MAX * 10.f);
 
         TargetObject* target = new TargetObject();
-        target->transform.position = glm::vec3(x, 0.0f, y);
+        target->transform.position = glm::vec3(x, 0.0f, z);
         target->transform.scale = glm::vec3(0.2f, 0.2f, 0.05f);
-        target->transform.rotation = glm::vec3(-90.f, 0.f, 0.f);
+        target->transform.rotation = glm::vec3(-90.f,0.f, 0.f);
 
         Mesh* mesh = ResourceManager::Get().GetMesh("target");
         Texture* tex = ResourceManager::Get().GetTexture("target");
@@ -143,6 +140,15 @@ public:
         target->AddComponent(new TargetController());
 
         targetsToSpawn->push_back(target);
+    }
+
+    void GetSpawnLocation(int& x, int& z){ 
+        int minZ = -10;
+        int maxZ = -5;
+        float maxX = 9.5f;
+        float minX = -9.5f;
+
+
     }
 };
 
