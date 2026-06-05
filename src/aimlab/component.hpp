@@ -5,29 +5,29 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
+#include "camera.hpp"
+#include "engine.hpp"
+#include "physics.hpp"
+#include <GLFW/glfw3.h>
 #include <glm/gtx/euler_angles.hpp>
 #include <iostream>
 #include <vector>
-#include <GLFW/glfw3.h>
-#include "engine.hpp"
-#include "physics.hpp"
-#include "camera.hpp"
 
 struct Transform {
     glm::vec3 position{0, 0, 0};
     glm::vec3 rotation{0, 0, 0};
     glm::vec3 scale{1, 1, 1};
 
-glm::mat4 GetWorldMatrix() const {
-    glm::mat4 m(1.f);
-    m = glm::translate(m, position);
+    glm::mat4 GetWorldMatrix() const {
+        glm::mat4 m(1.f);
+        m = glm::translate(m, position);
 
-    m = glm::rotate(m, glm::radians(rotation.y), {0, 1, 0});
-    m = glm::rotate(m, glm::radians(rotation.x), {1, 0, 0});
-    m = glm::rotate(m, glm::radians(rotation.z), {0, 0, 1});
+        m = glm::rotate(m, glm::radians(rotation.y), {0, 1, 0});
+        m = glm::rotate(m, glm::radians(rotation.x), {1, 0, 0});
+        m = glm::rotate(m, glm::radians(rotation.z), {0, 0, 1});
 
-    return glm::scale(m, scale);
-}
+        return glm::scale(m, scale);
+    }
 };
 
 class GameObject;
@@ -42,11 +42,16 @@ public:
     virtual ~Component() {}
 };
 
+enum ETargetState {
+    Spawned,
+    Dying,
+    Died,
+};
 
 class GameObject {
 public:
     Transform transform;
-    bool active = true;
+    ETargetState state = ETargetState::Spawned;
 
     virtual ~GameObject() {
         for (auto c : m_components)
@@ -66,7 +71,7 @@ public:
     }
 
     void Update(float dt) {
-        if (!active)
+        if (state == ETargetState::Died)
             return;
         for (auto c : m_components) {
             if (!c->isStarted) {
@@ -78,14 +83,14 @@ public:
     }
 
     void Input() {
-        if (!active)
+        if (state == ETargetState::Died)
             return;
         for (auto c : m_components)
             c->Input();
     }
 
     void Render() {
-        if (!active)
+        if (state == ETargetState::Died)
             return;
         for (auto c : m_components)
             c->Render();
@@ -95,23 +100,17 @@ private:
     std::vector<Component*> m_components;
 };
 
-
 class TargetObject : public GameObject {
 public:
     float radius = 1.0f;
-    bool isAlive = true;
     float spawnTime = 0.f;
 
     TargetObject() { spawnTime = (float)glfwGetTime(); }
 
-    void OnHit() {
-        isAlive = false;
-        active = false;
-    }
+    void OnHit() { state = ETargetState::Dying; }
 
     float GetReactionTime() const { return (float)glfwGetTime() - spawnTime; }
 };
-
 
 class CameraController : public Component {
 public:
@@ -126,7 +125,7 @@ public:
         if (canJump && InputManager::Get().IsKeyDown(GLFW_KEY_SPACE))
             playerYV = jumpVelocity;
     }
-    
+
     void Update(float dt) override {
         auto& gc = GraphicsContext::Get();
         auto& camera = Camera::Get();
@@ -152,7 +151,8 @@ public:
 
         if (canJump) { // 웅크리기 처리
             float targetHeight = Camera::playerHeight;
-            if (crouching) targetHeight *= crouchRatio;
+            if (crouching)
+                targetHeight *= crouchRatio;
 
             if (camera.position.y < targetHeight) {
                 camera.position.y += crouchSpeed * dt;
@@ -322,7 +322,6 @@ public:
         currentAmmo--;
         fireCooldown = fireInterval;
 
-       
         const Camera& camera = Camera::Get();
         PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
         TargetObject* nearestHitTarget = NULL;
@@ -331,20 +330,19 @@ public:
         CpuMesh* cpuMesh = ResourceManager::Get().GetCpuMesh("target");
 
         for (auto* obj : *targets) {
-            if (!obj->active)
+            if (obj->state != ETargetState::Spawned)
                 continue;
             auto* target = dynamic_cast<TargetObject*>(obj);
-            if (!target || !target->isAlive)
+            if (!target || target->state != ETargetState::Spawned)
                 continue;
-  
+
             if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius)) {
                 if (PhysicsSystem::Get().RayMeshIntersect(ray, *cpuMesh, target->transform.GetWorldMatrix())) {
                     float dist = glm::distance(camera.position, target->transform.position);
                     if (dist < minHitDist) {
                         nearestHitTarget = target;
-                        minHitDist = dist;     
+                        minHitDist = dist;
                     }
-
                 }
             }
         }
@@ -390,9 +388,7 @@ public:
     float reloadRotZ = 0.f;
     float reloadTimer = 0.f;
 
-    GunController(WeaponSystem* ws, glm::vec3 offset) : offset(offset) {
-        ws->addFireListener(this);
-    }
+    GunController(WeaponSystem* ws, glm::vec3 offset) : offset(offset) { ws->addFireListener(this); }
 
     void Fire() override {
         recoilBack = std::min(recoilBack + 0.15f, 0.25f);
@@ -401,16 +397,14 @@ public:
     }
 
     // TODO :  장전시 총 위치 아래로 + 살짝 회전
-    void Reload(float reloadTime) override { 
-        reloadTimer = reloadTime;
-    }
+    void Reload(float reloadTime) override { reloadTimer = reloadTime; }
 
     void Update(float dt) override {
         recoilBack = std::max(0.0f, recoilBack - 0.6f * dt);
         recoilUp = std::max(0.0f, recoilUp - 1.9f * dt);
         recoilPitch = std::max(0.0f, recoilPitch - 90.0f * dt);
 
-         if (reloadTimer > 0.f) {
+        if (reloadTimer > 0.f) {
             reloadTimer -= dt;
             reloadOffset = std::min(reloadOffset + 1.f * dt, 0.2f);
             reloadRotZ = std::min(reloadRotZ + 30.f * dt, 45.f);
@@ -432,4 +426,31 @@ public:
         pOwner->transform.rotation.z = reloadRotZ;
     }
 };
+
+class TargetController : public Component {
+public:
+    float angle = -90.f;
+    float pivotY;
+    float radius = 1.0f;
+    void Start() { pivotY = pOwner->transform.position.y; }
+
+    void Update(float dt) override {
+        if (pOwner->state == ETargetState::Spawned) {
+            angle = std::min(0.0f, angle + 180.f * dt);
+        }
+        if (pOwner->state == ETargetState::Dying) {
+            angle = std::max(-90.0f, angle - 180.f * dt);
+            if (angle == -90.f) {
+                pOwner->state = ETargetState::Died;
+            }
+        }
+
+        float rad = angle * (3.14159f / 180.f);
+
+        pOwner->transform.position.y = pivotY + radius * std::cos(rad);
+        pOwner->transform.position.z = radius * std::sin(rad);
+        pOwner->transform.rotation.x = angle;
+    }
+};
+
 #endif // AIMLAB_COMPONENT_HPP
