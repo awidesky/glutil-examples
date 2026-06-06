@@ -9,45 +9,8 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <config.hpp>
+#include "score.hpp"
 
-// ScoreManager
-// 싱글톤. 게임 점수, 정확도 관리.
-// 함수:
-//   RecordHit(reactionTime) - 타겟 맞을 때 호출. score += 100 / reactionTime
-//   RecordMiss()            - 빗나갈 때 호출. totalShots만 증가
-//   GetAccuracy()           - 정확도 반환. hits / totalShots * 100
-//   Reset()                 - 라운드 시작할 때 초기화
-
-class ScoreManager {
-public:
-    static ScoreManager& Get() {
-        static ScoreManager scoremanager;
-        return scoremanager;
-    }
-    ScoreManager(const ScoreManager&) = delete;
-    ScoreManager& operator=(const ScoreManager&) = delete;
-
-    int   score      = 0;
-    int   totalShot  = 0;
-    int   hit        = 0;
-
-    void RecordHit(float reactionTime) {
-        hit++;
-        totalShot++;
-        score += (int)(100.f / reactionTime);
-    }
-    void RecordMiss() { totalShot++; }
-
-    float GetAccuracy() const {
-        if (totalShot == 0) return 0.f;
-        return (float)hit / (float)totalShot * 100.f;
-    }
-
-    void Reset() { score = totalShot = hit = 0; }
-
-private:
-    ScoreManager() = default;
-};
 
 // RoundTimer
 // 라운드 시간 관리. GameLoop이 소유.
@@ -168,12 +131,14 @@ public:
         : gEngine(loop), weaponSystem(ws), roundTimer(rt) {}
 
     NumberController* AddDigit(float ancX, float ancY, float offX, float offY) {
-        auto& rm = ResourceManager::Get();
-        auto* mat =
-          new Material({rm.GetTexture("num0"), rm.GetTexture("num1"), rm.GetTexture("num2"), rm.GetTexture("num3"),
-                        rm.GetTexture("num4"), rm.GetTexture("num5"), rm.GetTexture("num6"), rm.GetTexture("num7"),
-                        rm.GetTexture("num8"), rm.GetTexture("num9")});
-        auto* obj = new GameObject();
+        auto& rm   = ResourceManager::Get();
+        auto* mat  = new Material({
+            rm.GetTexture("num0"), rm.GetTexture("num1"), rm.GetTexture("num2"),
+            rm.GetTexture("num3"), rm.GetTexture("num4"), rm.GetTexture("num5"),
+            rm.GetTexture("num6"), rm.GetTexture("num7"), rm.GetTexture("num8"),
+            rm.GetTexture("num9")
+        });
+        auto* obj  = new GameObject();
         auto* ctrl = new NumberController(mat, ancX, ancY, offX, offY, digitSize);
         obj->AddComponent(ctrl);
         obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
@@ -182,7 +147,7 @@ public:
     }
 
     void AddSymbol(const std::string& texName, float ancX, float ancY, float offX, float offY) {
-        auto& rm = ResourceManager::Get();
+        auto& rm  = ResourceManager::Get();
         auto* mat = new Material(rm.GetTexture(texName));
         auto* obj = new GameObject();
         obj->AddComponent(new NumberController(mat, ancX, ancY, offX, offY, digitSize * 0.5f));
@@ -233,4 +198,7 @@ public:
         }
     }
 };
+
+
+
 #endif // AIMLAB_MANAGER_HPP

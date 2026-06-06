@@ -12,6 +12,7 @@
 #include "engine.hpp"
 #include "physics.hpp"
 #include "camera.hpp"
+#include "score.hpp"
 
 struct Transform {
     glm::vec3 position{0, 0, 0};
@@ -108,9 +109,7 @@ public:
     float spawnTime = 0.f;
 
     TargetObject() { spawnTime = (float)glfwGetTime(); }
-
     void OnHit() { state = ETargetState::Dying;}
-
     float GetReactionTime() const { return (float)glfwGetTime() - spawnTime; }
 };
 
@@ -324,7 +323,6 @@ public:
         currentAmmo--;
         fireCooldown = fireInterval;
 
-       
         const Camera& camera = Camera::Get();
         PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
         TargetObject* nearestHitTarget = NULL;
@@ -338,20 +336,25 @@ public:
             auto* target = dynamic_cast<TargetObject*>(obj);
             if (!target || target->state != ETargetState::Spawned)
                 continue;
-  
+
             if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius)) {
                 if (PhysicsSystem::Get().RayMeshIntersect(ray, *cpuMesh, target->transform.GetWorldMatrix())) {
                     float dist = glm::distance(camera.position, target->transform.position);
                     if (dist < minHitDist) {
                         nearestHitTarget = target;
-                        minHitDist = dist;     
+                        minHitDist = dist;
                     }
-
                 }
             }
         }
-        if (nearestHitTarget != nullptr)
+        if (nearestHitTarget != nullptr) {
+            ScoreManager::Get().RecordHit(nearestHitTarget->GetReactionTime());
             nearestHitTarget->OnHit();
+        }
+        else
+        {
+            ScoreManager::Get().RecordMiss();
+        }
         for (auto* fireListener : fireListeners)
             fireListener->Fire();
     }
@@ -365,6 +368,8 @@ public:
         }
     }
 };
+
+
 class CrossHairComponent : public Component {
 public:
     void Start() override { pOwner->transform.scale = glm::vec3(32.0f, 32.0f, 1.0f); }
@@ -380,6 +385,7 @@ public:
         pOwner->transform.position.z = 0.0f;
     }
 };
+
 class GunController : public Component, FireListener {
 public:
     glm::vec3 offset;
@@ -435,8 +441,8 @@ public:
     }
 };
 
-class TargetController : public Component
-{
+
+class TargetController : public Component {
 public:
     float angle;
     float radius = 1.0f;
@@ -488,5 +494,9 @@ public:
         pOwner->transform.rotation.x = angle;
     }
 };
+
+
+
+
 
 #endif // AIMLAB_COMPONENT_HPP
