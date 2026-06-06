@@ -775,6 +775,7 @@ int main() {
         return -1;
     }
 
+    // 카메라
     Camera& camera = Camera::Get();
     camera.position = glm::vec3(0.f, 1.f, 0.f);
     camera.up = glm::vec3(0.f, 1.f, 0.f);
@@ -784,10 +785,12 @@ int main() {
 
     GameLoop gEngine;
 
+    // System Controller
     GameObject* system = new GameObject();
     system->AddComponent(new SystemController());
     gEngine.system.push_back(system);
 
+    // Camera Object
     GameObject* cameraObject = new GameObject();
     auto* cameraController = new CameraController();
     cameraObject->AddComponent(cameraController);
@@ -796,6 +799,7 @@ int main() {
     cameraObject->AddComponent(weaponsystem);
     gEngine.system.push_back(cameraObject);
 
+    // 바닥
     GameObject* plane = new GameObject();
     plane->transform.rotation.y = 180.f;
     plane->transform.scale = glm::vec3(10.f, 1.f, 10.f);
@@ -804,11 +808,11 @@ int main() {
     plane->AddComponent(planeRenderer);
     gEngine.world3d.push_back(plane);
 
-    // Target ResourceRenderer
+    // Target Spawner
     rm.AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
     rm.AddCpuMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
     rm.AddTexture("target", glutil::PROJECT_ROOT / "texture" / "target.png");
-   
+  
     
     GameObject* TargetSpawner = new GameObject();
     TargetSpawner->transform.position = glm::vec3(0.f, 0.f, 0.f);
@@ -817,6 +821,14 @@ int main() {
     TargetSpawner->AddComponent(spawner);
     gEngine.system.push_back(TargetSpawner);
 
+    // Round Timer
+    auto* timerObj = new GameObject();
+    auto* roundTimer = new RoundTimerComponent();
+    roundTimer->StartRound(60.f);
+    timerObj->AddComponent(roundTimer);
+    gEngine.system.push_back(timerObj);
+
+    // Gun
     GameObject* gun = new GameObject();
     gun->transform.scale = glm::vec3(0.006f);
     gun->AddComponent(new GunController(weaponsystem, {0.35f, -0.4f, 0.8f}));
@@ -825,6 +837,7 @@ int main() {
       new Material(rm.AddTexture("gun", glutil::PROJECT_ROOT / "assets" / "ak47" / "123456_wire_115115115_color.png"))));
     gEngine.world2d.push_back(gun);
 
+    // Crosshair
     GameObject* crosshair = new GameObject();
     crosshair->AddComponent(new CrossHairComponent());
     crosshair->AddComponent(
@@ -832,13 +845,44 @@ int main() {
                       new Material(rm.AddTexture("crosshair", glutil::PROJECT_ROOT / "texture" / "crosshair.png"))));
     gEngine.world2d.push_back(crosshair);
 
-    GameObject* num = new GameObject();
-    num->AddComponent(new CrossHairComponent());
 
-    num->AddComponent(new OrthogonalRenderer(
-      rm.AddMesh("crosshair", glutil::PROJECT_ROOT / "model" / "crosshair.obj"),
-      new Material(rm.AddTexture("0", glutil::PROJECT_ROOT / "texture" / "num" / "0.png"))));
-    gEngine.world2d.push_back(num);
+
+    // 숫자, 특수문자 저장
+    for (int i = 0; i < 10; i++) rm.AddTexture("num" + std::to_string(i),glutil::PROJECT_ROOT / "texture" / "num" / (std::to_string(i) + ".png"));
+    rm.AddTexture("numColon", glutil::PROJECT_ROOT / "texture" / "num" / "colon.png");
+    rm.AddTexture("numPercent", glutil::PROJECT_ROOT / "texture" / "num" / "percent.png");
+    rm.AddTexture("numSlash", glutil::PROJECT_ROOT / "texture" / "num" / "slash.png");
+
+    // HUD 생성
+    auto* hudObj = new GameObject();
+    auto* hud = new HUDComponent(&gEngine, weaponsystem, roundTimer);
+    float s = hud->digitSize;
+
+    // 시간
+    hud->timeDigits.push_back(hud->AddDigit(0.5f, 1.f, -s * 2.f, -s));
+    hud->timeDigits.push_back(hud->AddDigit(0.5f, 1.f, -s, -s));
+    hud->AddSymbol("numColon", 0.5f, 1.f, -s * 0.25f, -s);
+    hud->timeDigits.push_back(hud->AddDigit(0.5f, 1.f, s * 0.50f, -s));
+    hud->timeDigits.push_back(hud->AddDigit(0.5f, 1.f, s * 1.50f, -s));
+
+    // 점수
+    for (int i = 0; i < 5; i++)
+        hud->scoreDigits.push_back(hud->AddDigit(1.f, 1.f, -s * (5 - i), -s));
+
+    // 정확도
+    for (int i = 0; i < 3; i++)
+        hud->accuracyDigits.push_back(hud->AddDigit(1.f, 1.f, -s * (4 - i), -s * 2.f));
+    hud->AddSymbol("numPercent", 1.f, 1.f, -s, -s * 2.f);
+
+    // 탄약
+    hud->ammoDigits.push_back(hud->AddDigit(1.f, 1.f, -s * 4.f, -s * 3.f));
+    hud->ammoDigits.push_back(hud->AddDigit(1.f, 1.f, -s * 3.f, -s * 3.f));
+    hud->AddSymbol("numSlash", 1.f, 1.f, -s * 2.5f, -s * 3.f);
+    hud->ammoDigits.push_back(hud->AddDigit(1.f, 1.f, -s * 2.f, -s * 3.f));
+    hud->ammoDigits.push_back(hud->AddDigit(1.f, 1.f, -s, -s * 3.f));
+
+    hudObj->AddComponent(hud);
+    gEngine.system.push_back(hudObj);
 
 
 #ifdef AIMLAB_OPTION_GL_DEBUG
