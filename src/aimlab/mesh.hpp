@@ -12,7 +12,14 @@ class Material {
 public:
     Material() = default;
     explicit Material(Texture* texture) : texture(texture) {}
+    Material(std::initializer_list<Texture*> texList) : textures(texList) {}
 
+    void useTexture(size_t index) {
+        if (index < textures.size())
+            texIndex = index;
+    }
+    std::vector<Texture*> textures;
+    size_t texIndex = 0;
     Texture* texture = nullptr;
     GLint myTextureSamplerLocation = -1;
 
@@ -20,6 +27,9 @@ public:
     void Bind() const {
         glActiveTexture(GL_TEXTURE0);
         Texture* bindTexture = texture ? texture : ResourceManager::Get().GetDefaultTexture();
+
+        if (!textures.empty() && texIndex < textures.size())
+            bindTexture = textures[texIndex];
         if (bindTexture)
             bindTexture->bind();
         glUniform1i(myTextureSamplerLocation, 0);
@@ -158,6 +168,36 @@ public:
         glUniform1i(isUILocation, GL_FALSE);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
+    }
+};
+
+class NumberController : public Component {
+public:
+    Material* material = nullptr;
+    int digit = 0;
+    float anchorX = 0.f;
+    float anchorY = 0.f;
+    float offsetX = 0.f;
+    float offsetY = 0.f;
+    float digitSize = 48.f;
+
+    NumberController(Material* mat, float ancX, float ancY, float offX, float offY, float size = 48.f)
+        : material(mat), anchorX(ancX), anchorY(ancY), offsetX(offX), offsetY(offY), digitSize(size) {}
+
+    void Start() override { pOwner->transform.scale = glm::vec3(digitSize, digitSize, 1.f); }
+
+    void SetDigit(int d) {
+        digit = std::clamp(d, 0, 9);
+        if (material)
+            material->useTexture((size_t)digit);
+    }
+
+    void Update(float dt) override {
+        (void)dt;
+        int w, h;
+        GraphicsContext::Get().GetWindowSize(w, h);
+        pOwner->transform.position.x = w * anchorX + offsetX;
+        pOwner->transform.position.y = h * anchorY + offsetY;
     }
 };
 #endif // AIMLAB_MESH_HPP
