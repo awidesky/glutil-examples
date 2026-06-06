@@ -152,4 +152,85 @@ public:
     }
 };
 
+class HUDComponent : public Component {
+public:
+    WeaponSystem* weaponSystem = nullptr;
+    RoundTimerComponent* roundTimer = nullptr;
+    GameLoop* gEngine = nullptr;
+    float digitSize = 48.f;
+
+    std::vector<NumberController*> timeDigits;
+    std::vector<NumberController*> scoreDigits;
+    std::vector<NumberController*> accuracyDigits;
+    std::vector<NumberController*> ammoDigits;
+
+    HUDComponent(GameLoop* loop, WeaponSystem* ws, RoundTimerComponent* rt)
+        : gEngine(loop), weaponSystem(ws), roundTimer(rt) {}
+
+    NumberController* AddDigit(float ancX, float ancY, float offX, float offY) {
+        auto& rm = ResourceManager::Get();
+        auto* mat =
+          new Material({rm.GetTexture("num0"), rm.GetTexture("num1"), rm.GetTexture("num2"), rm.GetTexture("num3"),
+                        rm.GetTexture("num4"), rm.GetTexture("num5"), rm.GetTexture("num6"), rm.GetTexture("num7"),
+                        rm.GetTexture("num8"), rm.GetTexture("num9")});
+        auto* obj = new GameObject();
+        auto* ctrl = new NumberController(mat, ancX, ancY, offX, offY, digitSize);
+        obj->AddComponent(ctrl);
+        obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
+        gEngine->world2d.push_back(obj);
+        return ctrl;
+    }
+
+    void AddSymbol(const std::string& texName, float ancX, float ancY, float offX, float offY) {
+        auto& rm = ResourceManager::Get();
+        auto* mat = new Material(rm.GetTexture(texName));
+        auto* obj = new GameObject();
+        obj->AddComponent(new NumberController(mat, ancX, ancY, offX, offY, digitSize * 0.5f));
+        obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
+        gEngine->world2d.push_back(obj);
+    }
+
+    void Update(float dt) override {
+        (void)dt;
+
+        // 시간
+        if (roundTimer && timeDigits.size() >= 4) {
+            int remain = (int)std::max(0.f, roundTimer->remainTime);
+            int mm = remain / 60;
+            int ss = remain % 60;
+            timeDigits[0]->SetDigit(mm / 10);
+            timeDigits[1]->SetDigit(mm % 10);
+            timeDigits[2]->SetDigit(ss / 10);
+            timeDigits[3]->SetDigit(ss % 10);
+        }
+
+        // 점수
+        {
+            int score = ScoreManager::Get().score;
+            for (int i = (int)scoreDigits.size() - 1; i >= 0; i--) {
+                scoreDigits[i]->SetDigit(score % 10);
+                score /= 10;
+            }
+        }
+
+        // 정확도
+        {
+            int acc = (int)ScoreManager::Get().GetAccuracy();
+            for (int i = (int)accuracyDigits.size() - 1; i >= 0; i--) {
+                accuracyDigits[i]->SetDigit(acc % 10);
+                acc /= 10;
+            }
+        }
+
+        // 탄약
+        if (weaponSystem && ammoDigits.size() >= 4) {
+            int cur = weaponSystem->currentAmmo;
+            int max = weaponSystem->maxAmmo;
+            ammoDigits[0]->SetDigit(cur / 10);
+            ammoDigits[1]->SetDigit(cur % 10);
+            ammoDigits[2]->SetDigit(max / 10);
+            ammoDigits[3]->SetDigit(max % 10);
+        }
+    }
+};
 #endif // AIMLAB_MANAGER_HPP
