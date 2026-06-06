@@ -808,6 +808,7 @@ int main() {
     rm.AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
     rm.AddCpuMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
     rm.AddTexture("target", glutil::PROJECT_ROOT / "texture" / "target.png");
+   
     
     GameObject* TargetSpawner = new GameObject();
     TargetSpawner->transform.position = glm::vec3(0.f, 0.f, 0.f);
@@ -830,6 +831,14 @@ int main() {
      new OrthogonalRenderer(rm.AddMesh("crosshair", glutil::PROJECT_ROOT / "model" / "crosshair.obj"),
                       new Material(rm.AddTexture("crosshair", glutil::PROJECT_ROOT / "texture" / "crosshair.png"))));
     gEngine.world2d.push_back(crosshair);
+
+    GameObject* num = new GameObject();
+    num->AddComponent(new CrossHairComponent());
+
+    num->AddComponent(new OrthogonalRenderer(
+      rm.AddMesh("crosshair", glutil::PROJECT_ROOT / "model" / "crosshair.obj"),
+      new Material(rm.AddTexture("0", glutil::PROJECT_ROOT / "texture" / "num" / "0.png"))));
+    gEngine.world2d.push_back(num);
 
 
 #ifdef AIMLAB_OPTION_GL_DEBUG
