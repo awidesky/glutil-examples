@@ -11,7 +11,7 @@ uniform sampler2D myTextureSampler;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform float ambientStrength;
-uniform bool isUI;
+uniform bool isUI = false;
 
 void main(){
     vec4 tex = texture(myTextureSampler, UV);
