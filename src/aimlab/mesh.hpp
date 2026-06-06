@@ -101,6 +101,8 @@ public:
     GLint modelLocation = -1;
     GLint viewLocation = -1;
     GLint projectionLocation = -1;
+    GLint isUILocation = -1;
+
 
     void Start() override {
         program = GraphicsContext::Get().GetProgram();
@@ -111,6 +113,7 @@ public:
         modelLocation = glGetUniformLocation(program, "model");
         viewLocation = glGetUniformLocation(program, "view");
         projectionLocation = glGetUniformLocation(program, "projection");
+        isUILocation = glGetUniformLocation(program, "isUI");
     }
 
     void Render() override {
@@ -125,6 +128,7 @@ public:
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND); //TODO :init으로 옮기기
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glUniform1i(isUILocation, GL_TRUE);
 
         pMaterial->Bind();
 
@@ -150,6 +154,8 @@ public:
 
         glBindVertexArray(0);
 
+        
+        glUniform1i(isUILocation, GL_FALSE);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
     }

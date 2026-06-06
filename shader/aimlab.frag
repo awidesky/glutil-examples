@@ -11,9 +11,14 @@ uniform sampler2D myTextureSampler;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform float ambientStrength;
+uniform bool isUI;
 
 void main(){
     vec4 tex = texture(myTextureSampler, UV);
+    if(isUI){
+        color = tex;
+        return;
+    }
     vec3 objectColor = tex.rgb;
     
     vec3 ambient = ambientStrength * objectColor;
