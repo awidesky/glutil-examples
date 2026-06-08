@@ -121,10 +121,12 @@ int main() {
     rm.AddTexture("numPercent", glutil::PROJECT_ROOT / "texture" / "num" / "percent.png");
     rm.AddTexture("numSlash", glutil::PROJECT_ROOT / "texture" / "num" / "slash.png");
 
-    // 
+    // 글자 저장
     rm.AddTexture("labelScore", glutil::PROJECT_ROOT / "texture" / "num" / "score.png");
     rm.AddTexture("labelAccuracy", glutil::PROJECT_ROOT / "texture" / "num" / "accuracy.png");
     rm.AddTexture("labelAmmo", glutil::PROJECT_ROOT / "texture" / "num" / "ammo.png");
+    rm.AddTexture("start", glutil::PROJECT_ROOT / "texture" / "num" / "start.png");
+    rm.AddTexture("restart", glutil::PROJECT_ROOT / "texture" / "num" / "restart.png");
 
     // HUD 생성
     auto* hudObj = new GameObject();
@@ -161,6 +163,10 @@ int main() {
     // 카운트 다운
     hud->countdownDigit = (hud->AddDigit(0.5f, 0.5f, 0.f, 0.f));
     hud->countdownDigit->visible = false;
+
+    // 문구
+    hud->startSymbol = hud->AddSymbol("start", 0.5f, 0.0f, 0.f, 70.f, 400.f, 30.f);
+    hud->restartSymbol = hud->AddSymbol("restart", 0.5f, 0.0f, 0.f, 70.f, 400.f, 30.f);
 
     hudObj->AddComponent(hud);
     gEngine.system.push_back(hudObj);

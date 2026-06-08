@@ -197,7 +197,9 @@ public:
     std::vector<NumberController*> ammoDigits;
 
     NumberController* countdownDigit;
-    NumberController* pressSymbol;
+    NumberController* startSymbol;
+    NumberController* restartSymbol;
+
 
     HUDComponent(std::vector<GameObject*>* world2d, WeaponSystem* ws, RoundTimerComponent* rt)
         : world2d(world2d), weaponSystem(ws), roundTimer(rt) {}
@@ -218,22 +220,26 @@ public:
         return ctrl;
     }
 
-    void AddSymbol(const std::string& texName, float ancX, float ancY, float offX, float offY) {
+    NumberController* AddSymbol(const std::string& texName, float ancX, float ancY, float offX, float offY) {
         auto& rm  = ResourceManager::Get();
         auto* mat = new Material(rm.GetTexture(texName));
         auto* obj = new GameObject();
-        obj->AddComponent(new NumberController(mat, ancX, ancY, offX, offY, digitSize * 0.5f, digitSize * 0.5f));
+        auto* ctrl = new NumberController(mat, ancX, ancY, offX, offY, digitSize * 0.5f, digitSize * 0.5f);
+        obj->AddComponent(ctrl);
         obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
         world2d->push_back(obj);
+        return ctrl;
     }
 
-    void AddSymbol(const std::string& texName, float ancX, float ancY, float offX, float offY, float w, float h) {
+    NumberController* AddSymbol(const std::string& texName, float ancX, float ancY, float offX, float offY, float w, float h) {
         auto& rm = ResourceManager::Get();
         auto* mat = new Material(rm.GetTexture(texName));
         auto* obj = new GameObject();
-        obj->AddComponent(new NumberController(mat, ancX, ancY, offX, offY, w,h));
+        auto* ctrl = new NumberController(mat, ancX, ancY, offX, offY, w, h);
+        obj->AddComponent(ctrl);
         obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
         world2d->push_back(obj);
+        return ctrl;
     }
 
     void Update(float dt) override {
@@ -244,6 +250,10 @@ public:
             countdownDigit->SetDigit((int)std::ceil(GameStateManager::Get().countdownTimer));
             std::cout << countdownDigit->visible << '\n';
         }
+
+        if (startSymbol) startSymbol->visible = GameStateManager::Get().state == EGameState::Waiting;
+        if (restartSymbol) restartSymbol->visible = GameStateManager::Get().state == EGameState::Result;
+
 
          // 탄약
         if (weaponSystem && ammoDigits.size() >= 4) {
