@@ -13,10 +13,11 @@
 #include "score.hpp"
 
 
-enum class EGameState { Waiting, Playing, Result };
+enum class EGameState { Waiting, Playing, Result, CountDown };
 
 class GameStateManager {
 public:
+    float countdownTimer = 3.f;
     static GameStateManager& Get() {
         static GameStateManager state;
         return state;
@@ -26,6 +27,10 @@ public:
 
     EGameState state = EGameState::Waiting;
 
+    void StartCountDown() {
+        countdownTimer = 3.f;
+        state = EGameState::CountDown;
+    }
     void StartRound() { state = EGameState::Playing; }
     void EndRound() { state = EGameState::Result; }
 
@@ -132,24 +137,31 @@ public:
     float spawnInterval = 2.0f;
     int   maxTargets    = 10;
     float spawnTimer    = 0.f;
+    int spawnAmount = 0;
 
+    std::vector<GameObject*>* world3d = nullptr;
     std::vector<TargetObject*>* targetsToSpawn = nullptr;
 
     virtual void Update(float dt) override{
         if (!targetsToSpawn)
             return;
+        if (GameStateManager::Get().state == EGameState::CountDown || GameStateManager::Get().state == EGameState::Result)
+            return;
 
+        spawnInterval = (float)rand() / RAND_MAX * 2.0f + 1.0f;
         spawnTimer += dt;
         if (spawnTimer < spawnInterval) return;
         spawnTimer = 0.f;
 
         int alive = 0;
-        for (auto* obj : *targetsToSpawn)
+        for (auto* obj : *world3d)
             if (obj->state == ETargetState::Spawned && dynamic_cast<TargetObject*>(obj))
                 alive++;
 
         if (alive >= maxTargets) return;
-        SpawnTarget();
+
+        spawnAmount = rand() % 3 + 1;
+        for (int i=0; i<spawnAmount; ++i) SpawnTarget();
     }
 
     void SpawnTarget() {
@@ -170,15 +182,6 @@ public:
 
         targetsToSpawn->push_back(target);
     }
-
-    void GetSpawnLocation(int& x, int& z){ 
-        int minZ = -10;
-        int maxZ = -5;
-        float maxX = 9.5f;
-        float minX = -9.5f;
-
-
-    }
 };
 
 class HUDComponent : public Component {
@@ -192,6 +195,9 @@ public:
     std::vector<NumberController*> scoreDigits;
     std::vector<NumberController*> accuracyDigits;
     std::vector<NumberController*> ammoDigits;
+
+    NumberController* countdownDigit;
+    NumberController* pressSymbol;
 
     HUDComponent(std::vector<GameObject*>* world2d, WeaponSystem* ws, RoundTimerComponent* rt)
         : world2d(world2d), weaponSystem(ws), roundTimer(rt) {}
@@ -232,6 +238,13 @@ public:
 
     void Update(float dt) override {
 
+        // 카운트 다운
+        if (countdownDigit) {
+            countdownDigit->visible = (GameStateManager::Get().state == EGameState::CountDown);
+            countdownDigit->SetDigit((int)std::ceil(GameStateManager::Get().countdownTimer));
+            std::cout << countdownDigit->visible << '\n';
+        }
+
          // 탄약
         if (weaponSystem && ammoDigits.size() >= 4) {
             int cur = weaponSystem->currentAmmo;
@@ -254,8 +267,7 @@ public:
         }
 
 
-        if (GameStateManager::Get().state == EGameState::Waiting ||
-            GameStateManager::Get().state == EGameState::Result)
+        if (GameStateManager::Get().state != EGameState::Playing)
             return;
 
         // 점수
@@ -294,33 +306,39 @@ public:
 
     void Update(float dt) override { 
 
-        if (InputManager::Get().IsKeyDown(GLFW_KEY_G))
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_G) && !m_prevG)
             if (GameStateManager::Get().state == EGameState::Waiting ||
                 GameStateManager::Get().state == EGameState::Result) {
-                StartRound();
+                StartCountDown();
             }
-        if (InputManager::Get().IsKeyDown(GLFW_KEY_H)) {
+
+        m_prevG = InputManager::Get().IsKeyDown(GLFW_KEY_G);
+
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_H) && !m_prevH) {
             EndRound();
         }
-        //if (stateManager.state == EGameState::Playing && roundTimer->IsExpired()) {
-        //    stateManager.EndRound();
-        //    EndRound();
-        //}
+
+        m_prevH= InputManager::Get().IsKeyDown(GLFW_KEY_H);
+        
+        if (GameStateManager::Get().state == EGameState::Playing && roundTimer->IsExpired()) {
+            EndRound();
+        }
+        if (GameStateManager::Get().state == EGameState::CountDown) {
+            GameStateManager::Get().countdownTimer -= dt;
+            if (GameStateManager::Get().countdownTimer <= 0.f) {
+                StartRound();
+            }
+        }
     }
 
 private:
     void StartRound(){ 
+        GameStateManager::Get().StartRound();
         ScoreManager::Get().Reset();
         if (roundTimer)
-            roundTimer->StartRound(60.f);
+            roundTimer->StartRound(10.f);
         if (weaponSystem) {
             weaponSystem->StartRound();
-        }
-        GameStateManager::Get().StartRound();
-        for (auto* obj : *world3d) {
-            if (dynamic_cast<TargetObject*>(obj)) {
-                obj->state = ETargetState::Dying;
-            }
         }
     }
 
@@ -328,15 +346,24 @@ private:
         GameStateManager::Get().EndRound();
         if (roundTimer)
             roundTimer->Reset();
-        if (weaponSystem) {
-            weaponSystem->StartRound();
-        }
         for (auto* obj : *world3d) {
             if (dynamic_cast<TargetObject*>(obj)) {
                 obj->state = ETargetState::Dying;
             }
         }
     }
+
+    void StartCountDown() { 
+        GameStateManager::Get().StartCountDown();
+        for (auto* obj : *world3d) {
+            if (dynamic_cast<TargetObject*>(obj)) {
+                obj->state = ETargetState::Dying;
+            }
+        }
+    }
+
+    bool m_prevG = false;
+    bool m_prevH = false;
 };
 
 #endif // AIMLAB_MANAGER_HPP

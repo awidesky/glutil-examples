@@ -86,6 +86,7 @@ int main() {
     TargetSpawner->transform.position = glm::vec3(0.f, 0.f, 0.f);
     auto* spawner = new TargetSpawnerComponent();
     spawner->targetsToSpawn = &gEngine.targetsToSpawn;
+    spawner->world3d = &gEngine.world3d;
     TargetSpawner->AddComponent(spawner);
     gEngine.system.push_back(TargetSpawner);
 
@@ -156,6 +157,10 @@ int main() {
     hud->AddSymbol("labelScore", 1.f, 1.f, -s * 5.f - 210.f, -s * 0.7f, 98.f, s);
     hud->AddSymbol("labelAccuracy", 1.f, 1.f, -s * 4.f - 205.f, -s * 2.f, 152.f, s);
     hud->AddSymbol("labelAmmo", 1.f, 1.f, -s * 5.f - 200.f, -s * 3.f, 108.f, s);
+
+    // 카운트 다운
+    hud->countdownDigit = (hud->AddDigit(0.5f, 0.5f, 0.f, 0.f));
+    hud->countdownDigit->visible = false;
 
     hudObj->AddComponent(hud);
     gEngine.system.push_back(hudObj);

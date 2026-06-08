@@ -179,12 +179,14 @@ public:
     float anchorY = 0.f;
     float offsetX = 0.f;
     float offsetY = 0.f;
-    float digitSize = 48.f;
+    float width = 0.f;
+    float height = 0.f;
+    bool visible = true;
 
-    NumberController(Material* mat, float ancX, float ancY, float offX, float offY, float size = 48.f)
-        : material(mat), anchorX(ancX), anchorY(ancY), offsetX(offX), offsetY(offY), digitSize(size) {}
+    NumberController(Material* mat, float ancX, float ancY, float offX, float offY, float w, float h)
+        : material(mat), anchorX(ancX), anchorY(ancY), offsetX(offX), offsetY(offY), width(w), height(h) {}
 
-    void Start() override { pOwner->transform.scale = glm::vec3(digitSize, digitSize, 1.f); }
+    void Start() override { pOwner->transform.scale = glm::vec3(width, height, 1.f); }
 
     void SetDigit(int d) {
         digit = std::clamp(d, 0, 9);
@@ -193,7 +195,11 @@ public:
     }
 
     void Update(float dt) override {
-        (void)dt;
+        if (!visible) {
+            pOwner->transform.scale = glm::vec3(0.f);
+            return;     
+        }
+        pOwner->transform.scale = glm::vec3(width, height, 1.f);
         int w, h;
         GraphicsContext::Get().GetWindowSize(w, h);
         pOwner->transform.position.x = w * anchorX + offsetX;
