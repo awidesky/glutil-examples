@@ -31,6 +31,9 @@ glm::mat4 GetWorldMatrix() const {
 }
 };
 
+
+
+
 class GameObject;
 class Component {
 public:
@@ -102,14 +105,20 @@ private:
     std::vector<Component*> m_components;
 };
 
-
+class ParticleSystem;
 class TargetObject : public GameObject {
 public:
     float radius = 1.0f;
     float spawnTime = 0.f;
+    // 파티클 시스템 분리로 인해서 콜백으로 바꿧음.
+    std::function<void(glm::vec3, glm::vec3)> onHitEmit;
 
     TargetObject() { spawnTime = (float)glfwGetTime(); }
-    void OnHit() { state = ETargetState::Dying;}
+    void OnHit() { 
+        state = ETargetState::Dying;
+        if (onHitEmit)
+            onHitEmit(transform.position, glm::vec3(0,1,0));
+    }
     float GetReactionTime() const { return (float)glfwGetTime() - spawnTime; }
 };
 
@@ -495,7 +504,21 @@ public:
     }
 };
 
+class ParticleComponent : public Component {
+public:
+    glm::vec3 velocity;
+    float lifetime = 2.0f;
+    float remainTime = 2.0f;
 
+    ParticleComponent(glm::vec3 vel, float life = 2.0f) : velocity(vel), lifetime(life), remainTime(life) {}
+
+    void Update(float dt) override {
+        pOwner->transform.position += velocity * dt;
+        remainTime -= dt;
+        if (remainTime <= 0.f)
+            pOwner->state = ETargetState::Died;
+    }
+};
 
 
 

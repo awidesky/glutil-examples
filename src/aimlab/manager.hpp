@@ -1,15 +1,51 @@
 ﻿#ifndef AIMLAB_MANAGER_HPP
 #define AIMLAB_MANAGER_HPP
 
-#include "component.hpp"
-#include "mesh.hpp"
+
 #include <vector>
 #include <cstdlib>
 #include <cstdio>
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <config.hpp>
+#include "component.hpp"
+#include "mesh.hpp"
 #include "score.hpp"
+
+class ParticleSystem {
+public:
+    static ParticleSystem& Get() {
+        static ParticleSystem instance;
+        return instance;
+    }
+    ParticleSystem(const ParticleSystem&) = delete;
+    ParticleSystem& operator=(const ParticleSystem&) = delete;
+
+    std::vector<GameObject*> pendingParticles;
+
+    void Emit(glm::vec3 pos, glm::vec3 dir, int count) {
+        for (int i = 0; i < count; i++) {
+            float rx = ((float)rand() / RAND_MAX * 2.f - 1.f);
+            float ry = ((float)rand() / RAND_MAX * 2.f - 1.f);
+            float rz = ((float)rand() / RAND_MAX * 2.f - 1.f);
+            glm::vec3 vel = glm::normalize(dir + glm::vec3(rx, ry, rz) * 0.5f) * 3.f;
+
+            auto* obj = new GameObject();
+            obj->transform.position = pos;
+            obj->transform.scale = glm::vec3(0.1f);
+
+            Mesh* mesh = ResourceManager::Get().GetMesh("crosshair");
+            Texture* tex = ResourceManager::Get().GetTexture("particle");
+            obj->AddComponent(new MeshRenderer(mesh, new Material(tex)));
+            obj->AddComponent(new ParticleComponent(vel));
+
+            pendingParticles.push_back(obj);
+        }
+    }
+
+private:
+    ParticleSystem() = default;
+};
 
 
 // RoundTimer
@@ -101,6 +137,7 @@ public:
 
         target->AddComponent(new MeshRenderer(mesh, new Material(tex)));
         target->AddComponent(new TargetController());
+        target->onHitEmit = [](glm::vec3 pos, glm::vec3 dir) { ParticleSystem::Get().Emit(pos, dir, 20); };
 
         targetsToSpawn->push_back(target);
     }
@@ -119,7 +156,7 @@ class HUDComponent : public Component {
 public:
     WeaponSystem* weaponSystem = nullptr;
     RoundTimerComponent* roundTimer = nullptr;
-    GameLoop* gEngine = nullptr;
+    std::vector<GameObject*>* world2d = nullptr;
     float digitSize = 48.f;
 
     std::vector<NumberController*> timeDigits;
@@ -127,8 +164,8 @@ public:
     std::vector<NumberController*> accuracyDigits;
     std::vector<NumberController*> ammoDigits;
 
-    HUDComponent(GameLoop* loop, WeaponSystem* ws, RoundTimerComponent* rt)
-        : gEngine(loop), weaponSystem(ws), roundTimer(rt) {}
+    HUDComponent(std::vector<GameObject*>* world2d, WeaponSystem* ws, RoundTimerComponent* rt)
+        : world2d(world2d), weaponSystem(ws), roundTimer(rt) {}
 
     NumberController* AddDigit(float ancX, float ancY, float offX, float offY) {
         auto& rm   = ResourceManager::Get();
@@ -142,7 +179,7 @@ public:
         auto* ctrl = new NumberController(mat, ancX, ancY, offX, offY, digitSize);
         obj->AddComponent(ctrl);
         obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
-        gEngine->world2d.push_back(obj);
+        world2d->push_back(obj);
         return ctrl;
     }
 
@@ -152,7 +189,7 @@ public:
         auto* obj = new GameObject();
         obj->AddComponent(new NumberController(mat, ancX, ancY, offX, offY, digitSize * 0.5f));
         obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
-        gEngine->world2d.push_back(obj);
+        world2d->push_back(obj);
     }
 
     void Update(float dt) override {
@@ -198,6 +235,7 @@ public:
         }
     }
 };
+
 
 
 
