@@ -808,11 +808,13 @@ int main() {
     plane->AddComponent(planeRenderer);
     gEngine.world3d.push_back(plane);
 
-    // Target Spawner
+    // Target Spawner + Particle
     rm.AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
     rm.AddCpuMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
     rm.AddTexture("target", glutil::PROJECT_ROOT / "texture" / "target.png");
   
+    rm.AddMesh("particle", glutil::PROJECT_ROOT / "model" / "sphere.obj");
+    rm.AddTexture("particle", glutil::PROJECT_ROOT / "texture" / "spark.png");
     
     GameObject* TargetSpawner = new GameObject();
     TargetSpawner->transform.position = glm::vec3(0.f, 0.f, 0.f);
@@ -853,9 +855,14 @@ int main() {
     rm.AddTexture("numPercent", glutil::PROJECT_ROOT / "texture" / "num" / "percent.png");
     rm.AddTexture("numSlash", glutil::PROJECT_ROOT / "texture" / "num" / "slash.png");
 
+    // 
+    rm.AddTexture("labelScore", glutil::PROJECT_ROOT / "texture" / "num" / "score.png");
+    rm.AddTexture("labelAccuracy", glutil::PROJECT_ROOT / "texture" / "num" / "accuracy.png");
+    rm.AddTexture("labelAmmo", glutil::PROJECT_ROOT / "texture" / "num" / "ammo.png");
+
     // HUD 생성
     auto* hudObj = new GameObject();
-    auto* hud = new HUDComponent(&gEngine, weaponsystem, roundTimer);
+    auto* hud = new HUDComponent(&gEngine.world2d, weaponsystem, roundTimer);
     float s = hud->digitSize;
 
     // 시간
@@ -880,6 +887,10 @@ int main() {
     hud->AddSymbol("numSlash", 1.f, 1.f, -s * 2.5f, -s * 3.f);
     hud->ammoDigits.push_back(hud->AddDigit(1.f, 1.f, -s * 2.f, -s * 3.f));
     hud->ammoDigits.push_back(hud->AddDigit(1.f, 1.f, -s, -s * 3.f));
+
+    hud->AddSymbol("labelScore", 1.f, 1.f, -s * 5.f - 210.f, -s * 0.7f, 98.f, s);
+    hud->AddSymbol("labelAccuracy", 1.f, 1.f, -s * 4.f - 205.f, -s * 2.f, 152.f, s);
+    hud->AddSymbol("labelAmmo", 1.f, 1.f, -s * 5.f - 200.f, -s * 3.f, 108.f, s);
 
     hudObj->AddComponent(hud);
     gEngine.system.push_back(hudObj);

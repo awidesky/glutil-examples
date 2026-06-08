@@ -41,7 +41,7 @@ public:
             obj->transform.position = pos;
             obj->transform.scale = glm::vec3(0.1f);
 
-            Mesh* mesh = ResourceManager::Get().GetMesh("crosshair");
+            Mesh* mesh = ResourceManager::Get().GetMesh("particle");
             Texture* tex = ResourceManager::Get().GetTexture("particle");
             obj->AddComponent(new MeshRenderer(mesh, new Material(tex)));
             obj->AddComponent(new ParticleComponent(-vel));
@@ -183,7 +183,7 @@ public:
             rm.GetTexture("num9")
         });
         auto* obj  = new GameObject();
-        auto* ctrl = new NumberController(mat, ancX, ancY, offX, offY, digitSize);
+        auto* ctrl = new NumberController(mat, ancX, ancY, offX, offY, digitSize, digitSize);
         obj->AddComponent(ctrl);
         obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
         world2d->push_back(obj);
@@ -194,7 +194,16 @@ public:
         auto& rm  = ResourceManager::Get();
         auto* mat = new Material(rm.GetTexture(texName));
         auto* obj = new GameObject();
-        obj->AddComponent(new NumberController(mat, ancX, ancY, offX, offY, digitSize * 0.5f));
+        obj->AddComponent(new NumberController(mat, ancX, ancY, offX, offY, digitSize * 0.5f, digitSize * 0.5f));
+        obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
+        world2d->push_back(obj);
+    }
+
+    void AddSymbol(const std::string& texName, float ancX, float ancY, float offX, float offY, float w, float h) {
+        auto& rm = ResourceManager::Get();
+        auto* mat = new Material(rm.GetTexture(texName));
+        auto* obj = new GameObject();
+        obj->AddComponent(new NumberController(mat, ancX, ancY, offX, offY, w,h));
         obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
         world2d->push_back(obj);
     }
