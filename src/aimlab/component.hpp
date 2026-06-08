@@ -160,6 +160,9 @@ public:
         if (InputManager::Get().IsKeyDown(GLFW_KEY_D))
             camera.position += right * camera.speed * dt;
 
+        camera.position.x = std::clamp(camera.position.x, -10.f, 10.f);
+        camera.position.z = std::clamp(camera.position.z, 5.f, 10.f);
+
         if (canJump) { // 웅크리기 처리
             float targetHeight = Camera::playerHeight;
             if (crouching) targetHeight *= crouchRatio;
