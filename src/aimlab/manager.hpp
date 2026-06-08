@@ -12,6 +12,27 @@
 #include "mesh.hpp"
 #include "score.hpp"
 
+
+enum class EGameState { Waiting, Playing, Result };
+
+class GameStateManager {
+public:
+    static GameStateManager& Get() {
+        static GameStateManager state;
+        return state;
+    }
+    GameStateManager(const GameStateManager&) = delete;
+    GameStateManager& operator=(const GameStateManager&) = delete;
+
+    EGameState state = EGameState::Waiting;
+
+    void StartRound() { state = EGameState::Playing; }
+    void EndRound() { state = EGameState::Result; }
+
+private:
+    GameStateManager() = default;
+};
+
 class ParticleSystem {
 public:
     static ParticleSystem& Get() {
@@ -69,14 +90,15 @@ private:
 //   Reset()     - 타이머 초기화
 class RoundTimerComponent : public Component {
 public:
-    float duration  = 60.f;
-    float remainTime = 60.f;
+    float duration  = 0.f;
+    float remainTime = 0.f;
     bool  isRunning = false;
 
     void StartRound(float d) {
         duration = remainTime = d;
         isRunning = true;
     }
+
     virtual void Update(float dt) override{
         if (isRunning)
             remainTime -= dt;
@@ -84,7 +106,7 @@ public:
     bool IsExpired() const { return isRunning && remainTime <= 0.f;
     }
     void Reset() {
-        remainTime = duration;
+        remainTime = duration = 0.f;
         isRunning = false;
         //TODO : ScoreManager::Get().Reset()도 여기서 같이 해도 될듯?
         //TODO : world의 타겟들 다 지우는 거 
@@ -209,7 +231,16 @@ public:
     }
 
     void Update(float dt) override {
-        (void)dt;
+
+         // 탄약
+        if (weaponSystem && ammoDigits.size() >= 4) {
+            int cur = weaponSystem->currentAmmo;
+            int max = weaponSystem->maxAmmo;
+            ammoDigits[0]->SetDigit(cur / 10);
+            ammoDigits[1]->SetDigit(cur % 10);
+            ammoDigits[2]->SetDigit(max / 10);
+            ammoDigits[3]->SetDigit(max % 10);
+        }
 
         // 시간
         if (roundTimer && timeDigits.size() >= 4) {
@@ -221,6 +252,11 @@ public:
             timeDigits[2]->SetDigit(ss / 10);
             timeDigits[3]->SetDigit(ss % 10);
         }
+
+
+        if (GameStateManager::Get().state == EGameState::Waiting ||
+            GameStateManager::Get().state == EGameState::Result)
+            return;
 
         // 점수
         {
@@ -240,19 +276,67 @@ public:
             }
         }
 
-        // 탄약
-        if (weaponSystem && ammoDigits.size() >= 4) {
-            int cur = weaponSystem->currentAmmo;
-            int max = weaponSystem->maxAmmo;
-            ammoDigits[0]->SetDigit(cur / 10);
-            ammoDigits[1]->SetDigit(cur % 10);
-            ammoDigits[2]->SetDigit(max / 10);
-            ammoDigits[3]->SetDigit(max % 10);
-        }
+
     }
 };
 
 
 
+
+class GameManagerComponent : public Component {
+public:
+    RoundTimerComponent* roundTimer = nullptr;
+    WeaponSystem* weaponSystem = nullptr;
+    std::vector<GameObject*>* world3d = nullptr;
+
+    GameManagerComponent(RoundTimerComponent* rt, WeaponSystem* ws, std::vector<GameObject*>* w) 
+        : roundTimer(rt), weaponSystem(ws), world3d(w) {}
+
+    void Update(float dt) override { 
+
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_G))
+            if (GameStateManager::Get().state == EGameState::Waiting ||
+                GameStateManager::Get().state == EGameState::Result) {
+                StartRound();
+            }
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_H)) {
+            EndRound();
+        }
+        //if (stateManager.state == EGameState::Playing && roundTimer->IsExpired()) {
+        //    stateManager.EndRound();
+        //    EndRound();
+        //}
+    }
+
+private:
+    void StartRound(){ 
+        ScoreManager::Get().Reset();
+        if (roundTimer)
+            roundTimer->StartRound(60.f);
+        if (weaponSystem) {
+            weaponSystem->StartRound();
+        }
+        GameStateManager::Get().StartRound();
+        for (auto* obj : *world3d) {
+            if (dynamic_cast<TargetObject*>(obj)) {
+                obj->state = ETargetState::Dying;
+            }
+        }
+    }
+
+    void EndRound() { 
+        GameStateManager::Get().EndRound();
+        if (roundTimer)
+            roundTimer->Reset();
+        if (weaponSystem) {
+            weaponSystem->StartRound();
+        }
+        for (auto* obj : *world3d) {
+            if (dynamic_cast<TargetObject*>(obj)) {
+                obj->state = ETargetState::Dying;
+            }
+        }
+    }
+};
 
 #endif // AIMLAB_MANAGER_HPP

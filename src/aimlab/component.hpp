@@ -380,6 +380,11 @@ public:
                 fireListener->Reload(reloadTime / 2.f);
         }
     }
+
+    void StartRound() { 
+        currentAmmo = maxAmmo;
+        isReloading = false;
+    }
 };
 
 
