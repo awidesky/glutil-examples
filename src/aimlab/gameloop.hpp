@@ -3,7 +3,7 @@
 
 #include "engine.hpp"
 #include "component.hpp"
-
+#include "manager.hpp"
 #include <GLFW/glfw3.h>
 #include <vector>
 
@@ -62,6 +62,8 @@ public:
 
             /** 추가됐던 월드 객체들을 다 넣어준다. */
             for (auto* t : targetsToSpawn) world3d.push_back(t);
+            for (auto* t : ParticleSystem::Get().pendingParticles) world3d.push_back(t);
+            ParticleSystem::Get().pendingParticles.clear();
             targetsToSpawn.clear();
         }
     }
