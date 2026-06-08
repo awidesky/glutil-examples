@@ -25,11 +25,18 @@ public:
 
     void Emit(glm::vec3 pos, glm::vec3 dir, int count) {
         for (int i = 0; i < count; i++) {
+            glm::vec3 up = glm::abs(dir.y) < 0.9f ? glm::vec3(0, 1, 0) : glm::vec3(1, 0, 0);
+            glm::vec3 tangent = glm::normalize(glm::cross(up, dir));
+            glm::vec3 bitangent = glm::normalize(glm::cross(dir, tangent));
+
             float rx = ((float)rand() / RAND_MAX * 2.f - 1.f);
             float ry = ((float)rand() / RAND_MAX * 2.f - 1.f);
             float rz = ((float)rand() / RAND_MAX * 2.f - 1.f);
-            glm::vec3 vel = glm::normalize(dir + glm::vec3(rx, ry, rz) * 0.5f) * 3.f;
-
+            glm::vec3 vel = glm::normalize(dir * (0.3f + rz * 0.7f) + // 메인 방향 성분
+                                           tangent * rx * 0.8f +      // 옆 퍼짐
+                                           bitangent * ry * 0.8f      // 위아래 퍼짐
+                                           ) *
+                            (4.f + (float)rand() / RAND_MAX * 4.f);
             auto* obj = new GameObject();
             obj->transform.position = pos;
             obj->transform.scale = glm::vec3(0.1f);
@@ -37,7 +44,7 @@ public:
             Mesh* mesh = ResourceManager::Get().GetMesh("crosshair");
             Texture* tex = ResourceManager::Get().GetTexture("particle");
             obj->AddComponent(new MeshRenderer(mesh, new Material(tex)));
-            obj->AddComponent(new ParticleComponent(vel));
+            obj->AddComponent(new ParticleComponent(-vel));
 
             pendingParticles.push_back(obj);
         }

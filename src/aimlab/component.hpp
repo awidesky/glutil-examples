@@ -514,9 +514,12 @@ public:
     float lifetime = 2.0f;
     float remainTime = 2.0f;
 
+    static constexpr float gravity = -9.8f;
+
     ParticleComponent(glm::vec3 vel, float life = 2.0f) : velocity(vel), lifetime(life), remainTime(life) {}
 
     void Update(float dt) override {
+        velocity.y += gravity * dt;
         pOwner->transform.position += velocity * dt;
         remainTime -= dt;
         if (remainTime <= 0.f)
