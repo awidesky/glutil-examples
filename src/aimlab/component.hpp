@@ -114,10 +114,10 @@ public:
     std::function<void(glm::vec3, glm::vec3)> onHitEmit;
 
     TargetObject() { spawnTime = (float)glfwGetTime(); }
-    void OnHit() { 
+    void OnHit(const glm::vec3& hitPoint) { 
         state = ETargetState::Dying;
         if (onHitEmit)
-            onHitEmit(transform.position, glm::vec3(0,1,0));
+            onHitEmit(hitPoint, hitPoint - Camera::Get().position);
     }
     float GetReactionTime() const { return (float)glfwGetTime() - spawnTime; }
 };
@@ -336,7 +336,9 @@ public:
         PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
         TargetObject* nearestHitTarget = NULL;
         float minHitDist = FLT_MAX;
-        // TODO : 로드는 한번만
+        glm::vec3 nearestHitPoint;
+        glm::vec3 hitPoint;
+
         CpuMesh* cpuMesh = ResourceManager::Get().GetCpuMesh("target");
 
         for (auto* obj : *targets) {
@@ -347,18 +349,20 @@ public:
                 continue;
 
             if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius)) {
-                if (PhysicsSystem::Get().RayMeshIntersect(ray, *cpuMesh, target->transform.GetWorldMatrix())) {
+                if (PhysicsSystem::Get().RayMeshIntersect(ray, *cpuMesh, target->transform.GetWorldMatrix(),
+                                                          hitPoint)) {
                     float dist = glm::distance(camera.position, target->transform.position);
                     if (dist < minHitDist) {
                         nearestHitTarget = target;
                         minHitDist = dist;
+                        nearestHitPoint = hitPoint;
                     }
                 }
             }
         }
         if (nearestHitTarget != nullptr) {
             ScoreManager::Get().RecordHit(nearestHitTarget->GetReactionTime());
-            nearestHitTarget->OnHit();
+            nearestHitTarget->OnHit(nearestHitPoint);
         }
         else
         {
