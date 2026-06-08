@@ -248,7 +248,6 @@ public:
         if (countdownDigit) {
             countdownDigit->visible = (GameStateManager::Get().state == EGameState::CountDown);
             countdownDigit->SetDigit((int)std::ceil(GameStateManager::Get().countdownTimer));
-            std::cout << countdownDigit->visible << '\n';
         }
 
         if (startSymbol) startSymbol->visible = GameStateManager::Get().state == EGameState::Waiting;

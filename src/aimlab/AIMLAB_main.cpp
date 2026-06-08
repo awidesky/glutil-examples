@@ -35,6 +35,7 @@ int main() {
     //}
 
     rm.AddMesh("plane", glutil::PROJECT_ROOT / "model" / "plane.obj");
+    rm.AddMesh("cube", glutil::PROJECT_ROOT / "model" / "cube.obj");
     Mesh* planeMesh = rm.GetMesh("plane");
     if (!planeMesh || !planeMesh->ok) {
         std::cout << planeMesh->error;
@@ -67,12 +68,34 @@ int main() {
 
     // 바닥
     GameObject* plane = new GameObject();
-    plane->transform.rotation.y = 180.f;
+    plane->transform.rotation.y = 0.f;
     plane->transform.scale = glm::vec3(10.f, 1.f, 10.f);
 
     auto* planeRenderer = new MeshRenderer(planeMesh, new Material());
     plane->AddComponent(planeRenderer);
     gEngine.world3d.push_back(plane);
+
+    // 벽
+    GameObject* cube = new GameObject();
+    cube->transform.scale = glm::vec3(10.f,1.f, 2.f);
+    cube->transform.position = glm::vec3(0.f, 0.f, 3.f);
+    auto* cubeRenderer = new MeshRenderer(rm.GetMesh("cube"), new Material());
+    cube->AddComponent(cubeRenderer);
+    gEngine.world3d.push_back(cube);
+
+    // 벽
+    GameObject* plane2 = new GameObject();
+    plane2->transform.rotation.x = 90.f;
+    plane2->transform.position.z = -10.f;
+    plane2->transform.position.y = 5.f;
+
+    plane2->transform.scale = glm::vec3(10.f, 1.f, 10.f);
+
+    auto* planeRenderer2 = new MeshRenderer(planeMesh, new Material());
+    plane2->AddComponent(planeRenderer2);
+    gEngine.world3d.push_back(plane2);
+
+
 
     // Target Spawner + Particle
     rm.AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");

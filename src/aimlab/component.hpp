@@ -282,7 +282,7 @@ public:
     void Render() override {
         const auto& gc = GraphicsContext::Get();
         const Camera& camera = Camera::Get();
-        static const glm::vec3 lightPos(1.0f, 3.0f, 2.0f);
+        static const glm::vec3 lightPos(0.0f, 5.0f, -20.5f);
         glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix(gc.fov)));
         glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
         glUniform1f(ambientStrengthLocation, gc.ambientStrength);
