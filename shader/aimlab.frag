@@ -32,7 +32,7 @@ void main(){
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
     const vec3 lightColor = vec3(2.0);
-    vec3 specular = 0.5 * spec * lightColor;
+    vec3 specular = 0.5 * spec * lightColor * ambientStrength;
 
     vec3 result = ambient + diffuse + specular;
     color = vec4(result, tex.a);
