@@ -13,9 +13,9 @@
 
 GLuint LoadShaders(const char * vertex_file_path1,const char * fragment_file_path1){
 
-	std::string path1 = (glutil::PROJECT_ROOT / vertex_file_path1).string();
+	std::string path1 = (PROJECT_ROOT / "shader" / vertex_file_path1).string();
     const char* vertex_file_path = path1.c_str();
-    std::string path2 = (glutil::PROJECT_ROOT / fragment_file_path1).string();
+    std::string path2 = (PROJECT_ROOT / "shader" / fragment_file_path1).string();
     const char* fragment_file_path = path2.c_str();
 
 	// Create the shaders
@@ -128,9 +128,9 @@ bool loadOBJ(
 	std::vector<glm::vec2> & out_uvs,
 	std::vector<glm::vec3> & out_normals
 ){
-    std::string spath = (glutil::PROJECT_ROOT / objpath).string();
+    std::string spath = (ASSET_ROOT / objpath).string();
     const char* path = spath.c_str();
-	printf("Loading OBJ file %s...\n", spath);
+	printf("Loading OBJ file %s...\n", spath.c_str());
 
 	std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
 	std::vector<glm::vec3> temp_vertices; 
@@ -219,7 +219,7 @@ bool loadOBJ(
 
 GLuint loadBMP_custom(const char * imagePath){
 
-	std::string path = (glutil::PROJECT_ROOT / imagePath).string();
+	std::string path = (ASSET_ROOT / imagePath).string();
     const char* imagepath = path.c_str();
 
 	printf("Reading image %s\n", imagepath);

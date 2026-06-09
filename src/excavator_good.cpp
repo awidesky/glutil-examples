@@ -217,9 +217,9 @@ static GLuint loadBMP(const char* path);
 
 static void start() {
     //모델 객체를 만든다.
-    modelData cube{ "model/cube.obj" };
-    modelData plane{ "model/plane.obj" };
-    modelData torus{ "model/torus.obj" };
+    modelData cube{ "assets/basic/model/cube.obj" };
+    modelData plane{ "assets/basic/model/plane.obj" };
+    modelData torus{ "assets/excavator/model/torus.obj" };
 
     // Create and compile our GLSL program from the shaders
     glutil::ShaderLoadResult vsSrc = glutil::ShaderLoader::loadFile("shader/excvator.vert");
@@ -265,12 +265,12 @@ static void start() {
     }
 
     // 각 오브젝트에 맞는 텍스쳐를 가져온다.
-    defaultTexture = loadBMP("texture/default.bmp");
-    GLuint groundTexture = loadBMP("texture/grid.bmp");
-    GLuint trackTexture = loadBMP("texture/track.bmp");
-    GLuint scoopTexture = loadBMP("texture/scoop.bmp");
-    GLuint cabinTexture = loadBMP("texture/cabin.bmp");
-    GLuint bodyTexture = loadBMP("texture/body.bmp");
+    defaultTexture = loadBMP("assets/basic/texture/default.bmp");
+    GLuint groundTexture = loadBMP("assets/basic/texture/grid.bmp");
+    GLuint trackTexture = loadBMP("assets/excavator/texture/track.bmp");
+    GLuint scoopTexture = loadBMP("assets/excavator/texture/scoop.bmp");
+    GLuint cabinTexture = loadBMP("assets/excavator/texture/cabin.bmp");
+    GLuint bodyTexture = loadBMP("assets/excavator/texture/body.bmp");
 
     // 모든 유니폼 변수 ID를 가져온다
     TextureUniformID = glGetUniformLocation(programID, "myTextureSampler");

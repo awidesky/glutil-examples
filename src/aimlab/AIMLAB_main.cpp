@@ -18,8 +18,8 @@ int main() {
 
     InputManager::Get().Init();
 
-    glutil::GLProgram program = glutil::ShaderLoader::loadProgramToGL(glutil::PROJECT_ROOT / "shader" / "aimlab.vert",
-                                                                      glutil::PROJECT_ROOT / "shader" / "aimlab.frag");
+    glutil::GLProgram program = glutil::ShaderLoader::loadProgramToGL(PROJECT_ROOT / "shader" / "aimlab.vert",
+                                                                      PROJECT_ROOT / "shader" / "aimlab.frag");
     if (!program.ok) {
         std::cout << program.error;
         return -1;
@@ -27,15 +27,15 @@ int main() {
     gc.SetProgram(program.id);
 
     auto& rm = ResourceManager::Get();
-    rm.SetDefaultTexture(glutil::PROJECT_ROOT / "texture" / "grid.bmp");
+    rm.SetDefaultTexture(ASSET_ROOT / "basic" / "texture" / "grid.bmp");
     //Texture* defaultTexture = ResourceManager::Get().GetDefaultTexture();
     //if (!defaultTexture || !defaultTexture->ok) { // TODO : better error checking and printing(inside add* function? and exit policy.
     //    std::cout << defaultTexture->error;
     //    return -1;
     //}
 
-    rm.AddMesh("plane", glutil::PROJECT_ROOT / "model" / "plane.obj");
-    rm.AddMesh("cube", glutil::PROJECT_ROOT / "model" / "cube.obj");
+    rm.AddMesh("plane", ASSET_ROOT / "basic" / "model" / "plane.obj");
+    rm.AddMesh("cube",  ASSET_ROOT / "basic" / "model" / "cube.obj");
     Mesh* planeMesh = rm.GetMesh("plane");
     if (!planeMesh || !planeMesh->ok) {
         std::cout << planeMesh->error;
@@ -98,12 +98,12 @@ int main() {
 
 
     // Target Spawner + Particle
-    rm.AddMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
-    rm.AddCpuMesh("target", glutil::PROJECT_ROOT / "model" / "target.obj");
-    rm.AddTexture("target", glutil::PROJECT_ROOT / "texture" / "target.png");
+    rm.AddMesh("target", ASSET_ROOT / "AIMLAB" / "model" / "target.obj");
+    rm.AddCpuMesh("target", ASSET_ROOT / "AIMLAB" / "model" / "target.obj");
+    rm.AddTexture("target", ASSET_ROOT / "AIMLAB" / "texture" / "target.png");
   
-    rm.AddMesh("particle", glutil::PROJECT_ROOT / "model" / "sphere.obj");
-    rm.AddTexture("particle", glutil::PROJECT_ROOT / "texture" / "spark.png");
+    rm.AddMesh("particle", ASSET_ROOT / "basic" / "model" / "sphere.obj");
+    rm.AddTexture("particle", ASSET_ROOT / "AIMLAB" / "texture" / "spark.png");
     
     GameObject* TargetSpawner = new GameObject();
     TargetSpawner->transform.position = glm::vec3(0.f, 0.f, 0.f);
@@ -124,32 +124,32 @@ int main() {
     gun->transform.scale = glm::vec3(0.006f);
     gun->AddComponent(new GunController(weaponsystem, {0.35f, -0.4f, 0.8f}));
     gun->AddComponent(new ViewModelRenderer(
-      rm.AddMesh("gun", glutil::PROJECT_ROOT / "assets" / "ak47" / "ak47.obj"),
-      new Material(rm.AddTexture("gun", glutil::PROJECT_ROOT / "assets" / "ak47" / "123456_wire_115115115_color.png"))));
+      rm.AddMesh("gun", ASSET_ROOT / "ak47" / "ak47.obj"),
+      new Material(rm.AddTexture("gun", ASSET_ROOT / "ak47" / "123456_wire_115115115_color.png"))));
     gEngine.world2d.push_back(gun);
 
     // Crosshair
     GameObject* crosshair = new GameObject();
     crosshair->AddComponent(new CrossHairComponent());
     crosshair->AddComponent(
-     new OrthogonalRenderer(rm.AddMesh("crosshair", glutil::PROJECT_ROOT / "model" / "crosshair.obj"),
-                      new Material(rm.AddTexture("crosshair", glutil::PROJECT_ROOT / "texture" / "crosshair.png"))));
+     new OrthogonalRenderer(rm.AddMesh("crosshair", ASSET_ROOT / "AIMLAB" / "model" / "crosshair.obj"),
+                      new Material(rm.AddTexture("crosshair", ASSET_ROOT / "AIMLAB" / "texture" / "crosshair.png"))));
     gEngine.world2d.push_back(crosshair);
 
 
 
     // 숫자, 특수문자 저장
-    for (int i = 0; i < 10; i++) rm.AddTexture("num" + std::to_string(i),glutil::PROJECT_ROOT / "texture" / "num" / (std::to_string(i) + ".png"));
-    rm.AddTexture("numColon", glutil::PROJECT_ROOT / "texture" / "num" / "colon.png");
-    rm.AddTexture("numPercent", glutil::PROJECT_ROOT / "texture" / "num" / "percent.png");
-    rm.AddTexture("numSlash", glutil::PROJECT_ROOT / "texture" / "num" / "slash.png");
+    for (int i = 0; i < 10; i++) rm.AddTexture("num" + std::to_string(i), ASSET_ROOT / "num" / (std::to_string(i) + ".png"));
+    rm.AddTexture("numColon", ASSET_ROOT / "num" / "colon.png");
+    rm.AddTexture("numPercent", ASSET_ROOT / "num" / "percent.png");
+    rm.AddTexture("numSlash", ASSET_ROOT / "num" / "slash.png");
 
     // 글자 저장
-    rm.AddTexture("labelScore", glutil::PROJECT_ROOT / "texture" / "num" / "score.png");
-    rm.AddTexture("labelAccuracy", glutil::PROJECT_ROOT / "texture" / "num" / "accuracy.png");
-    rm.AddTexture("labelAmmo", glutil::PROJECT_ROOT / "texture" / "num" / "ammo.png");
-    rm.AddTexture("start", glutil::PROJECT_ROOT / "texture" / "num" / "start.png");
-    rm.AddTexture("restart", glutil::PROJECT_ROOT / "texture" / "num" / "restart.png");
+    rm.AddTexture("labelScore", ASSET_ROOT / "num" / "score.png");
+    rm.AddTexture("labelAccuracy", ASSET_ROOT / "num" / "accuracy.png");
+    rm.AddTexture("labelAmmo", ASSET_ROOT / "num" / "ammo.png");
+    rm.AddTexture("start", ASSET_ROOT / "num" / "start.png");
+    rm.AddTexture("restart", ASSET_ROOT / "num" / "restart.png");
 
     // HUD 생성
     auto* hudObj = new GameObject();

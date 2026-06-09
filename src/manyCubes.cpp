@@ -1,3 +1,5 @@
+#include "config.hpp"
+
 #include <glutil/glutil.hpp>
 
 #include <glm/glm.hpp>
@@ -133,8 +135,8 @@ int main(int argc, char** argv) {
     }
     glfwSetKeyCallback(window, keyCallback);
 
-    const fs::path vsPath = "shader/manyCubes.vert";
-    const fs::path fsPath = "shader/manyCubes.frag";
+    const fs::path vsPath = PROJECT_ROOT / "shader" / "manyCubes.vert";
+    const fs::path fsPath = PROJECT_ROOT / "shader" / "manyCubes.frag";
 
     const GLuint program = createProgramFromFiles(vsPath, fsPath);
     if (program == 0) {
@@ -234,10 +236,10 @@ int main(int argc, char** argv) {
     glBindVertexArray(0);
 
 
-    const fs::path diffusePath = "texture/diffuse.DDS";
-    const fs::path normalPath = "texture/normal.bmp";
-    const fs::path specularPath = "texture/specular.DDS";
-    const fs::path planePath = "texture/grid.bmp";
+    const fs::path diffusePath  = ASSET_ROOT / "basic" / "texture" / "diffuse.DDS";
+    const fs::path normalPath   = ASSET_ROOT / "basic" / "texture" / "normal.bmp";
+    const fs::path specularPath = ASSET_ROOT / "basic" / "texture" / "specular.DDS";
+    const fs::path planePath    = ASSET_ROOT / "basic" / "texture" / "grid.bmp";
 
     GLuint diffuseTex = 0;
     GLuint normalTex = 0;

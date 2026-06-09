@@ -525,5 +525,4 @@ FodyWeavers.xsd
 external/
 build/
 build*/
-!model/*.obj
 assets/
