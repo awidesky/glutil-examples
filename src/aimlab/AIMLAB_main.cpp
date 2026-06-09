@@ -76,12 +76,12 @@ int main() {
     gEngine.world3d.push_back(plane);
 
     // 벽
-    GameObject* cube = new GameObject();
-    cube->transform.scale = glm::vec3(10.f,1.f, 2.f);
-    cube->transform.position = glm::vec3(0.f, 0.f, 3.f);
-    auto* cubeRenderer = new MeshRenderer(rm.GetMesh("cube"), new Material());
-    cube->AddComponent(cubeRenderer);
-    gEngine.world3d.push_back(cube);
+    //GameObject* cube = new GameObject();
+    //cube->transform.scale = glm::vec3(10.f,1.f, 2.f);
+    //cube->transform.position = glm::vec3(0.f, 0.f, 3.f);
+    //auto* cubeRenderer = new MeshRenderer(rm.GetMesh("cube"), new Material());
+    //cube->AddComponent(cubeRenderer);
+    //gEngine.world3d.push_back(cube);
 
     // 벽
     GameObject* plane2 = new GameObject();

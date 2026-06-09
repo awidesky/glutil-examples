@@ -264,6 +264,7 @@ public:
 
         const bool keyC = im.IsKeyDown(GLFW_KEY_C);
         const bool keyEsc = im.IsKeyDown(GLFW_KEY_ESCAPE);
+        const bool keyRightClick = im.IsMouseDown(GLFW_MOUSE_BUTTON_RIGHT);
 
         if (keyC && !m_prevC)
             gc.ToggleFullscreen();
@@ -274,9 +275,19 @@ public:
             else
                 glfwSetWindowShouldClose(gc.GetWindow(), GLFW_TRUE);
         }
+        if (keyRightClick && !m_prevRClick) {
+            if (m_zoomCount == 2) {
+                gc.fov += 15.f * (m_zoomCount + 1);
+                m_zoomCount = 0;
+            } else {
+                ++m_zoomCount;
+                gc.fov -= 15.f * m_zoomCount;
+            }      
+        }
 
         m_prevC = keyC;
         m_prevEsc = keyEsc;
+        m_prevRClick = keyRightClick;
     }
 
     void Render() override {
@@ -294,6 +305,8 @@ private:
     GLint ambientStrengthLocation = -1;
     bool m_prevC = false;
     bool m_prevEsc = false;
+    bool m_prevRClick = false;
+    int m_zoomCount = 0.f;
 };
 struct FireListener {
     virtual void Fire() = 0;
