@@ -11,9 +11,14 @@ uniform sampler2D myTextureSampler;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform float ambientStrength;
+uniform bool isUI = false;
 
 void main(){
     vec4 tex = texture(myTextureSampler, UV);
+    if(isUI){
+        color = tex;
+        return;
+    }
     vec3 objectColor = tex.rgb;
     
     vec3 ambient = ambientStrength * objectColor;
@@ -27,7 +32,7 @@ void main(){
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
     const vec3 lightColor = vec3(2.0);
-    vec3 specular = 0.5 * spec * lightColor;
+    vec3 specular = 0.5 * spec * lightColor * ambientStrength;
 
     vec3 result = ambient + diffuse + specular;
     color = vec4(result, tex.a);

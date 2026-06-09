@@ -1,53 +1,85 @@
 ﻿#ifndef AIMLAB_MANAGER_HPP
 #define AIMLAB_MANAGER_HPP
 
-#include "component.hpp"
-#include "mesh.hpp"
+
 #include <vector>
 #include <cstdlib>
 #include <cstdio>
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <config.hpp>
+#include "component.hpp"
+#include "mesh.hpp"
+#include "score.hpp"
 
-// ScoreManager
-// 싱글톤. 게임 점수, 정확도 관리.
-// 함수:
-//   RecordHit(reactionTime) - 타겟 맞을 때 호출. score += 100 / reactionTime
-//   RecordMiss()            - 빗나갈 때 호출. totalShots만 증가
-//   GetAccuracy()           - 정확도 반환. hits / totalShots * 100
-//   Reset()                 - 라운드 시작할 때 초기화
 
-class ScoreManager {
+enum class EGameState { Waiting, Playing, Result, CountDown };
+
+class GameStateManager {
 public:
-    static ScoreManager& Get() {
-        static ScoreManager scoremanager;
-        return scoremanager;
+    float countdownTimer = 3.f;
+    static GameStateManager& Get() {
+        static GameStateManager state;
+        return state;
     }
-    ScoreManager(const ScoreManager&) = delete;
-    ScoreManager& operator=(const ScoreManager&) = delete;
+    GameStateManager(const GameStateManager&) = delete;
+    GameStateManager& operator=(const GameStateManager&) = delete;
 
-    int   score      = 0;
-    int   totalShot  = 0;
-    int   hit        = 0;
+    EGameState state = EGameState::Waiting;
 
-    void RecordHit(float reactionTime) {
-        hit++;
-        totalShot++;
-        score += (int)(100.f / reactionTime);
+    void StartCountDown() {
+        countdownTimer = 3.f;
+        state = EGameState::CountDown;
     }
-    void RecordMiss() { totalShot++; }
-
-    float GetAccuracy() const {
-        if (totalShot == 0) return 0.f;
-        return (float)hit / (float)totalShot * 100.f;
-    }
-
-    void Reset() { score = totalShot = hit = 0; }
+    void StartRound() { state = EGameState::Playing; }
+    void EndRound() { state = EGameState::Result; }
 
 private:
-    ScoreManager() = default;
+    GameStateManager() = default;
 };
+
+class ParticleSystem {
+public:
+    static ParticleSystem& Get() {
+        static ParticleSystem instance;
+        return instance;
+    }
+    ParticleSystem(const ParticleSystem&) = delete;
+    ParticleSystem& operator=(const ParticleSystem&) = delete;
+
+    std::vector<GameObject*> pendingParticles;
+
+    void Emit(glm::vec3 pos, glm::vec3 dir, int count) {
+        for (int i = 0; i < count; i++) {
+            glm::vec3 up = glm::abs(dir.y) < 0.9f ? glm::vec3(0, 1, 0) : glm::vec3(1, 0, 0);
+            glm::vec3 tangent = glm::normalize(glm::cross(up, dir));
+            glm::vec3 bitangent = glm::normalize(glm::cross(dir, tangent));
+
+            float rx = ((float)rand() / RAND_MAX * 2.f - 1.f);
+            float ry = ((float)rand() / RAND_MAX * 2.f - 1.f);
+            float rz = ((float)rand() / RAND_MAX * 2.f - 1.f);
+            glm::vec3 vel = glm::normalize(dir * (0.3f + rz * 0.7f) + // 메인 방향 성분
+                                           tangent * rx * 0.8f +      // 옆 퍼짐
+                                           bitangent * ry * 0.8f      // 위아래 퍼짐
+                                           ) *
+                            (4.f + (float)rand() / RAND_MAX * 4.f);
+            auto* obj = new GameObject();
+            obj->transform.position = pos;
+            obj->transform.scale = glm::vec3(0.1f);
+
+            Mesh* mesh = ResourceManager::Get().GetMesh("particle");
+            Texture* tex = ResourceManager::Get().GetTexture("particle");
+            obj->AddComponent(new MeshRenderer(mesh, new Material(tex)));
+            obj->AddComponent(new ParticleComponent(-vel));
+
+            pendingParticles.push_back(obj);
+        }
+    }
+
+private:
+    ParticleSystem() = default;
+};
+
 
 // RoundTimer
 // 라운드 시간 관리. GameLoop이 소유.
@@ -63,14 +95,15 @@ private:
 //   Reset()     - 타이머 초기화
 class RoundTimerComponent : public Component {
 public:
-    float duration  = 60.f;
-    float remainTime = 60.f;
+    float duration  = 0.f;
+    float remainTime = 0.f;
     bool  isRunning = false;
 
     void StartRound(float d) {
         duration = remainTime = d;
         isRunning = true;
     }
+
     virtual void Update(float dt) override{
         if (isRunning)
             remainTime -= dt;
@@ -78,7 +111,7 @@ public:
     bool IsExpired() const { return isRunning && remainTime <= 0.f;
     }
     void Reset() {
-        remainTime = duration;
+        remainTime = duration = 0.f;
         isRunning = false;
         //TODO : ScoreManager::Get().Reset()도 여기서 같이 해도 될듯?
         //TODO : world의 타겟들 다 지우는 거 
@@ -104,42 +137,242 @@ public:
     float spawnInterval = 2.0f;
     int   maxTargets    = 10;
     float spawnTimer    = 0.f;
-    float spawnRange    = 10.0f;
+    int spawnAmount = 0;
 
+    std::vector<GameObject*>* world3d = nullptr;
     std::vector<TargetObject*>* targetsToSpawn = nullptr;
 
     virtual void Update(float dt) override{
         if (!targetsToSpawn)
             return;
+        if (GameStateManager::Get().state == EGameState::CountDown || GameStateManager::Get().state == EGameState::Result)
+            return;
 
+        spawnInterval = (float)rand() / RAND_MAX * 2.0f + 1.0f;
         spawnTimer += dt;
         if (spawnTimer < spawnInterval) return;
         spawnTimer = 0.f;
 
         int alive = 0;
-        for (auto* obj : *targetsToSpawn)
-            if (obj->active && dynamic_cast<TargetObject*>(obj))
+        for (auto* obj : *world3d)
+            if (obj->state == ETargetState::Spawned && dynamic_cast<TargetObject*>(obj))
                 alive++;
 
         if (alive >= maxTargets) return;
-        SpawnTarget();
+
+        spawnAmount = rand() % 3 + 1;
+        for (int i=0; i<spawnAmount; ++i) SpawnTarget();
     }
 
     void SpawnTarget() {
-        float x = ((float)rand() / RAND_MAX * 2.f - 1.f) * spawnRange;
-        float y = ((float)rand() / RAND_MAX * 2.f - 1.f) * spawnRange;
+        float x = ((float)rand() / RAND_MAX * 2.f - 1.f) * 9.5f;
+        float z = round(-(float)rand() / RAND_MAX * 10.f);
 
         TargetObject* target = new TargetObject();
-        target->transform.position = glm::vec3(x, 1.0f, y);
+        target->transform.position = glm::vec3(x, 0.0f, z);
         target->transform.scale = glm::vec3(0.2f, 0.2f, 0.05f);
+        target->transform.rotation = glm::vec3(-90.f,0.f, 0.f);
 
         Mesh* mesh = ResourceManager::Get().GetMesh("target");
         Texture* tex = ResourceManager::Get().GetTexture("target");
 
         target->AddComponent(new MeshRenderer(mesh, new Material(tex)));
+        target->AddComponent(new TargetController());
+        target->onHitEmit = [](glm::vec3 pos, glm::vec3 dir) { ParticleSystem::Get().Emit(pos, dir, 20); };
 
         targetsToSpawn->push_back(target);
     }
+};
+
+class HUDComponent : public Component {
+public:
+    WeaponSystem* weaponSystem = nullptr;
+    RoundTimerComponent* roundTimer = nullptr;
+    std::vector<GameObject*>* world2d = nullptr;
+    float digitSize = 48.f;
+
+    std::vector<NumberController*> timeDigits;
+    std::vector<NumberController*> scoreDigits;
+    std::vector<NumberController*> accuracyDigits;
+    std::vector<NumberController*> ammoDigits;
+
+    NumberController* countdownDigit;
+    NumberController* startSymbol;
+    NumberController* restartSymbol;
+
+
+    HUDComponent(std::vector<GameObject*>* world2d, WeaponSystem* ws, RoundTimerComponent* rt)
+        : world2d(world2d), weaponSystem(ws), roundTimer(rt) {}
+
+    NumberController* AddDigit(float ancX, float ancY, float offX, float offY) {
+        auto& rm   = ResourceManager::Get();
+        auto* mat  = new Material({
+            rm.GetTexture("num0"), rm.GetTexture("num1"), rm.GetTexture("num2"),
+            rm.GetTexture("num3"), rm.GetTexture("num4"), rm.GetTexture("num5"),
+            rm.GetTexture("num6"), rm.GetTexture("num7"), rm.GetTexture("num8"),
+            rm.GetTexture("num9")
+        });
+        auto* obj  = new GameObject();
+        auto* ctrl = new NumberController(mat, ancX, ancY, offX, offY, digitSize, digitSize);
+        obj->AddComponent(ctrl);
+        obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
+        world2d->push_back(obj);
+        return ctrl;
+    }
+
+    NumberController* AddSymbol(const std::string& texName, float ancX, float ancY, float offX, float offY) {
+        auto& rm  = ResourceManager::Get();
+        auto* mat = new Material(rm.GetTexture(texName));
+        auto* obj = new GameObject();
+        auto* ctrl = new NumberController(mat, ancX, ancY, offX, offY, digitSize * 0.5f, digitSize * 0.5f);
+        obj->AddComponent(ctrl);
+        obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
+        world2d->push_back(obj);
+        return ctrl;
+    }
+
+    NumberController* AddSymbol(const std::string& texName, float ancX, float ancY, float offX, float offY, float w, float h) {
+        auto& rm = ResourceManager::Get();
+        auto* mat = new Material(rm.GetTexture(texName));
+        auto* obj = new GameObject();
+        auto* ctrl = new NumberController(mat, ancX, ancY, offX, offY, w, h);
+        obj->AddComponent(ctrl);
+        obj->AddComponent(new OrthogonalRenderer(rm.GetMesh("crosshair"), mat));
+        world2d->push_back(obj);
+        return ctrl;
+    }
+
+    void Update(float dt) override {
+
+        // 카운트 다운
+        if (countdownDigit) {
+            countdownDigit->visible = (GameStateManager::Get().state == EGameState::CountDown);
+            countdownDigit->SetDigit((int)std::ceil(GameStateManager::Get().countdownTimer));
+        }
+
+        if (startSymbol) startSymbol->visible = GameStateManager::Get().state == EGameState::Waiting;
+        if (restartSymbol) restartSymbol->visible = GameStateManager::Get().state == EGameState::Result;
+
+
+         // 탄약
+        if (weaponSystem && ammoDigits.size() >= 4) {
+            int cur = weaponSystem->currentAmmo;
+            int max = weaponSystem->maxAmmo;
+            ammoDigits[0]->SetDigit(cur / 10);
+            ammoDigits[1]->SetDigit(cur % 10);
+            ammoDigits[2]->SetDigit(max / 10);
+            ammoDigits[3]->SetDigit(max % 10);
+        }
+
+        // 시간
+        if (roundTimer && timeDigits.size() >= 4) {
+            int remain = (int)std::max(0.f, roundTimer->remainTime);
+            int mm = remain / 60;
+            int ss = remain % 60;
+            timeDigits[0]->SetDigit(mm / 10);
+            timeDigits[1]->SetDigit(mm % 10);
+            timeDigits[2]->SetDigit(ss / 10);
+            timeDigits[3]->SetDigit(ss % 10);
+        }
+
+
+        if (GameStateManager::Get().state != EGameState::Playing)
+            return;
+
+        // 점수
+        {
+            int score = ScoreManager::Get().score;
+            for (int i = (int)scoreDigits.size() - 1; i >= 0; i--) {
+                scoreDigits[i]->SetDigit(score % 10);
+                score /= 10;
+            }
+        }
+
+        // 정확도
+        {
+            int acc = (int)ScoreManager::Get().GetAccuracy();
+            for (int i = (int)accuracyDigits.size() - 1; i >= 0; i--) {
+                accuracyDigits[i]->SetDigit(acc % 10);
+                acc /= 10;
+            }
+        }
+
+
+    }
+};
+
+
+
+
+class GameManagerComponent : public Component {
+public:
+    RoundTimerComponent* roundTimer = nullptr;
+    WeaponSystem* weaponSystem = nullptr;
+    std::vector<GameObject*>* world3d = nullptr;
+
+    GameManagerComponent(RoundTimerComponent* rt, WeaponSystem* ws, std::vector<GameObject*>* w) 
+        : roundTimer(rt), weaponSystem(ws), world3d(w) {}
+
+    void Update(float dt) override { 
+
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_G) && !m_prevG)
+            if (GameStateManager::Get().state == EGameState::Waiting ||
+                GameStateManager::Get().state == EGameState::Result) {
+                StartCountDown();
+            }
+
+        m_prevG = InputManager::Get().IsKeyDown(GLFW_KEY_G);
+
+        if (InputManager::Get().IsKeyDown(GLFW_KEY_H) && !m_prevH) {
+            EndRound();
+        }
+
+        m_prevH= InputManager::Get().IsKeyDown(GLFW_KEY_H);
+        
+        if (GameStateManager::Get().state == EGameState::Playing && roundTimer->IsExpired()) {
+            EndRound();
+        }
+        if (GameStateManager::Get().state == EGameState::CountDown) {
+            GameStateManager::Get().countdownTimer -= dt;
+            if (GameStateManager::Get().countdownTimer <= 0.f) {
+                StartRound();
+            }
+        }
+    }
+
+private:
+    void StartRound(){ 
+        GameStateManager::Get().StartRound();
+        ScoreManager::Get().Reset();
+        if (roundTimer)
+            roundTimer->StartRound(10.f);
+        if (weaponSystem) {
+            weaponSystem->StartRound();
+        }
+    }
+
+    void EndRound() { 
+        GameStateManager::Get().EndRound();
+        if (roundTimer)
+            roundTimer->Reset();
+        for (auto* obj : *world3d) {
+            if (dynamic_cast<TargetObject*>(obj)) {
+                obj->state = ETargetState::Dying;
+            }
+        }
+    }
+
+    void StartCountDown() { 
+        GameStateManager::Get().StartCountDown();
+        for (auto* obj : *world3d) {
+            if (dynamic_cast<TargetObject*>(obj)) {
+                obj->state = ETargetState::Dying;
+            }
+        }
+    }
+
+    bool m_prevG = false;
+    bool m_prevH = false;
 };
 
 #endif // AIMLAB_MANAGER_HPP

@@ -12,6 +12,7 @@
 #include "engine.hpp"
 #include "physics.hpp"
 #include "camera.hpp"
+#include "score.hpp"
 
 struct Transform {
     glm::vec3 position{0, 0, 0};
@@ -30,6 +31,9 @@ glm::mat4 GetWorldMatrix() const {
 }
 };
 
+
+
+
 class GameObject;
 class Component {
 public:
@@ -42,11 +46,17 @@ public:
     virtual ~Component() {}
 };
 
+enum ETargetState {
+    Spawned,
+    Dying,
+    Died,
+};
+
 
 class GameObject {
 public:
     Transform transform;
-    bool active = true;
+    ETargetState state = ETargetState::Spawned;
 
     virtual ~GameObject() {
         for (auto c : m_components)
@@ -66,7 +76,7 @@ public:
     }
 
     void Update(float dt) {
-        if (!active)
+        if (state == ETargetState::Died)
             return;
         for (auto c : m_components) {
             if (!c->isStarted) {
@@ -78,14 +88,14 @@ public:
     }
 
     void Input() {
-        if (!active)
+        if (state == ETargetState::Died)
             return;
         for (auto c : m_components)
             c->Input();
     }
 
     void Render() {
-        if (!active)
+        if (state == ETargetState::Died)
             return;
         for (auto c : m_components)
             c->Render();
@@ -95,20 +105,20 @@ private:
     std::vector<Component*> m_components;
 };
 
-
+class ParticleSystem;
 class TargetObject : public GameObject {
 public:
     float radius = 1.0f;
-    bool isAlive = true;
     float spawnTime = 0.f;
+    // 파티클 시스템 분리로 인해서 콜백으로 바꿧음.
+    std::function<void(glm::vec3, glm::vec3)> onHitEmit;
 
     TargetObject() { spawnTime = (float)glfwGetTime(); }
-
-    void OnHit() {
-        isAlive = false;
-        active = false;
+    void OnHit(const glm::vec3& hitPoint) { 
+        state = ETargetState::Dying;
+        if (onHitEmit)
+            onHitEmit(hitPoint, hitPoint - Camera::Get().position);
     }
-
     float GetReactionTime() const { return (float)glfwGetTime() - spawnTime; }
 };
 
@@ -149,6 +159,9 @@ public:
             camera.position -= right * camera.speed * dt;
         if (InputManager::Get().IsKeyDown(GLFW_KEY_D))
             camera.position += right * camera.speed * dt;
+
+        camera.position.x = std::clamp(camera.position.x, -10.f, 10.f);
+        camera.position.z = std::clamp(camera.position.z, 5.f, 10.f);
 
         if (canJump) { // 웅크리기 처리
             float targetHeight = Camera::playerHeight;
@@ -251,6 +264,7 @@ public:
 
         const bool keyC = im.IsKeyDown(GLFW_KEY_C);
         const bool keyEsc = im.IsKeyDown(GLFW_KEY_ESCAPE);
+        const bool keyRightClick = im.IsMouseDown(GLFW_MOUSE_BUTTON_RIGHT);
 
         if (keyC && !m_prevC)
             gc.ToggleFullscreen();
@@ -261,15 +275,25 @@ public:
             else
                 glfwSetWindowShouldClose(gc.GetWindow(), GLFW_TRUE);
         }
+        if (keyRightClick && !m_prevRClick) {
+            if (m_zoomCount == 2) {
+                gc.fov += 15.f * (m_zoomCount + 1);
+                m_zoomCount = 0;
+            } else {
+                ++m_zoomCount;
+                gc.fov -= 15.f * m_zoomCount;
+            }      
+        }
 
         m_prevC = keyC;
         m_prevEsc = keyEsc;
+        m_prevRClick = keyRightClick;
     }
 
     void Render() override {
         const auto& gc = GraphicsContext::Get();
         const Camera& camera = Camera::Get();
-        static const glm::vec3 lightPos(1.0f, 3.0f, 2.0f);
+        static const glm::vec3 lightPos(0.0f, 5.0f, -20.5f);
         glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix(gc.fov)));
         glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
         glUniform1f(ambientStrengthLocation, gc.ambientStrength);
@@ -281,6 +305,8 @@ private:
     GLint ambientStrengthLocation = -1;
     bool m_prevC = false;
     bool m_prevEsc = false;
+    bool m_prevRClick = false;
+    int m_zoomCount = 0.f;
 };
 struct FireListener {
     virtual void Fire() = 0;
@@ -322,34 +348,42 @@ public:
         currentAmmo--;
         fireCooldown = fireInterval;
 
-       
         const Camera& camera = Camera::Get();
         PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
         TargetObject* nearestHitTarget = NULL;
         float minHitDist = FLT_MAX;
-        // TODO : 로드는 한번만
+        glm::vec3 nearestHitPoint;
+        glm::vec3 hitPoint;
+
         CpuMesh* cpuMesh = ResourceManager::Get().GetCpuMesh("target");
 
         for (auto* obj : *targets) {
-            if (!obj->active)
+            if (obj->state != ETargetState::Spawned)
                 continue;
             auto* target = dynamic_cast<TargetObject*>(obj);
-            if (!target || !target->isAlive)
+            if (!target || target->state != ETargetState::Spawned)
                 continue;
-  
+
             if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius)) {
-                if (PhysicsSystem::Get().RayMeshIntersect(ray, *cpuMesh, target->transform.GetWorldMatrix())) {
+                if (PhysicsSystem::Get().RayMeshIntersect(ray, *cpuMesh, target->transform.GetWorldMatrix(),
+                                                          hitPoint)) {
                     float dist = glm::distance(camera.position, target->transform.position);
                     if (dist < minHitDist) {
                         nearestHitTarget = target;
-                        minHitDist = dist;     
+                        minHitDist = dist;
+                        nearestHitPoint = hitPoint;
                     }
-
                 }
             }
         }
-        if (nearestHitTarget != nullptr)
-            nearestHitTarget->OnHit();
+        if (nearestHitTarget != nullptr) {
+            ScoreManager::Get().RecordHit(nearestHitTarget->GetReactionTime());
+            nearestHitTarget->OnHit(nearestHitPoint);
+        }
+        else
+        {
+            ScoreManager::Get().RecordMiss();
+        }
         for (auto* fireListener : fireListeners)
             fireListener->Fire();
     }
@@ -362,7 +396,14 @@ public:
                 fireListener->Reload(reloadTime / 2.f);
         }
     }
+
+    void StartRound() { 
+        currentAmmo = maxAmmo;
+        isReloading = false;
+    }
 };
+
+
 class CrossHairComponent : public Component {
 public:
     void Start() override { pOwner->transform.scale = glm::vec3(32.0f, 32.0f, 1.0f); }
@@ -378,6 +419,7 @@ public:
         pOwner->transform.position.z = 0.0f;
     }
 };
+
 class GunController : public Component, FireListener {
 public:
     glm::vec3 offset;
@@ -432,4 +474,79 @@ public:
         pOwner->transform.rotation.z = reloadRotZ;
     }
 };
+
+
+class TargetController : public Component {
+public:
+    float angle;
+    float radius = 1.0f;
+    bool canMove = false;
+    glm::vec3 cachedOwnerLocation;
+    float maxRange = 9.5f;
+    float moveSpeed = 5.f;
+    float leftDistance = 0.f;
+    int dir = 1.0f;
+    void Start()
+    { 
+        cachedOwnerLocation = pOwner->transform.position;
+        angle = pOwner->transform.rotation.x;
+        dir = rand() % 2 * 2 - 1;
+        leftDistance = std::abs(dir * maxRange - cachedOwnerLocation.x);
+    }
+
+    void Update(float dt) override
+    { 
+        if (pOwner->state == ETargetState::Spawned) {
+            angle = std::min(0.0f, angle + 180.f * dt);
+            canMove = angle == 0.0f;
+        } 
+        if (pOwner->state == ETargetState::Dying) {
+            angle = std::max(-90.0f, angle - 180.f * dt);
+            canMove = false;
+            if (angle == -90.f)
+            {
+                pOwner->state = ETargetState::Died;
+            }
+        }
+
+        if (canMove)
+        {
+            leftDistance -= moveSpeed * dt;
+            if (leftDistance <= 0)
+            {
+                pOwner->transform.position.x = dir * maxRange;
+                dir = -dir;
+                leftDistance = 2 * maxRange;
+            }
+            pOwner->transform.position.x +=  moveSpeed * dir * dt;
+        }
+
+        float rad = angle * (3.14159f / 180.f);
+
+        pOwner->transform.position.y = cachedOwnerLocation.y + radius * std::cos(rad);
+        pOwner->transform.position.z = cachedOwnerLocation.z + radius * std::sin(rad); 
+        pOwner->transform.rotation.x = angle;
+    }
+};
+
+class ParticleComponent : public Component {
+public:
+    glm::vec3 velocity;
+    float lifetime = 0.f;
+
+    static constexpr float gravity = -9.8f;
+
+    ParticleComponent(glm::vec3 vel, float life = 2.0f) : velocity(vel), lifetime(life) {}
+
+    void Update(float dt) override {
+        velocity.y += gravity * dt;
+        pOwner->transform.position += velocity * dt;
+        lifetime -= dt;
+        if (lifetime <= 0.f)
+            pOwner->state = ETargetState::Died;
+    }
+};
+
+
+
 #endif // AIMLAB_COMPONENT_HPP

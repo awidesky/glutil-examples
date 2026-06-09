@@ -3,7 +3,7 @@
 
 #include "engine.hpp"
 #include "component.hpp"
-
+#include "manager.hpp"
 #include <GLFW/glfw3.h>
 #include <vector>
 
@@ -62,7 +62,20 @@ public:
 
             /** 추가됐던 월드 객체들을 다 넣어준다. */
             for (auto* t : targetsToSpawn) world3d.push_back(t);
+            for (auto* t : ParticleSystem::Get().pendingParticles) world3d.push_back(t);
+            ParticleSystem::Get().pendingParticles.clear();
             targetsToSpawn.clear();
+
+            // 객체 삭제 Swap And Pop 방식
+            for (int i = world3d.size() - 1; i > -1; --i)
+            {
+                if (world3d[i]->state == Died)
+                {
+                    delete world3d[i];
+                    world3d[i] = world3d.back();
+                    world3d.pop_back();
+                }
+            }
         }
     }
 };

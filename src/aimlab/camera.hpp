@@ -19,7 +19,7 @@ public:
     Camera& operator=(const Camera&) = delete;
 
     constexpr static float playerHeight = 1.5f;
-    glm::vec3 position{0.f, playerHeight, 0.f};
+    glm::vec3 position{0.f, playerHeight, 7.f};
     glm::vec3 up{0.f, 1.f, 0.f};
     float yaw = -90.0f;
     float pitch = 0.0f;

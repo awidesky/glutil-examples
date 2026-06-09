@@ -182,9 +182,9 @@ bool thirdView = true;
 
 void start() {
     // 모델 객체를 만든다.
-    modelData cube{"model/cube.obj"};
-    modelData plane{"model/plane.obj"};
-    modelData torus{"model/torus.obj"};
+    modelData cube {"basic/model/cube.obj"};
+    modelData plane{"basic/model/plane.obj"};
+    modelData torus{"excavator/model/torus.obj"};
 
     // VAO
     GLuint VertexArrayID;
@@ -199,13 +199,13 @@ void start() {
 #endif
 
     // 각 오브젝트에 맞는 텍스쳐를 가져온다.
-    defaultTexture = loadBMP_custom("texture/default.bmp");
-    GLuint groundTexture = loadBMP_custom("texture/grid.bmp");
-    GLuint trackTexture = loadBMP_custom("texture/track.bmp");
-    GLuint scoopTexture = loadBMP_custom("texture/scoop.bmp");
-    //GLuint diceTexture = loadDDS("texture/dice.DDS"); // 테스트용
-    GLuint cabinTexture = loadBMP_custom("texture/cabin.bmp");
-    GLuint bodyTexture = loadBMP_custom("texture/body.bmp");
+    defaultTexture = loadBMP_custom("basic/texture/default.bmp");
+    GLuint groundTexture = loadBMP_custom("basic/texture/grid.bmp");
+    GLuint trackTexture = loadBMP_custom("basic/texture/track.bmp");
+    GLuint scoopTexture = loadBMP_custom("basic/texture/scoop.bmp");
+    //GLuint diceTexture = loadDDS("basic/texture/dice.DDS"); // 테스트용
+    GLuint cabinTexture = loadBMP_custom("basic/texture/cabin.bmp");
+    GLuint bodyTexture = loadBMP_custom("basic/texture/body.bmp");
 
     // 모든 유니폼 변수 ID를 가져온다
     TextureUniformID = glGetUniformLocation(programID, "myTextureSampler");

@@ -70,9 +70,10 @@ set(GDM_GLAD_EXTENSION
 
 add_subdirectory("${GDM_DIR}")
 
+set(ASSET_DIR "${CMAKE_SOURCE_DIR}/assets")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/generatedHeader")
 configure_file(
-    "${CMAKE_SOURCE_DIR}/src/aimlab/config.hpp.in"
+    "${CMAKE_SOURCE_DIR}/src/config.hpp.in"
     "${CMAKE_BINARY_DIR}/generatedHeader/config.hpp"
     @ONLY
 )
@@ -139,29 +140,14 @@ function(fetch_example_asset ASSET_NAME)
         LIST_DIRECTORIES TRUE
         "${_extract_dir}/*"
     )
+    
+    # Make asset dir
+    file(MAKE_DIRECTORY "${_asset_dir}")
 
-    set(_root "")
-
-    foreach(p IN LISTS _children)
-        if(IS_DIRECTORY "${p}")
-            set(_root "${p}")
-            break()
-        endif()
+    foreach(item IN LISTS _children)
+        get_filename_component(name "${item}" NAME)
+        file(RENAME "${item}" "${_asset_dir}/${name}")
     endforeach()
-
-    # root folder exist
-    if (_root)
-        file(RENAME "${_root}" "${_asset_dir}")
-    else()
-        # no root folder
-        file(MAKE_DIRECTORY "${_asset_dir}")
-        file(GLOB _files "${_extract_dir}/*")
-
-        foreach(f IN LISTS _files)
-            get_filename_component(_name "${f}" NAME)
-            file(RENAME "${f}" "${_asset_dir}/${_name}")
-        endforeach()
-    endif()
     file(REMOVE_RECURSE "${_extract_dir}")
 
     if (NOT EXISTS "${_asset_dir}")
@@ -237,11 +223,16 @@ add_gdm_example(04_AIMLAB
     src/aimlab/physics.hpp
     src/aimlab/mesh.hpp
     src/aimlab/manager.hpp
+    src/aimlab/score.hpp
 	
     shader/aimlab.vert
     shader/aimlab.frag
 )
 
+fetch_example_asset(basic)
+fetch_example_asset(excavator)
+fetch_example_asset(num)
+fetch_example_asset(AIMLAB)
 fetch_example_asset(ak47)
 
 source_group("Shaders"
