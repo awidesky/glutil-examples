@@ -317,7 +317,7 @@ void GameManagerComponent::StartRound() {
 
     GameStateManager::Get().StartRound();
     ScoreManager::Get().Reset();
-    if (roundTimer) roundTimer->StartRound(10.f);
+    if (roundTimer) roundTimer->StartRound(GameStateManager::Get().roundTime);
     if (weaponSystem) {
         weaponSystem->StartRound();
     }

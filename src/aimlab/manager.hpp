@@ -20,6 +20,7 @@ enum class EGameState { Waiting, Playing, Result, CountDown };
 class GameStateManager {
 public:
     float countdownTimer = 3.f;
+    float roundTime = 30.f;
     static GameStateManager& Get() {
         static GameStateManager state;
         return state;
