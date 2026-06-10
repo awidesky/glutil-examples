@@ -251,6 +251,19 @@ void HUDComponent::Update(float dt) {
         ammoDigits[3]->SetDigit(max % 10);
     }
 
+    auto& gc = GraphicsContext::Get();
+    // 감도, fov 등 굳이 계속 HUD에 띄울 필요는 없지만, 임시적으로 잠시 보여주고 싶은 값(0~100 사이)
+    if (gc.GetAuxDisplayTimer() > 0.0f) {
+        const int val = gc.GetAuxDisplayValue();
+        int d0 = (val / 100) % 10;
+        int d1 = (val / 10) % 10;
+        int d2 = val % 10;
+
+        auxDisplayDigits[0]->SetDigit(d0);
+        auxDisplayDigits[1]->SetDigit(d1);
+        auxDisplayDigits[2]->SetDigit(d2);
+    }
+
     // 시간
     if (roundTimer && timeDigits.size() >= 4) {
         int remain = (int)std::max(0.f, roundTimer->remainTime);

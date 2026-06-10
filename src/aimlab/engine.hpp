@@ -4,6 +4,8 @@
 #include <glutil/glutil.hpp>
 
 #include <glm/glm.hpp>
+
+#include <algorithm>
 #include <utility>
 #include <filesystem>
 #include <string>
@@ -133,14 +135,37 @@ public:
     }
     GLuint GetProgram() const { return m_program; }
 
+    
+    float GetMouseSensitivity() const { return mouseSensitivity; }
+    void SetMouseSensitivity(float value) {
+        mouseSensitivity = value;
+        auxDisplayTimer += auxDisplayTime;
+
+        auxDisplayValue = std::clamp((int)std::round(mouseSensitivity * 100.0f), 0, 999);
+    }
+
+    float GetFOV() const { return fov; }
+    void SetFOV(float value) {
+        fov = value;
+        auxDisplayTimer += auxDisplayTime;
+        auxDisplayValue = std::clamp((int)std::round(fov), 0, 999);
+    }
+
+    float GetAmbientStrength() const { return ambientStrength; }
+    void SetAmbientStrength(float value) {
+        ambientStrength = value;
+        auxDisplayTimer += auxDisplayTime;
+        auxDisplayValue = std::clamp((int)std::round(ambientStrength * 100.0f), 0, 999);
+    }
+
+    float GetAuxDisplayTimer() const { return auxDisplayTimer; }
+    int GetAuxDisplayValue() const { return auxDisplayValue; }
+
     ~GraphicsContext() {
         glfwDestroyWindow(m_window);
         glfwTerminate();
     }
 
-    float mouseSensitivity = 0.3f;
-    float fov = 75.0f;
-    float ambientStrength = 0.5f;
 private:
     GraphicsContext() = default;
 
@@ -151,6 +176,16 @@ private:
     int m_windowedW = 1280;
     int m_windowedH = 720;
     std::string m_title;
+
+    float mouseSensitivity = 1.f;
+    float fov = 75.0f;
+    float ambientStrength = 0.5f;
+    
+    // 감도, fov 등 굳이 계속 HUD에 띄울 필요는 없지만, 임시적으로 잠시 보여주고 싶은 값들을
+    // 띄울 때 쓰인다.
+    float auxDisplayTimer = 0.0f;
+    const float auxDisplayTime = 3.0f; 
+    int auxDisplayValue = 0;
 
 #ifdef AIMLAB_OPTION_GL_DEBUG
     std::chrono::steady_clock::time_point lastPrint, frameBegin;

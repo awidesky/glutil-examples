@@ -233,43 +233,44 @@ public:
         const float fovRate = 30.0f;
         const float ambientRate = 0.05f;
 
+        // TODOTODO : 주어진 코드의 getter, setter로 변경
         if (im.IsKeyDown(GLFW_KEY_LEFT_BRACKET)) {
-            float oldValue = gc.mouseSensitivity;
-            gc.mouseSensitivity = std::max(0.001f, gc.mouseSensitivity - sensitivityRate * dt);
-            if (gc.mouseSensitivity != oldValue)
-                std::cout << "mouseSensitivity: " << gc.mouseSensitivity << '\n';
+            float oldValue = gc.GetMouseSensitivity(); // TODOTODO : add setter for all. gc에 auxDisplayValue; auxDisplayTimer으로 둬서, 그걸 가져와 확인.
+            gc.mouseSensitivity = std::max(0.001f, gc.GetMouseSensitivity - sensitivityRate * dt);
+            if (gc.GetMouseSensitivity != oldValue)
+                LOG_INFO() << "mouseSensitivity: " << gc.mouseSensitivity << '\n';
         }
         if (im.IsKeyDown(GLFW_KEY_RIGHT_BRACKET)) {
             float oldValue = gc.mouseSensitivity;
             gc.mouseSensitivity = std::min(2.0f, gc.mouseSensitivity + sensitivityRate * dt);
             if (gc.mouseSensitivity != oldValue)
-                std::cout << "mouseSensitivity: " << gc.mouseSensitivity << '\n';
+                LOG_INFO() << "mouseSensitivity: " << gc.mouseSensitivity << '\n';
         }
 
         if (im.IsKeyDown(GLFW_KEY_O)) {
             float oldValue = gc.fov;
             gc.fov = std::max(20.0f, gc.fov - fovRate * dt);
             if (gc.fov != oldValue)
-                std::cout << "fov: " << gc.fov << '\n';
+                LOG_INFO() << "fov: " << gc.fov << '\n';
         }
         if (im.IsKeyDown(GLFW_KEY_P)) {
             float oldValue = gc.fov;
             gc.fov = std::min(120.0f, gc.fov + fovRate * dt);
             if (gc.fov != oldValue)
-                std::cout << "fov: " << gc.fov << '\n';
+                LOG_INFO() << "fov: " << gc.fov << '\n';
         }
 
         if (im.IsKeyDown(GLFW_KEY_SEMICOLON)) {
             float oldValue = gc.ambientStrength;
             gc.ambientStrength = std::max(0.0f, gc.ambientStrength - ambientRate * dt);
             if (gc.ambientStrength != oldValue)
-                std::cout << "ambientStrength: " << gc.ambientStrength << '\n';
+                LOG_INFO() << "ambientStrength: " << gc.ambientStrength << '\n';
         }
         if (im.IsKeyDown(GLFW_KEY_APOSTROPHE)) {
             float oldValue = gc.ambientStrength;
             gc.ambientStrength = std::min(3.0f, gc.ambientStrength + ambientRate * dt);
             if (gc.ambientStrength != oldValue)
-                std::cout << "ambientStrength: " << gc.ambientStrength << '\n';
+                LOG_INFO() << "ambientStrength: " << gc.ambientStrength << '\n';
         }
 
         const bool keyC = im.IsKeyDown(GLFW_KEY_C);
@@ -301,7 +302,7 @@ public:
         static const glm::vec3 lightPos(0.0f, 5.0f, -20.5f);
         glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix(gc.fov)));
         glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
-        glUniform1f(ambientStrengthLocation, gc.ambientStrength);
+        glUniform1f(ambientStrengthLocation, gc.GetAmbientStrength());
 
         glUniform1i(isUILocation, GL_FALSE);
         glDepthMask(GL_TRUE);
@@ -620,6 +621,7 @@ public:
     std::vector<NumberController*> scoreDigits;
     std::vector<NumberController*> accuracyDigits;
     std::vector<NumberController*> ammoDigits;
+    std::vector<NumberController*> auxDisplayDigits;
 
     NumberController* countdownDigit = nullptr;
     NumberController* startSymbol = nullptr;
