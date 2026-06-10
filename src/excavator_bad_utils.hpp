@@ -12,10 +12,12 @@
 
 #include "config.hpp"
 
+#if defined(_MSC_VER)
 #pragma warning(disable : 4996) // unsafe scanf
 #pragma warning(disable : 6031) // scanf return ignore
 #pragma warning(disable : 6387) // malloc'ed buffer may be NULL
 #pragma warning(disable : 6054) // parameter of strncmp may not be NULL terminated
+#endif
 
 GLuint LoadShaders(const char * vertex_file_path1,const char * fragment_file_path1){
 
