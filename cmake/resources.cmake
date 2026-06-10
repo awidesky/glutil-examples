@@ -10,40 +10,37 @@ function(fetch_example_asset ASSET_NAME)
 
     message(STATUS "[${PROJECT_NAME}] Fetching asset: ${ASSET_NAME}")
 
-    # Download cache
-    set(_download_dir "${CMAKE_BINARY_DIR}/_downloads")
-    file(MAKE_DIRECTORY "${_download_dir}")
+    # Temporary archive path
+    set(_archive "${CMAKE_BINARY_DIR}/${ASSET_NAME}.zip")
 
-    set(_archive "${_download_dir}/${ASSET_NAME}.zip")
+    # Download URL
+    set(_url
+        "https://github.com/awidesky/glutil-examples/releases/download/0.0.1/${ASSET_NAME}.zip"
+    )
+
+    # Ensure no stale file exists
+    file(REMOVE "${_archive}")
 
     # Download
-    if (NOT EXISTS "${_archive}")
-        set(_url
-            "https://github.com/awidesky/glutil-examples/releases/download/0.0.1/${ASSET_NAME}.zip"
+    file(DOWNLOAD
+        "${_url}"
+        "${_archive}"
+        STATUS _dl_status
+        LOG _dl_log
+    )
+
+    list(GET _dl_status 0 _dl_code)
+
+    if (NOT _dl_code EQUAL 0)
+        file(REMOVE "${_archive}")
+
+        list(GET _dl_status 1 _dl_msg)
+        message(FATAL_ERROR
+            "[${PROJECT_NAME}] Failed to download asset '${ASSET_NAME}'\n"
+            "URL: ${_url}\n"
+            "Reason: ${_dl_msg}"
+            "Log : ${_dl_log}"
         )
-
-        file(DOWNLOAD
-            "${_url}"
-            "${_archive}"
-            STATUS _dl_status
-            LOG _dl_log
-        )
-
-        list(GET _dl_status 0 _dl_code)
-
-        if (NOT _dl_code EQUAL 0)
-            file(REMOVE "${_archive}")
-        
-            list(GET _dl_status 1 _dl_msg)
-            message(FATAL_ERROR
-                "[${PROJECT_NAME}] Failed to download asset '${ASSET_NAME}'\n"
-                "URL: ${_url}\n"
-                "Reason: ${_dl_msg}"
-                "Log : ${_dl_log}"
-            )
-        endif()
-    else()
-        message(STATUS "[${PROJECT_NAME}] Using cached archive: ${_archive}")
     endif()
 
     # Extract
@@ -54,13 +51,16 @@ function(fetch_example_asset ASSET_NAME)
     file(MAKE_DIRECTORY "${_extract_dir}")
 
     file(ARCHIVE_EXTRACT INPUT "${_archive}" DESTINATION "${_extract_dir}")
-    
+
+    # Remove temporary archive immediately after extraction
+    file(REMOVE "${_archive}")
+
     # Move extracted content
     file(GLOB _children
         LIST_DIRECTORIES TRUE
         "${_extract_dir}/*"
     )
-    
+
     # Make asset dir
     file(MAKE_DIRECTORY "${_asset_dir}")
 
@@ -68,6 +68,8 @@ function(fetch_example_asset ASSET_NAME)
         get_filename_component(name "${item}" NAME)
         file(RENAME "${item}" "${_asset_dir}/${name}")
     endforeach()
+
+    # Cleanup extraction directory
     file(REMOVE_RECURSE "${_extract_dir}")
 
     if (NOT EXISTS "${_asset_dir}")
