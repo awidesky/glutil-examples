@@ -50,6 +50,7 @@ void NumberController::SetDigit(int d) {
 }
 
 void NumberController::Update(float dt) {
+    (void)dt;
     if (!visible) {
         pOwner->transform.scale = glm::vec3(0.f);
         return;
@@ -134,9 +135,10 @@ void WeaponSystem::Fire()
                 DecalComponent* decal = new DecalComponent();
                 gunDecal->transform.rotation = block->transform.rotation;
                 gunDecal->transform.position = hitPoint + hitNormal * floatingAmount;
+                gunDecal->transform.scale = glm::vec3(0.1f);
                 floatingAmount += 0.001f;
                 gunDecal->AddComponent(new MeshRenderer(ResourceManager::Get().GetMesh("plane"),
-                                                        new Material(ResourceManager::Get().GetTexture("target"))));
+                                                        new Material(ResourceManager::Get().GetTexture("bulletHole"))));
                 gunDecal->AddComponent(decal);
                 decalsToSpawn->push_back(gunDecal);
             }
@@ -169,8 +171,8 @@ void TargetSpawnerComponent::Update(float dt) {
 }
 
 void TargetSpawnerComponent::SpawnTarget() {
-    float x = ((float)rand() / RAND_MAX * 2.f - 1.f) * 9.5f;
-    float z = round(-(float)rand() / RAND_MAX * 10.f);
+    float x = ((float)rand() / RAND_MAX * 2.f - 1.f) * 19.5f;
+    float z = round(-(float)rand() / RAND_MAX * 20.f);
 
     TargetObject* target = new TargetObject();
     target->type = EObjectType::Target;
@@ -229,7 +231,7 @@ NumberController* HUDComponent::AddSymbol(const std::string& texName, float ancX
 }
 
 void HUDComponent::Update(float dt) {
-
+    (void)dt;
     // 카운트 다운
     if (countdownDigit) {
         countdownDigit->visible = (GameStateManager::Get().state == EGameState::CountDown);
