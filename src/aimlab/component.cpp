@@ -172,7 +172,7 @@ void TargetSpawnerComponent::Update(float dt) {
 
 void TargetSpawnerComponent::SpawnTarget() {
     float x = ((float)rand() / RAND_MAX * 2.f - 1.f) * 19.5f;
-    float z = round(-(float)rand() / RAND_MAX * 20.f);
+    float z = round(-(float)rand() / RAND_MAX * 17.f);
 
     TargetObject* target = new TargetObject();
     target->type = EObjectType::Target;

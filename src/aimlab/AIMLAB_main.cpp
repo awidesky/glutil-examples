@@ -42,7 +42,7 @@ int main() {
     
     // 카메라
     Camera& camera = Camera::Get();
-    camera.position = glm::vec3(0.f, 1.f, 10.f);
+    camera.position = glm::vec3(0.f, 1.f, 15.f);
     camera.up = glm::vec3(0.f, 1.f, 0.f);
     camera.yaw = -90.f;
     camera.pitch = 0.f;
