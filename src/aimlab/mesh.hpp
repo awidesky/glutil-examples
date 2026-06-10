@@ -136,8 +136,9 @@ public:
 
         glDisable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
-        glEnable(GL_BLEND); //TODO :init으로 옮기기
+        glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         glUniform1i(isUILocation, GL_TRUE);
 
         pMaterial->Bind();
@@ -163,11 +164,6 @@ public:
         }
 
         glBindVertexArray(0);
-
-        
-        glUniform1i(isUILocation, GL_FALSE);
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
     }
 };
 #endif // AIMLAB_MESH_HPP

@@ -217,6 +217,7 @@ public:
         projectionLocation = glGetUniformLocation(program, "projection");
         lightPosLocation = glGetUniformLocation(program, "lightPos");
         ambientStrengthLocation = glGetUniformLocation(program, "ambientStrength");
+        isUILocation = glGetUniformLocation(program, "isUI");
     }
 
     void Update(float dt) override {
@@ -301,12 +302,17 @@ public:
         glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix(gc.fov)));
         glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
         glUniform1f(ambientStrengthLocation, gc.ambientStrength);
+
+        glUniform1i(isUILocation, GL_FALSE);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
     }
 
 private:
     GLint projectionLocation = -1;
     GLint lightPosLocation = -1;
     GLint ambientStrengthLocation = -1;
+    GLint isUILocation = -1;
     bool m_prevC = false;
     bool m_prevEsc = false;
     bool m_prevRClick = false;
