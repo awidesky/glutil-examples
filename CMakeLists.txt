@@ -79,83 +79,6 @@ configure_file(
 )
 
 
-# Resource Downloader
-function(fetch_example_asset ASSET_NAME)
-    set(_asset_dir "${PROJECT_SOURCE_DIR}/assets/${ASSET_NAME}")
-
-    # Already available
-    if (EXISTS "${_asset_dir}")
-        return()
-    endif()
-
-    message(STATUS "[${PROJECT_NAME}] Fetching asset: ${ASSET_NAME}")
-
-    # Download cache
-    set(_download_dir "${CMAKE_BINARY_DIR}/_downloads")
-    file(MAKE_DIRECTORY "${_download_dir}")
-
-    set(_archive "${_download_dir}/${ASSET_NAME}.zip")
-
-    # Download
-    if (NOT EXISTS "${_archive}")
-        set(_url
-            "https://github.com/awidesky/glutil-examples/releases/download/0.0.1/${ASSET_NAME}.zip"
-        )
-
-        file(DOWNLOAD
-            "${_url}"
-            "${_archive}"
-            STATUS _dl_status
-            LOG _dl_log
-        )
-
-        list(GET _dl_status 0 _dl_code)
-
-        if (NOT _dl_code EQUAL 0)
-            file(REMOVE "${_archive}")
-        
-            list(GET _dl_status 1 _dl_msg)
-            message(FATAL_ERROR
-                "[${PROJECT_NAME}] Failed to download asset '${ASSET_NAME}'\n"
-                "URL: ${_url}\n"
-                "Reason: ${_dl_msg}"
-                "Log : ${_dl_log}"
-            )
-        endif()
-    else()
-        message(STATUS "[${PROJECT_NAME}] Using cached archive: ${_archive}")
-    endif()
-
-    # Extract
-    file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}/assets")
-    set(_extract_dir "${CMAKE_BINARY_DIR}/_extract/${ASSET_NAME}")
-
-    file(REMOVE_RECURSE "${_extract_dir}")
-    file(MAKE_DIRECTORY "${_extract_dir}")
-
-    file(ARCHIVE_EXTRACT INPUT "${_archive}" DESTINATION "${_extract_dir}")
-    
-    # Move extracted content
-    file(GLOB _children
-        LIST_DIRECTORIES TRUE
-        "${_extract_dir}/*"
-    )
-    
-    # Make asset dir
-    file(MAKE_DIRECTORY "${_asset_dir}")
-
-    foreach(item IN LISTS _children)
-        get_filename_component(name "${item}" NAME)
-        file(RENAME "${item}" "${_asset_dir}/${name}")
-    endforeach()
-    file(REMOVE_RECURSE "${_extract_dir}")
-
-    if (NOT EXISTS "${_asset_dir}")
-        message(FATAL_ERROR "[${PROJECT_NAME}] Failed to extract asset '${ASSET_NAME}'")
-    endif()
-endfunction()
-
-
 # Example targets
 function(add_gdm_example TARGET_NAME)
     add_executable(${TARGET_NAME} ${ARGN})
@@ -225,16 +148,29 @@ add_gdm_example(04_AIMLAB
     src/aimlab/manager.hpp
     src/aimlab/score.hpp
 	
+    external/miniaudio.h
+
     shader/aimlab.vert
     shader/aimlab.frag
 )
+
+source_group("Shaders"
+    REGULAR_EXPRESSION ".*\\.(frag|vert)$"
+)
+
+include("cmake/resources.cmake")
 
 fetch_example_asset(basic)
 fetch_example_asset(excavator)
 fetch_example_asset(num)
 fetch_example_asset(AIMLAB)
+fetch_example_asset(crosshair)
 fetch_example_asset(ak47)
 
-source_group("Shaders"
-    REGULAR_EXPRESSION ".*\\.(frag|vert)$"
+download_repo_file(
+    REPOSITORY https://github.com/mackron/miniaudio
+    TAG 0.11.25
+    FILE miniaudio.h
+    DESTINATION_DIR ${PROJECT_SOURCE_DIR}/external
 )
+ 
