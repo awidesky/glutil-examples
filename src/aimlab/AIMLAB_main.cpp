@@ -33,22 +33,13 @@ int main() {
     gc.SetProgram(program.id);
 
     auto& rm = ResourceManager::Get();
-    rm.SetDefaultTexture(ASSET_ROOT / "basic" / "texture" / "grid.bmp");
-    //Texture* defaultTexture = ResourceManager::Get().GetDefaultTexture();
-    //if (!defaultTexture || !defaultTexture->ok) { // TODO : better error checking and printing(inside add* function? and exit policy.
-    //    std::cout << defaultTexture->error;
-    //    return -1;
-    //}
+    rm.SetDefaultTexture(ASSET_ROOT / "basic" / "texture" / "default.bmp");
 
     rm.AddMesh("plane", ASSET_ROOT / "basic" / "model" / "plane.obj");
     rm.AddCpuMesh("plane", ASSET_ROOT / "basic" / "model" / "plane.obj");
     rm.AddMesh("cube",  ASSET_ROOT / "basic" / "model" / "cube.obj");
     Mesh* planeMesh = rm.GetMesh("plane");
-    if (!planeMesh || !planeMesh->ok) {
-        std::cout << planeMesh->error;
-        return -1;
-    }
-
+    
     // 카메라
     Camera& camera = Camera::Get();
     camera.position = glm::vec3(0.f, 1.f, 0.f);
@@ -77,20 +68,12 @@ int main() {
     // 바닥
     GameObject* plane = new GameObject();
     plane->type = EObjectType::Block;
-    plane->transform.rotation.y = 0.f;
+    plane->transform.rotation.y = 180.f;
     plane->transform.scale = glm::vec3(10.f, 1.f, 10.f);
 
-    auto* planeRenderer = new MeshRenderer(planeMesh, new Material());
+    auto* planeRenderer = new MeshRenderer(planeMesh, new Material(rm.AddTexture("grid", ASSET_ROOT / "basic" / "texture" / "grid.bmp")));
     plane->AddComponent(planeRenderer);
     gEngine.world3d.push_back(plane);
-
-    // 벽
-    //GameObject* cube = new GameObject();
-    //cube->transform.scale = glm::vec3(10.f,1.f, 2.f);
-    //cube->transform.position = glm::vec3(0.f, 0.f, 3.f);
-    //auto* cubeRenderer = new MeshRenderer(rm.GetMesh("cube"), new Material());
-    //cube->AddComponent(cubeRenderer);
-    //gEngine.world3d.push_back(cube);
 
     // 벽
     GameObject* plane2 = new GameObject();
@@ -101,7 +84,7 @@ int main() {
 
     plane2->transform.scale = glm::vec3(10.f, 1.f, 10.f);
 
-    auto* planeRenderer2 = new MeshRenderer(planeMesh, new Material());
+    auto* planeRenderer2 = new MeshRenderer(planeMesh, new Material(rm.AddTexture("backwall", ASSET_ROOT / "AIMLAB" / "texture" / "container.jpg")));
     plane2->AddComponent(planeRenderer2);
     gEngine.world3d.push_back(plane2);
 
@@ -203,7 +186,6 @@ int main() {
     hudObj->AddComponent(hud);
     gEngine.system.push_back(hudObj);
 
-    auto& gsm = GameStateManager::Get();
     GameObject* gm = new GameObject();
     GameManagerComponent* gmc = new GameManagerComponent(roundTimer, weaponsystem, &gEngine.world3d);
     gm->AddComponent(gmc);

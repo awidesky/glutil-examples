@@ -50,6 +50,7 @@ void NumberController::SetDigit(int d) {
 }
 
 void NumberController::Update(float dt) {
+    (void)dt;
     if (!visible) {
         pOwner->transform.scale = glm::vec3(0.f);
         return;
@@ -229,7 +230,7 @@ NumberController* HUDComponent::AddSymbol(const std::string& texName, float ancX
 }
 
 void HUDComponent::Update(float dt) {
-
+    (void)dt;
     // 카운트 다운
     if (countdownDigit) {
         countdownDigit->visible = (GameStateManager::Get().state == EGameState::CountDown);

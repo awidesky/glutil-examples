@@ -162,21 +162,21 @@ bool loadOBJ(
 		// else : parse lineHeader
 		
 		if ( strcmp( lineHeader, "v" ) == 0 ){
-			glm::vec3 vertex;
+            glm::vec3 vertex{};
 			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
 			temp_vertices.push_back(vertex);
 		}else if ( strcmp( lineHeader, "vt" ) == 0 ){
-			glm::vec2 uv;
+            glm::vec2 uv{};
 			fscanf(file, "%f %f\n", &uv.x, &uv.y );
 			uv.y = -uv.y; // Invert V coordinate since we will only use DDS texture, which are inverted. Remove if you want to use TGA or BMP loaders.
 			temp_uvs.push_back(uv);
 		}else if ( strcmp( lineHeader, "vn" ) == 0 ){
-			glm::vec3 normal;
+            glm::vec3 normal{};
 			fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
 			temp_normals.push_back(normal);
 		}else if ( strcmp( lineHeader, "f" ) == 0 ){
 			std::string vertex1, vertex2, vertex3;
-			unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+            unsigned int vertexIndex[3]{}, uvIndex[3]{}, normalIndex[3]{};
 			int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
 			if (matches != 9){
 				printf("File can't be read by our simple parser :-( Try exporting with other options\n");
@@ -204,9 +204,9 @@ bool loadOBJ(
 	for( unsigned int i=0; i<vertexIndices.size(); i++ ){
 
 		// Get the indices of its attributes
-		unsigned int vertexIndex = vertexIndices[i];
-		unsigned int uvIndex = uvIndices[i];
-		unsigned int normalIndex = normalIndices[i];
+		size_t vertexIndex = vertexIndices[i];
+        size_t uvIndex = uvIndices[i];
+        size_t normalIndex = normalIndices[i];
 		
 		// Get the attributes thanks to the index
 		glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
@@ -281,9 +281,9 @@ GLuint loadBMP_custom(const char * imagePath){
 	fread(data,1,imageSize,file);
 #if STEP > 1
 #if STEP > 2
-    int rowSize = ((width * 3 + 3) / 4) * 4; // GL_RGB ±‚¡ÿ (BMP 24bit)
+    int rowSize = ((width * 3 + 3) / 4) * 4; // GL_RGB Í∏∞Ï§Ä (BMP 24bit)
 #else
-    int rowSize = width * 3; // GL_RGB ±‚¡ÿ (BMP 24bit)
+    int rowSize = width * 3; // GL_RGB Í∏∞Ï§Ä (BMP 24bit)
 #endif
 
     unsigned char* tempRow = new unsigned char[rowSize];
@@ -360,9 +360,9 @@ GLuint loadBMP_custom(const char * imagePath){
 
 
 
-#define FOURCC_DXT1 0x31545844 // Equivalent to "DXT1" in ASCII
-#define FOURCC_DXT3 0x33545844 // Equivalent to "DXT3" in ASCII
-#define FOURCC_DXT5 0x35545844 // Equivalent to "DXT5" in ASCII
+constexpr unsigned int FOURCC_DXT1 = 0x31545844; // Equivalent to "DXT1" in ASCII
+constexpr unsigned int FOURCC_DXT3 = 0x33545844; // Equivalent to "DXT3" in ASCII
+constexpr unsigned int FOURCC_DXT5 = 0x35545844; // Equivalent to "DXT5" in ASCII
 
 GLuint loadDDS(const char * imagepath){
 

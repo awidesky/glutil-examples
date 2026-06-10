@@ -210,8 +210,8 @@ struct Texture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GLfloat maxAniso = 1.0f;
-        //glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
-        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, std::min(8.0f, maxAniso));
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, std::min(8.0f, maxAniso));
     }
     void bind() const { glBindTexture(GL_TEXTURE_2D, tex.id);}
 };
@@ -229,7 +229,7 @@ struct Sound {
     }
     explicit Sound(ma_sound* sound) : sound(sound) {}
 
-    void play() {
+    void play() const {
         if (!sound) return;
 
         ma_sound_seek_to_pcm_frame(sound, 0);
@@ -321,7 +321,12 @@ public:
             it->second = nullptr;
         }
 
-        return _textures[name] = new Texture(glutil::ImageLoader::loadImageToGL(path));
+        auto tex = new Texture(glutil::ImageLoader::loadImageToGL(path));
+        if (!tex->tex.ok) {
+            delete tex;
+            tex = nullptr;
+        }
+        return _textures[name] = tex;
     }
     Program* AddProgram(const std::string& name, const std::filesystem::path& vs, const std::filesystem::path& fs) {
         auto it = _programs.find(name);

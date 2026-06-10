@@ -222,6 +222,7 @@ public:
         projectionLocation = glGetUniformLocation(program, "projection");
         lightPosLocation = glGetUniformLocation(program, "lightPos");
         ambientStrengthLocation = glGetUniformLocation(program, "ambientStrength");
+        isUILocation = glGetUniformLocation(program, "isUI");
     }
 
     void Update(float dt) override {
@@ -301,16 +302,21 @@ public:
         glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix(gc.fov)));
         glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
         glUniform1f(ambientStrengthLocation, gc.ambientStrength);
+
+        glUniform1i(isUILocation, GL_FALSE);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
     }
 
 private:
     GLint projectionLocation = -1;
     GLint lightPosLocation = -1;
     GLint ambientStrengthLocation = -1;
+    GLint isUILocation = -1;
     bool m_prevC = false;
     bool m_prevEsc = false;
     bool m_prevRClick = false;
-    int m_zoomCount = 0.f;
+    int m_zoomCount = 0;
 };
 struct FireListener {
     virtual void Fire() = 0;
@@ -391,8 +397,8 @@ public:
     float reloadTimer = 0.f;
     
     int nextFireSound = 0;
-    Sound* fireSounds[4];
-    Sound* reloadSound;
+    Sound* fireSounds[4] = {nullptr,};
+    Sound* reloadSound = nullptr;
     
     GunController(WeaponSystem* ws, glm::vec3 offset) : offset(offset) {
         ws->addFireListener(this);
@@ -450,14 +456,14 @@ public:
 
 class TargetController : public Component {
 public:
-    float angle;
+    float angle = 0.0f;
     float radius = 1.0f;
     bool canMove = false;
-    glm::vec3 cachedOwnerLocation;
+    glm::vec3 cachedOwnerLocation = {};
     float maxRange = 9.5f;
     float moveSpeed = 5.f;
     float leftDistance = 0.f;
-    int dir = 1.0f;
+    int dir = 1;
     void Start()
     { 
         cachedOwnerLocation = pOwner->transform.position;
@@ -615,9 +621,9 @@ public:
     std::vector<NumberController*> accuracyDigits;
     std::vector<NumberController*> ammoDigits;
 
-    NumberController* countdownDigit;
-    NumberController* startSymbol;
-    NumberController* restartSymbol;
+    NumberController* countdownDigit = nullptr;
+    NumberController* startSymbol = nullptr;
+    NumberController* restartSymbol = nullptr;
 
     HUDComponent(std::vector<GameObject*>* world2d, WeaponSystem* ws, RoundTimerComponent* rt);
 
