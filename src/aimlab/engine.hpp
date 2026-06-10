@@ -346,7 +346,12 @@ public:
             it->second = nullptr;
         }
 
-        return _textures[name] = new Texture(glutil::ImageLoader::loadImageToGL(path));
+        auto tex = new Texture(glutil::ImageLoader::loadImageToGL(path));
+        if (!tex->tex.ok) {
+            delete tex;
+            tex = nullptr;
+        }
+        return _textures[name] = tex;
     }
     Program* AddProgram(const std::string& name, const std::filesystem::path& vs, const std::filesystem::path& fs) {
         auto it = _programs.find(name);

@@ -33,7 +33,7 @@ int main() {
     gc.SetProgram(program.id);
 
     auto& rm = ResourceManager::Get();
-    rm.SetDefaultTexture(ASSET_ROOT / "basic" / "texture" / "grid.bmp");
+    rm.SetDefaultTexture(ASSET_ROOT / "basic" / "texture" / "default.bmp");
     //Texture* defaultTexture = ResourceManager::Get().GetDefaultTexture();
     //if (!defaultTexture || !defaultTexture->ok) { // TODO : better error checking and printing(inside add* function? and exit policy.
     //    std::cout << defaultTexture->error;
@@ -77,17 +77,9 @@ int main() {
     plane->transform.rotation.y = 180.f;
     plane->transform.scale = glm::vec3(10.f, 1.f, 10.f);
 
-    auto* planeRenderer = new MeshRenderer(planeMesh, new Material());
+    auto* planeRenderer = new MeshRenderer(planeMesh, new Material(rm.AddTexture("grid", ASSET_ROOT / "basic" / "texture" / "grid.bmp")));
     plane->AddComponent(planeRenderer);
     gEngine.world3d.push_back(plane);
-
-    // 벽
-    //GameObject* cube = new GameObject();
-    //cube->transform.scale = glm::vec3(10.f,1.f, 2.f);
-    //cube->transform.position = glm::vec3(0.f, 0.f, 3.f);
-    //auto* cubeRenderer = new MeshRenderer(rm.GetMesh("cube"), new Material());
-    //cube->AddComponent(cubeRenderer);
-    //gEngine.world3d.push_back(cube);
 
     // 벽
     GameObject* plane2 = new GameObject();
