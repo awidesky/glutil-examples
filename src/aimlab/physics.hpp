@@ -29,7 +29,7 @@ public:
     }
 
     bool RayMeshIntersect(const Ray& ray, const glutil::ModelData& cpuMesh, const glm::mat4& modelMatrix,
-                          glm::vec3& hitPoint) {
+                          glm::vec3& hitPoint, glm::vec3& hitNormal) {
 
         for (const auto& meshData : cpuMesh.meshes) {
             const glutil::VertexPNT* verts = static_cast<const glutil::VertexPNT*>(meshData.vertexData());
@@ -46,6 +46,7 @@ public:
                 float t;
                 if (RayTriangleIntersect(ray, v0, v1, v2, t)) {
                     hitPoint = ray.origin + ray.direction * t;
+                    hitNormal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
                     return true;
                 }
             }

@@ -1,4 +1,4 @@
-#include "config.hpp"
+﻿#include "config.hpp"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -6,6 +6,7 @@
 #include <component.hpp>
 #include <mesh.hpp>
 #include <manager.hpp>
+
 
 CrossHairComponent::CrossHairComponent() {
     material = new Material(
@@ -78,6 +79,74 @@ void RoundTimerComponent::Reset() {
     // TODO : world의 타겟들 다 지우는 거
 }
 
+void WeaponSystem::Fire()
+{
+    if (isReloading || !targets || fireCooldown > 0.f) return;
+    if (currentAmmo <= 0) {
+        Reload();
+        return;
+    }
+    currentAmmo--;
+    fireCooldown = fireInterval;
+
+    const Camera& camera = Camera::Get();
+    PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
+    TargetObject* nearestHitTarget = NULL;
+    float minHitDist = FLT_MAX;
+    glm::vec3 nearestHitPoint;
+    glm::vec3 hitPoint, hitNormal;
+    CpuMesh* targetMesh = ResourceManager::Get().GetCpuMesh("target");
+    
+    std::vector<GameObject*> blocks;
+    CpuMesh* planeMesh = ResourceManager::Get().GetCpuMesh("plane");
+
+
+    for (auto* obj : *targets) {
+        if (obj->state != EObjectState::Spawned) continue;
+        if (obj->type == EObjectType::Block) {
+            blocks.push_back(obj);
+            continue;
+        }
+        auto* target = dynamic_cast<TargetObject*>(obj);
+        if (!target || target->state != EObjectState::Spawned) continue;
+
+        if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius)) {
+            if (PhysicsSystem::Get().RayMeshIntersect(ray, *targetMesh, target->transform.GetWorldMatrix(), hitPoint,
+                                                      hitNormal)) {
+                float dist = glm::distance(camera.position, target->transform.position);
+                if (dist < minHitDist) {
+                    nearestHitTarget = target;
+                    minHitDist = dist;
+                    nearestHitPoint = hitPoint;
+                }
+            }
+        }
+    }
+    if (nearestHitTarget != nullptr) {
+        ScoreManager::Get().RecordHit(nearestHitTarget->GetReactionTime());
+        nearestHitTarget->OnHit(nearestHitPoint);
+    } else {
+        ScoreManager::Get().RecordMiss();
+        // 타겟과 충돌 X 이면 벽이나 바닥과 충돌했는지 확인
+        for (auto block : blocks) {
+            if (PhysicsSystem::Get().RayMeshIntersect(ray, *planeMesh, block->transform.GetWorldMatrix(), hitPoint, hitNormal)) {
+                GameObject* gunDecal = new GameObject();
+                DecalComponent* decal = new DecalComponent();
+                gunDecal->transform.rotation = block->transform.rotation;
+                gunDecal->transform.position = hitPoint + hitNormal * floatingAmount;
+                floatingAmount += 0.0001f;
+                gunDecal->AddComponent(new MeshRenderer(ResourceManager::Get().GetMesh("plane"),
+                                                        new Material(ResourceManager::Get().GetTexture("target"))));
+                gunDecal->AddComponent(decal);
+                decalsToSpawn->push_back(gunDecal);
+            }
+        }
+    }
+    for (auto* fireListener : fireListeners)
+        fireListener->Fire();
+}
+
+
 void TargetSpawnerComponent::Update(float dt) {
     if (!targetsToSpawn) return;
     if (GameStateManager::Get().state == EGameState::CountDown || GameStateManager::Get().state == EGameState::Result)
@@ -90,7 +159,7 @@ void TargetSpawnerComponent::Update(float dt) {
 
     int alive = 0;
     for (auto* obj : *world3d)
-        if (obj->state == ETargetState::Spawned && dynamic_cast<TargetObject*>(obj)) alive++;
+        if (obj->state == EObjectState::Spawned && dynamic_cast<TargetObject*>(obj)) alive++;
 
     if (alive >= maxTargets) return;
 
@@ -104,6 +173,7 @@ void TargetSpawnerComponent::SpawnTarget() {
     float z = round(-(float)rand() / RAND_MAX * 10.f);
 
     TargetObject* target = new TargetObject();
+    target->type = EObjectType::Target;
     target->transform.position = glm::vec3(x, 0.0f, z);
     target->transform.scale = glm::vec3(0.2f, 0.2f, 0.05f);
     target->transform.rotation = glm::vec3(-90.f, 0.f, 0.f);
@@ -257,7 +327,7 @@ void GameManagerComponent::EndRound() {
     if (roundTimer) roundTimer->Reset();
     for (auto* obj : *world3d) {
         if (dynamic_cast<TargetObject*>(obj)) {
-            obj->state = ETargetState::Dying;
+            obj->state = EObjectState::Dying;
         }
     }
 }
@@ -267,7 +337,7 @@ void GameManagerComponent::StartCountDown() {
     GameStateManager::Get().StartCountDown();
     for (auto* obj : *world3d) {
         if (dynamic_cast<TargetObject*>(obj)) {
-            obj->state = ETargetState::Dying;
+            obj->state = EObjectState::Dying;
         }
     }
 }

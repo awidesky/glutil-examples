@@ -50,17 +50,23 @@ public:
     virtual ~Component() {}
 };
 
-enum ETargetState {
+enum EObjectState {
     Spawned,
     Dying,
     Died,
 };
 
+enum EObjectType {
+    System,
+    Target,
+    Block,
+};
 
 class GameObject {
 public:
     Transform transform;
-    ETargetState state = ETargetState::Spawned;
+    EObjectState state = EObjectState::Spawned;
+    EObjectType type = EObjectType::System;
 
     virtual ~GameObject() {
         for (auto c : m_components)
@@ -80,7 +86,7 @@ public:
     }
 
     void Update(float dt) {
-        if (state == ETargetState::Died)
+        if (state == EObjectState::Died)
             return;
         for (auto c : m_components) {
             if (!c->isStarted) {
@@ -92,14 +98,14 @@ public:
     }
 
     void Input() {
-        if (state == ETargetState::Died)
+        if (state == EObjectState::Died)
             return;
         for (auto c : m_components)
             c->Input();
     }
 
     void Render() {
-        if (state == ETargetState::Died)
+        if (state == EObjectState::Died)
             return;
         for (auto c : m_components)
             c->Render();
@@ -118,7 +124,7 @@ public:
 
     TargetObject() { spawnTime = (float)glfwGetTime(); }
     void OnHit(const glm::vec3& hitPoint) { 
-        state = ETargetState::Dying;
+        state = EObjectState::Dying;
         if (onHitEmit)
             onHitEmit(hitPoint, hitPoint - Camera::Get().position);
     }
@@ -324,7 +330,10 @@ public:
     float reloadTimer = 0.f;
     float fireInterval = 0.1f; // 600 RPM
     float fireCooldown = 0.f;
+    float floatingAmount = 0.0001f;
+
     std::vector<GameObject*>* targets = nullptr;
+    std::vector<GameObject*>* decalsToSpawn = nullptr;
     std::vector<FireListener*> fireListeners;
 
     void Update(float dt) override {
@@ -345,60 +354,13 @@ public:
 
     void addFireListener(FireListener* listener) { fireListeners.push_back(listener); }
 
-    void Fire() {
-        if (isReloading || !targets || fireCooldown > 0.f)
-            return;
-        if (currentAmmo <= 0) {
-            Reload();
-            return;
-        }
-        currentAmmo--;
-        fireCooldown = fireInterval;
-
-        const Camera& camera = Camera::Get();
-        PhysicsSystem::Ray ray = {camera.position, camera.GetForward()};
-        TargetObject* nearestHitTarget = NULL;
-        float minHitDist = FLT_MAX;
-        glm::vec3 nearestHitPoint;
-        glm::vec3 hitPoint;
-
-        CpuMesh* cpuMesh = ResourceManager::Get().GetCpuMesh("target");
-
-        for (auto* obj : *targets) {
-            if (obj->state != ETargetState::Spawned)
-                continue;
-            auto* target = dynamic_cast<TargetObject*>(obj);
-            if (!target || target->state != ETargetState::Spawned)
-                continue;
-
-            if (PhysicsSystem::Get().RaySphereIntersect(ray, target->transform.position, target->radius)) {
-                if (PhysicsSystem::Get().RayMeshIntersect(ray, *cpuMesh, target->transform.GetWorldMatrix(),
-                                                          hitPoint)) {
-                    float dist = glm::distance(camera.position, target->transform.position);
-                    if (dist < minHitDist) {
-                        nearestHitTarget = target;
-                        minHitDist = dist;
-                        nearestHitPoint = hitPoint;
-                    }
-                }
-            }
-        }
-        if (nearestHitTarget != nullptr) {
-            ScoreManager::Get().RecordHit(nearestHitTarget->GetReactionTime());
-            nearestHitTarget->OnHit(nearestHitPoint);
-        }
-        else
-        {
-            ScoreManager::Get().RecordMiss();
-        }
-        for (auto* fireListener : fireListeners)
-            fireListener->Fire();
-    }
+    void Fire();
 
     void Reload() {
         if (!isReloading && currentAmmo < maxAmmo) {
             isReloading = true;
             reloadTimer = reloadTime;
+            floatingAmount = 0.0001f;
             for (auto* fireListener : fireListeners)
                 fireListener->Reload(reloadTime);
         }
@@ -511,16 +473,16 @@ public:
 
     void Update(float dt) override
     { 
-        if (pOwner->state == ETargetState::Spawned) {
+        if (pOwner->state == EObjectState::Spawned) {
             angle = std::min(0.0f, angle + 180.f * dt);
             canMove = angle == 0.0f;
         } 
-        if (pOwner->state == ETargetState::Dying) {
+        if (pOwner->state == EObjectState::Dying) {
             angle = std::max(-90.0f, angle - 180.f * dt);
             canMove = false;
             if (angle == -90.f)
             {
-                pOwner->state = ETargetState::Died;
+                pOwner->state = EObjectState::Died;
             }
         }
 
@@ -558,19 +520,20 @@ public:
         pOwner->transform.position += velocity * dt;
         lifetime -= dt;
         if (lifetime <= 0.f)
-            pOwner->state = ETargetState::Died;
+            pOwner->state = EObjectState::Died;
     }
 };
 
 class DecalComponent : public Component {
 public:
     float lifetime = 0.f;
-    DecalComponent(float life = 2.0f) 
+
+    DecalComponent(float life = 1.5f) 
         :lifetime(life) {}
 
     void Update(float dt) override {
         lifetime -= dt;
-        if (lifetime <= 0.f) pOwner->state = ETargetState::Died;
+        if (lifetime <= 0.f) pOwner->state = EObjectState::Died;
     }
 };
 

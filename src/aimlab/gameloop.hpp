@@ -16,6 +16,7 @@ public:
     std::vector<GameObject*> world3d;
     std::vector<GameObject*> world2d;
     std::vector<TargetObject*> targetsToSpawn;
+    std::vector<GameObject*> decalsToSpawn;
     bool isRunning = true;
 
 
@@ -64,9 +65,12 @@ public:
 
             /** 추가됐던 월드 객체들을 다 넣어준다. */
             for (auto* t : targetsToSpawn) world3d.push_back(t);
+            for (auto* t : decalsToSpawn) world3d.push_back(t);
             for (auto* t : ParticleSystem::Get().pendingParticles) world3d.push_back(t);
+
             ParticleSystem::Get().pendingParticles.clear();
             targetsToSpawn.clear();
+            decalsToSpawn.clear();
 
             // 객체 삭제 Swap And Pop 방식
             for (int i = world3d.size() - 1; i > -1; --i)
