@@ -11,7 +11,7 @@
 
 #define NOMINMAX
 #define MINIAUDIO_IMPLEMENTATION
-#include "../../external/miniaudio.h"
+#include <miniaudio.h>
 
 class GraphicsContext {
 public:

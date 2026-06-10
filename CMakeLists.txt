@@ -81,9 +81,22 @@ configure_file(
 
 # Example targets
 function(add_gdm_example TARGET_NAME)
-    add_executable(${TARGET_NAME} ${ARGN})
+    set(options)
+    set(oneValueArgs)
+    set(multiValueArgs SOURCES INCLUDE_DIRS)
+
+    cmake_parse_arguments(ARG
+        "${options}"
+        "${oneValueArgs}"
+        "${multiValueArgs}"
+        ${ARGN}
+    )
+
+    add_executable(${TARGET_NAME} ${ARG_SOURCES})
+
     target_include_directories(${TARGET_NAME} PRIVATE
         "${CMAKE_BINARY_DIR}/generatedHeader"
+        ${ARG_INCLUDE_DIRS}
     )
     target_link_libraries(${TARGET_NAME} PRIVATE
         gdm::deps
@@ -108,17 +121,19 @@ endfunction()
 
 
 add_gdm_example(01_ManyCubes
-    src/manyCubes.cpp
+    SOURCES
+        src/manyCubes.cpp
 
-    shader/manyCubes.vert
-    shader/manyCubes.frag
+        shader/manyCubes.vert
+        shader/manyCubes.frag
 )
 add_gdm_example(02_Excavator_bad
-    src/excavator_bad_utils.hpp
-    src/excavator_bad.cpp
+    SOURCES
+        src/excavator_bad_utils.hpp
+        src/excavator_bad.cpp
 
-    shader/excvator.vert
-    shader/excvator.frag
+        shader/excvator.vert
+        shader/excvator.frag
 )
 if(MSVC)
     set_source_files_properties(
@@ -132,26 +147,30 @@ else()
     )
 endif()
 add_gdm_example(03_Excavator_good
-    src/excavator_good.cpp
+    SOURCES
+        src/excavator_good.cpp
 
-    shader/excvator.vert
-    shader/excvator.frag
+        shader/excvator.vert
+        shader/excvator.frag
 )
 add_gdm_example(04_AIMLAB
-    src/aimlab/AIMLAB_main.cpp
-    src/aimlab/gameloop.hpp
-    src/aimlab/camera.hpp
-    src/aimlab/engine.hpp
-    src/aimlab/component.hpp
-    src/aimlab/physics.hpp
-    src/aimlab/mesh.hpp
-    src/aimlab/manager.hpp
-    src/aimlab/score.hpp
+    SOURCES
+        src/aimlab/AIMLAB_main.cpp
+        src/aimlab/gameloop.hpp
+        src/aimlab/camera.hpp
+        src/aimlab/engine.hpp
+        src/aimlab/component.hpp
+        src/aimlab/physics.hpp
+        src/aimlab/mesh.hpp
+        src/aimlab/manager.hpp
+        src/aimlab/score.hpp
 	
-    external/miniaudio.h
+        shader/aimlab.vert
+        shader/aimlab.frag
 
-    shader/aimlab.vert
-    shader/aimlab.frag
+    INCLUDE_DIRS
+        src/aimlab
+        external/header_only
 )
 
 source_group("Shaders"
@@ -171,6 +190,6 @@ download_repo_file(
     REPOSITORY https://github.com/mackron/miniaudio
     TAG 0.11.25
     FILE miniaudio.h
-    DESTINATION_DIR ${PROJECT_SOURCE_DIR}/external
+    DESTINATION_DIR ${PROJECT_SOURCE_DIR}/external/header_only
 )
  
