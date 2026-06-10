@@ -41,6 +41,7 @@ int main() {
     //}
 
     rm.AddMesh("plane", ASSET_ROOT / "basic" / "model" / "plane.obj");
+    rm.AddCpuMesh("plane", ASSET_ROOT / "basic" / "model" / "plane.obj");
     rm.AddMesh("cube",  ASSET_ROOT / "basic" / "model" / "cube.obj");
     Mesh* planeMesh = rm.GetMesh("plane");
     if (!planeMesh || !planeMesh->ok) {
@@ -69,11 +70,13 @@ int main() {
     cameraObject->AddComponent(cameraController);
     auto* weaponsystem = new WeaponSystem();
     weaponsystem->targets = &gEngine.world3d;
+    weaponsystem->decalsToSpawn = &gEngine.decalsToSpawn;
     cameraObject->AddComponent(weaponsystem);
     gEngine.system.push_back(cameraObject);
 
     // 바닥
     GameObject* plane = new GameObject();
+    plane->type = EObjectType::Block;
     plane->transform.rotation.y = 0.f;
     plane->transform.scale = glm::vec3(10.f, 1.f, 10.f);
 
@@ -91,9 +94,10 @@ int main() {
 
     // 벽
     GameObject* plane2 = new GameObject();
+    plane2->type = EObjectType::Block;
     plane2->transform.rotation.x = 90.f;
     plane2->transform.position.z = -10.f;
-    plane2->transform.position.y = 5.f;
+    plane2->transform.position.y = 10.f;
 
     plane2->transform.scale = glm::vec3(10.f, 1.f, 10.f);
 
