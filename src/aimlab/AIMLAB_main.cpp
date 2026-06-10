@@ -74,7 +74,7 @@ int main() {
 
     // 바닥
     GameObject* plane = new GameObject();
-    plane->transform.rotation.y = 0.f;
+    plane->transform.rotation.y = 180.f;
     plane->transform.scale = glm::vec3(10.f, 1.f, 10.f);
 
     auto* planeRenderer = new MeshRenderer(planeMesh, new Material());
