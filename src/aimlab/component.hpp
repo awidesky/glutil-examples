@@ -109,7 +109,6 @@ private:
     std::vector<Component*> m_components;
 };
 
-class ParticleSystem;
 class TargetObject : public GameObject {
 public:
     float radius = 1.0f;
@@ -347,8 +346,12 @@ public:
     void addFireListener(FireListener* listener) { fireListeners.push_back(listener); }
 
     void Fire() {
-        if (currentAmmo <= 0 || isReloading || !targets || fireCooldown > 0.f)
+        if (isReloading || !targets || fireCooldown > 0.f)
             return;
+        if (currentAmmo <= 0) {
+            Reload();
+            return;
+        }
         currentAmmo--;
         fireCooldown = fireInterval;
 
@@ -556,6 +559,18 @@ public:
         lifetime -= dt;
         if (lifetime <= 0.f)
             pOwner->state = ETargetState::Died;
+    }
+};
+
+class DecalComponent : public Component {
+public:
+    float lifetime = 0.f;
+    DecalComponent(float life = 2.0f) 
+        :lifetime(life) {}
+
+    void Update(float dt) override {
+        lifetime -= dt;
+        if (lifetime <= 0.f) pOwner->state = ETargetState::Died;
     }
 };
 
