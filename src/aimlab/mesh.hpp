@@ -3,7 +3,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glad/gl.h>
+#include <glutil/gl.hpp>
 
 #include "component.hpp"
 #include "engine.hpp"
@@ -168,42 +168,6 @@ public:
         glUniform1i(isUILocation, GL_FALSE);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
-    }
-};
-
-class NumberController : public Component {
-public:
-    Material* material = nullptr;
-    int digit = 0;
-    float anchorX = 0.f;
-    float anchorY = 0.f;
-    float offsetX = 0.f;
-    float offsetY = 0.f;
-    float width = 0.f;
-    float height = 0.f;
-    bool visible = true;
-
-    NumberController(Material* mat, float ancX, float ancY, float offX, float offY, float w, float h)
-        : material(mat), anchorX(ancX), anchorY(ancY), offsetX(offX), offsetY(offY), width(w), height(h) {}
-
-    void Start() override { pOwner->transform.scale = glm::vec3(width, height, 1.f); }
-
-    void SetDigit(int d) {
-        digit = std::clamp(d, 0, 9);
-        if (material)
-            material->useTexture((size_t)digit);
-    }
-
-    void Update(float dt) override {
-        if (!visible) {
-            pOwner->transform.scale = glm::vec3(0.f);
-            return;     
-        }
-        pOwner->transform.scale = glm::vec3(width, height, 1.f);
-        int w, h;
-        GraphicsContext::Get().GetWindowSize(w, h);
-        pOwner->transform.position.x = w * anchorX + offsetX;
-        pOwner->transform.position.y = h * anchorY + offsetY;
     }
 };
 #endif // AIMLAB_MESH_HPP

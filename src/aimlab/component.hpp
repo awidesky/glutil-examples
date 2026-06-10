@@ -10,6 +10,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/euler_angles.hpp>
 
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 #include "engine.hpp"
@@ -22,16 +23,16 @@ struct Transform {
     glm::vec3 rotation{0, 0, 0};
     glm::vec3 scale{1, 1, 1};
 
-glm::mat4 GetWorldMatrix() const {
-    glm::mat4 m(1.f);
-    m = glm::translate(m, position);
+    glm::mat4 GetWorldMatrix() const {
+        glm::mat4 m(1.f);
+        m = glm::translate(m, position);
 
-    m = glm::rotate(m, glm::radians(rotation.y), {0, 1, 0});
-    m = glm::rotate(m, glm::radians(rotation.x), {1, 0, 0});
-    m = glm::rotate(m, glm::radians(rotation.z), {0, 0, 1});
+        m = glm::rotate(m, glm::radians(rotation.y), {0, 1, 0});
+        m = glm::rotate(m, glm::radians(rotation.x), {1, 0, 0});
+        m = glm::rotate(m, glm::radians(rotation.z), {0, 0, 1});
 
-    return glm::scale(m, scale);
-}
+        return glm::scale(m, scale);
+    }
 };
 
 
@@ -406,21 +407,15 @@ public:
     }
 };
 
-
+class Material;
 class CrossHairComponent : public Component {
 public:
-    void Start() override { pOwner->transform.scale = glm::vec3(32.0f, 32.0f, 1.0f); }
-    void Update(float dt) override {
-        (void)dt;
-        auto& gc = GraphicsContext::Get();
+    Material* material;
 
-        int w, h;
-        gc.GetWindowSize(w, h);
-
-        pOwner->transform.position.x = w * 0.5f;
-        pOwner->transform.position.y = h * 0.5f;
-        pOwner->transform.position.z = 0.0f;
-    }
+    CrossHairComponent();
+    void Start() override;
+    void Input() override;
+    void Update(float dt) override;
 };
 
 class GunController : public Component, FireListener {
@@ -564,6 +559,119 @@ public:
     }
 };
 
+class NumberController : public Component {
+public:
+    Material* material = nullptr;
+    int digit = 0;
+    float anchorX = 0.f;
+    float anchorY = 0.f;
+    float offsetX = 0.f;
+    float offsetY = 0.f;
+    float width = 0.f;
+    float height = 0.f;
+    bool visible = true;
 
+    NumberController(Material* mat, float ancX, float ancY, float offX, float offY, float w, float h);
 
+    void Start() override;
+    void SetDigit(int d);
+    void Update(float dt) override;
+};
+
+// RoundTimer
+// 라운드 시간 관리. GameLoop이 소유.
+//
+//   duration  - 라운드 총 시간 (기본 60초)
+//   remaining - 남은 시간
+//   isRunning - 타이머 동작 중인지
+//
+// 함수:
+//   Start(d)    - 라운드 시작. duration = remaining = d
+//   Update(dt)  - 매 프레임 호출. remaining 감소
+//   IsExpired() - remaining <= 0 이면 true. GameLoop에서 게임 종료 판단
+//   Reset()     - 타이머 초기화
+class RoundTimerComponent : public Component {
+public:
+    float duration = 0.f;
+    float remainTime = 0.f;
+    bool isRunning = false;
+
+    void StartRound(float d);
+    virtual void Update(float dt) override;
+    bool IsExpired() const;
+    void Reset();
+};
+
+// TargetSpawner
+// 타겟 자동 생성. GameLoop이 소유.
+//
+// 멤버:
+//   spawnInterval - 몇 초마다 생성 (기본 2초)
+//   maxTargets    - 최대 동시 타겟 수 (기본 5개)
+//   spawnTimer    - 누적 시간
+//   spawnRange    - 생성 범위 (기본 ±5)
+//   world*        - GameLoop의 world 포인터. 생성한 타겟 여기에 추가
+//
+// 함수:
+//   Update(dt)   - 매 프레임 호출. 타이머 누적 후 조건 맞으면 SpawnTarget()
+//   SpawnTarget() - 랜덤 위치에 GameObject 생성 + TargetLogic 붙여서 world에 추가
+
+class TargetSpawnerComponent : public Component {
+public:
+    float spawnInterval = 2.0f;
+    int maxTargets = 10;
+    float spawnTimer = 0.f;
+    int spawnAmount = 0;
+
+    std::vector<GameObject*>* world3d = nullptr;
+    std::vector<TargetObject*>* targetsToSpawn = nullptr;
+
+    virtual void Update(float dt) override;
+    void SpawnTarget();
+};
+
+class HUDComponent : public Component {
+public:
+    WeaponSystem* weaponSystem = nullptr;
+    RoundTimerComponent* roundTimer = nullptr;
+    std::vector<GameObject*>* world2d = nullptr;
+    float digitSize = 48.f;
+
+    std::vector<NumberController*> timeDigits;
+    std::vector<NumberController*> scoreDigits;
+    std::vector<NumberController*> accuracyDigits;
+    std::vector<NumberController*> ammoDigits;
+
+    NumberController* countdownDigit;
+    NumberController* startSymbol;
+    NumberController* restartSymbol;
+
+    HUDComponent(std::vector<GameObject*>* world2d, WeaponSystem* ws, RoundTimerComponent* rt);
+
+    NumberController* AddDigit(float ancX, float ancY, float offX, float offY);
+    NumberController* AddSymbol(const std::string& texName, float ancX, float ancY, float offX, float offY);
+    NumberController* AddSymbol(const std::string& texName, float ancX, float ancY, float offX, float offY, float w,
+                                float h);
+
+    void Update(float dt) override;
+};
+
+class GameManagerComponent : public Component {
+public:
+    RoundTimerComponent* roundTimer = nullptr;
+    WeaponSystem* weaponSystem = nullptr;
+    std::vector<GameObject*>* world3d = nullptr;
+
+    GameManagerComponent(RoundTimerComponent* rt, WeaponSystem* ws, std::vector<GameObject*>* w);
+
+    void Update(float dt) override;
+
+private:
+    void StartRound();
+    void EndRound();
+    void StartCountDown();
+
+    bool m_prevG = false;
+    bool m_prevH = false;
+};
 #endif // AIMLAB_COMPONENT_HPP

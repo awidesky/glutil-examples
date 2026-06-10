@@ -160,6 +160,7 @@ add_gdm_example(04_AIMLAB
         src/aimlab/camera.hpp
         src/aimlab/engine.hpp
         src/aimlab/component.hpp
+        src/aimlab/component.cpp
         src/aimlab/physics.hpp
         src/aimlab/mesh.hpp
         src/aimlab/manager.hpp

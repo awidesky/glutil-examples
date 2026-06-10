@@ -1,11 +1,17 @@
-﻿#include "config.hpp"
+﻿#include <glutil/glutil.hpp>
+
+#include "config.hpp"
 #include "gameloop.hpp"
 #include "mesh.hpp"
 #include "manager.hpp"
+#include "component.hpp"
 
 #include <glm/glm.hpp>
-#include <glutil/glutil.hpp>
 #include <iostream>
+
+#define NOMINMAX
+#define MINIAUDIO_IMPLEMENTATION
+#include <miniaudio.h>
 
 int main() {
     auto& gc = GraphicsContext::Get();
@@ -130,10 +136,9 @@ int main() {
 
     // Crosshair
     GameObject* crosshair = new GameObject();
-    crosshair->AddComponent(new CrossHairComponent());
-    crosshair->AddComponent(
-     new OrthogonalRenderer(rm.AddMesh("crosshair", ASSET_ROOT / "AIMLAB" / "model" / "crosshair.obj"),
-                      new Material(rm.AddTexture("crosshair", ASSET_ROOT / "AIMLAB" / "texture" / "crosshair.png"))));
+    CrossHairComponent* chc = new CrossHairComponent();
+    crosshair->AddComponent(chc);
+    crosshair->AddComponent(new OrthogonalRenderer(rm.AddMesh("crosshair", ASSET_ROOT / "AIMLAB" / "model" / "crosshair.obj"), chc->material));
     gEngine.world2d.push_back(crosshair);
 
 

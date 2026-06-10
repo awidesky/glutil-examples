@@ -10,7 +10,6 @@
 #include <unordered_map>
 
 #define NOMINMAX
-#define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio.h>
 
 class GraphicsContext {
@@ -323,31 +322,52 @@ public:
     }
 
     Mesh* AddMesh(const std::string& name, const std::filesystem::path& path) {
+        auto it = _meshes.find(name);
+        if (it != _meshes.end()) {
+            delete it->second;
+            it->second = nullptr;
+        }
+
         return _meshes[name] = new Mesh(glutil::ModelLoader::loadOBJtoGL(path));
     }
     CpuMesh* AddCpuMesh(const std::string& name, const std::filesystem::path& path) {
+        auto it = _cpuMeshes.find(name);
+        if (it != _cpuMeshes.end()) {
+            delete it->second;
+            it->second = nullptr;
+        }
+
         return _cpuMeshes[name] = new CpuMesh(glutil::ModelLoader::loadOBJ(path));
     }
     Texture* AddTexture(const std::string& name, const std::filesystem::path& path) {
+        auto it = _textures.find(name);
+        if (it != _textures.end()) {
+            delete it->second;
+            it->second = nullptr;
+        }
+
         return _textures[name] = new Texture(glutil::ImageLoader::loadImageToGL(path));
     }
     Program* AddProgram(const std::string& name, const std::filesystem::path& vs, const std::filesystem::path& fs) {
+        auto it = _programs.find(name);
+        if (it != _programs.end()) {
+            delete it->second;
+            it->second = nullptr;
+        }
+
         return _programs[name] = new Program(glutil::ShaderLoader::loadProgramToGL(vs, fs));
     }
     Sound* AddSound(const std::string& name, const std::filesystem::path& path) {
         auto it = _sounds.find(name);
-        if (it != _sounds.end())
-            return it->second;
+        if (it != _sounds.end()) {
+            delete it->second;
+            it->second = nullptr;
+            _sounds.erase(it);
+        }
 
         ma_sound* rawSound = new ma_sound();
         ma_result result = ma_sound_init_from_file(
-            &_audioEngine,
-            path.string().c_str(),
-            MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_ASYNC,
-            nullptr,
-            nullptr,
-            rawSound
-        );
+          &_audioEngine, path.string().c_str(), MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_ASYNC, nullptr, nullptr, rawSound);
 
         if (result != MA_SUCCESS) {
             LOG_ERROR() << "Failed to load sound " << path.string() << ": " << std::to_string(result);
@@ -362,20 +382,11 @@ public:
         delete _defaultTexture;
         _defaultTexture = nullptr;
 
-        for (auto& pair : _meshes)
-            delete pair.second;
-
-        for (auto& pair : _cpuMeshes)
-            delete pair.second;
-
-        for (auto& pair : _textures)
-            delete pair.second;
-
-        for (auto& pair : _programs)
-            delete pair.second;
-
-        for (auto& pair : _sounds)
-            delete pair.second;
+        for (auto& pair : _meshes) delete pair.second;
+        for (auto& pair : _cpuMeshes) delete pair.second;
+        for (auto& pair : _textures) delete pair.second;
+        for (auto& pair : _programs) delete pair.second;
+        for (auto& pair : _sounds) delete pair.second;
 
         _meshes.clear();
         _textures.clear();
