@@ -65,6 +65,7 @@ int main() {
     cameraObject->AddComponent(weaponsystem);
     gEngine.system.push_back(cameraObject);
 
+    rm.AddTexture("bulletHole", ASSET_ROOT / "AIMLAB" / "texture" / "bulletHole.png");
     // 바닥
     GameObject* plane = new GameObject();
     plane->type = EObjectType::Block;

@@ -529,7 +529,7 @@ class DecalComponent : public Component {
 public:
     float lifetime = 0.f;
 
-    DecalComponent(float life = 1.5f) 
+    DecalComponent(float life = 15.0f) 
         :lifetime(life) {}
 
     void Update(float dt) override {

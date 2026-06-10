@@ -135,9 +135,10 @@ void WeaponSystem::Fire()
                 DecalComponent* decal = new DecalComponent();
                 gunDecal->transform.rotation = block->transform.rotation;
                 gunDecal->transform.position = hitPoint + hitNormal * floatingAmount;
+                gunDecal->transform.scale = glm::vec3(0.1f);
                 floatingAmount += 0.001f;
                 gunDecal->AddComponent(new MeshRenderer(ResourceManager::Get().GetMesh("plane"),
-                                                        new Material(ResourceManager::Get().GetTexture("target"))));
+                                                        new Material(ResourceManager::Get().GetTexture("bulletHole"))));
                 gunDecal->AddComponent(decal);
                 decalsToSpawn->push_back(gunDecal);
             }
