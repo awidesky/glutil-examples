@@ -393,7 +393,7 @@ public:
             isReloading = true;
             reloadTimer = reloadTime;
             for (auto* fireListener : fireListeners)
-                fireListener->Reload(reloadTime / 2.f);
+                fireListener->Reload(reloadTime);
         }
     }
 
@@ -431,20 +431,34 @@ public:
     float reloadOffset = 0.f;
     float reloadRotZ = 0.f;
     float reloadTimer = 0.f;
-
+    
+    int nextFireSound = 0;
+    Sound* fireSounds[4];
+    Sound* reloadSound;
+    
     GunController(WeaponSystem* ws, glm::vec3 offset) : offset(offset) {
         ws->addFireListener(this);
     }
 
+    void Start() override {
+        fireSounds[0] = ResourceManager::Get().AddSound("ak_1", ASSET_ROOT / "ak47" / "ak47_01.wav");
+        fireSounds[1] = ResourceManager::Get().AddSound("ak_2", ASSET_ROOT / "ak47" / "ak47_02.wav");
+        fireSounds[2] = ResourceManager::Get().AddSound("ak_3", ASSET_ROOT / "ak47" / "ak47_03.wav");
+        fireSounds[3] = ResourceManager::Get().AddSound("ak_4", ASSET_ROOT / "ak47" / "ak47_04.wav");
+        reloadSound = ResourceManager::Get().AddSound("ak_reload", ASSET_ROOT / "ak47" / "csgo_ak_47_reload.wav");
+    }
     void Fire() override {
         recoilBack = std::min(recoilBack + 0.15f, 0.25f);
         recoilUp = std::min(recoilUp + 0.05f, 0.11f);
         recoilPitch = std::min(recoilPitch + 3.0f, 6.0f);
+
+        fireSounds[nextFireSound]->play();
+        nextFireSound = (nextFireSound + 1) % 4;
     }
 
-    // TODO :  장전시 총 위치 아래로 + 살짝 회전
     void Reload(float reloadTime) override { 
-        reloadTimer = reloadTime;
+        reloadTimer = reloadTime / 2.f;
+        reloadSound->play();
     }
 
     void Update(float dt) override {

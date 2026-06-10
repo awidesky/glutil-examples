@@ -9,6 +9,9 @@
 #include <string>
 #include <unordered_map>
 
+#define MINIAUDIO_IMPLEMENTATION
+#include "../../external/miniaudio.h"
+
 class GraphicsContext {
 public:
     static GraphicsContext& Get() {
@@ -239,13 +242,36 @@ struct Texture {
 };
 using Program = glutil::GLProgram;
 
+struct Sound {
+    ma_sound* sound = nullptr;
+
+    Sound() = default;
+    ~Sound() {
+        if (sound) {
+            ma_sound_uninit(sound);
+            delete sound;
+        }
+    }
+    explicit Sound(ma_sound* sound) : sound(sound) {}
+
+    void play() {
+        if (!sound) return;
+
+        ma_sound_seek_to_pcm_frame(sound, 0);
+        ma_sound_start(sound);
+    }
+};
+
 class ResourceManager {
 public:
     static ResourceManager& Get() {
         static ResourceManager rm;
         return rm;
     }
-    ~ResourceManager() { Clear(); }
+    ~ResourceManager() {
+        Clear();
+        ma_engine_uninit(&_audioEngine);
+    }
 
     Texture* GetDefaultTexture() const { return _defaultTexture; }
 
@@ -262,7 +288,6 @@ public:
 
         return it->second;
     }
-
     CpuMesh* GetCpuMesh(const std::string& name) {
         auto it = _cpuMeshes.find(name);
 
@@ -271,7 +296,6 @@ public:
 
         return it->second;
     }
-
     Texture* GetTexture(const std::string& name) {
         auto it = _textures.find(name);
 
@@ -280,11 +304,18 @@ public:
 
         return it->second;
     }
-
     Program* GetProgram(const std::string& name) {
         auto it = _programs.find(name);
 
         if (it == _programs.end())
+            return nullptr;
+
+        return it->second;
+    }
+    Sound* GetSound(const std::string& name) {
+        auto it = _sounds.find(name);
+
+        if (it == _sounds.end())
             return nullptr;
 
         return it->second;
@@ -301,6 +332,29 @@ public:
     }
     Program* AddProgram(const std::string& name, const std::filesystem::path& vs, const std::filesystem::path& fs) {
         return _programs[name] = new Program(glutil::ShaderLoader::loadProgramToGL(vs, fs));
+    }
+    Sound* AddSound(const std::string& name, const std::filesystem::path& path) {
+        auto it = _sounds.find(name);
+        if (it != _sounds.end())
+            return it->second;
+
+        ma_sound* rawSound = new ma_sound();
+        ma_result result = ma_sound_init_from_file(
+            &_audioEngine,
+            path.string().c_str(),
+            MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_ASYNC,
+            nullptr,
+            nullptr,
+            rawSound
+        );
+
+        if (result != MA_SUCCESS) {
+            LOG_ERROR() << "Failed to load sound " << path.string() << ": " << std::to_string(result);
+            delete rawSound;
+            return nullptr;
+        }
+
+        return _sounds[name] = new Sound(rawSound);
     }
 
     void Clear() {
@@ -319,17 +373,26 @@ public:
         for (auto& pair : _programs)
             delete pair.second;
 
+        for (auto& pair : _sounds)
+            delete pair.second;
+
         _meshes.clear();
         _textures.clear();
         _programs.clear();
+        _cpuMeshes.clear();
+        _sounds.clear();
     }
 
 private:
-    ResourceManager() = default;
+    ResourceManager() {
+        ma_engine_init(nullptr, &_audioEngine);
+    }
     Texture* _defaultTexture = nullptr;
     std::unordered_map<std::string, Mesh*> _meshes;
     std::unordered_map<std::string, CpuMesh*> _cpuMeshes;
     std::unordered_map<std::string, Texture*> _textures;
     std::unordered_map<std::string, Program*> _programs;
+    std::unordered_map<std::string, Sound*> _sounds;
+    ma_engine _audioEngine{};
 };
 #endif // AIMLAB_ENGINE_HPP
