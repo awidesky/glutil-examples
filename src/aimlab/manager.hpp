@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <config.hpp>
+
 #include "component.hpp"
 #include "mesh.hpp"
 #include "score.hpp"

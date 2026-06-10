@@ -9,6 +9,7 @@
 #include <string>
 #include <unordered_map>
 
+#define NOMINMAX
 #define MINIAUDIO_IMPLEMENTATION
 #include "../../external/miniaudio.h"
 

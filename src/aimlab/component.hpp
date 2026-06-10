@@ -1,14 +1,17 @@
 ﻿#ifndef AIMLAB_COMPONENT_HPP
 #define AIMLAB_COMPONENT_HPP
 #include <algorithm>
+#include <iostream>
+#include <vector>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/euler_angles.hpp>
-#include <iostream>
-#include <vector>
+
 #include <GLFW/glfw3.h>
+
 #include "engine.hpp"
 #include "physics.hpp"
 #include "camera.hpp"
@@ -445,7 +448,7 @@ public:
         fireSounds[1] = ResourceManager::Get().AddSound("ak_2", ASSET_ROOT / "ak47" / "ak47_02.wav");
         fireSounds[2] = ResourceManager::Get().AddSound("ak_3", ASSET_ROOT / "ak47" / "ak47_03.wav");
         fireSounds[3] = ResourceManager::Get().AddSound("ak_4", ASSET_ROOT / "ak47" / "ak47_04.wav");
-        reloadSound = ResourceManager::Get().AddSound("ak_reload", ASSET_ROOT / "ak47" / "csgo_ak_47_reload.wav");
+        reloadSound = ResourceManager::Get().AddSound("ak_reload", ASSET_ROOT / "ak47" / "ak_47_reload.wav");
     }
     void Fire() override {
         recoilBack = std::min(recoilBack + 0.15f, 0.25f);
