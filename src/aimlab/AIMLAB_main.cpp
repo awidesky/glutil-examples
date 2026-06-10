@@ -89,7 +89,7 @@ int main() {
 
     plane2->transform.scale = glm::vec3(10.f, 1.f, 10.f);
 
-    auto* planeRenderer2 = new MeshRenderer(planeMesh, new Material());
+    auto* planeRenderer2 = new MeshRenderer(planeMesh, new Material(rm.AddTexture("backwall", ASSET_ROOT / "AIMLAB" / "texture" / "container.jpg")));
     plane2->AddComponent(planeRenderer2);
     gEngine.world3d.push_back(plane2);
 
