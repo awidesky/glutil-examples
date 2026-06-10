@@ -197,8 +197,8 @@ int main() {
     hud->countdownDigit->visible = false;
 
     // 문구
-    hud->startSymbol = hud->AddSymbol("start", 0.5f, 0.0f, 0.f, 70.f, 400.f, 30.f);
-    hud->restartSymbol = hud->AddSymbol("restart", 0.5f, 0.0f, 0.f, 70.f, 400.f, 30.f);
+    hud->startSymbol = hud->AddSymbol("start", 0.5f, 0.0f, 0.f, 70.f, 500.f, 40.f);
+    hud->restartSymbol = hud->AddSymbol("restart", 0.5f, 0.0f, 0.f, 70.f, 500.f, 40.f);
 
     hudObj->AddComponent(hud);
     gEngine.system.push_back(hudObj);

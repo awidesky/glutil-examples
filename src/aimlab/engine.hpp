@@ -58,6 +58,14 @@ public:
         // glEnable(GL_CULL_FACE);
         // glCullFace(GL_BACK);
 
+        glfwGetWindowPos(m_window, &m_windowedX, &m_windowedY);
+        glfwGetWindowSize(m_window, &m_windowedW, &m_windowedH);
+
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        glfwSetWindowMonitor(m_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        glViewport(0, 0, mode->width, mode->height);
+
 #ifdef AIMLAB_OPTION_GL_DEBUG
         glutil::debug::printRuntimeInfo();
         glutil::debug::debugCallbackSeverityThreshold = GL_DEBUG_SEVERITY_LOW;
@@ -115,38 +123,6 @@ public:
         glfwGetFramebufferSize(m_window, &width, &height);
     }
 
-    void ToggleFullscreen() {
-        if (m_isFullscreen)
-            ExitFullscreen();
-        else
-            EnterFullscreen();
-    }
-
-    void EnterFullscreen() {
-        if (m_isFullscreen)
-            return;
-
-        glfwGetWindowPos(m_window, &m_windowedX, &m_windowedY);
-        glfwGetWindowSize(m_window, &m_windowedW, &m_windowedH);
-
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-        glfwSetWindowMonitor(m_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-        glViewport(0, 0, mode->width, mode->height);
-        m_isFullscreen = true;
-    }
-
-    void ExitFullscreen() {
-        if (!m_isFullscreen)
-            return;
-
-        glfwSetWindowMonitor(m_window, nullptr, m_windowedX, m_windowedY, m_windowedW, m_windowedH, 0);
-        glViewport(0, 0, m_windowedW, m_windowedH);
-        m_isFullscreen = false;
-    }
-
-    bool IsFullscreen() const { return m_isFullscreen; }
-
     void SetProgram(GLuint id) {
         m_program = id;
         glUseProgram(id);
@@ -166,7 +142,6 @@ private:
 
     GLFWwindow* m_window = nullptr;
     GLuint m_program = 0;
-    bool m_isFullscreen = false;
     int m_windowedX = 100;
     int m_windowedY = 100;
     int m_windowedW = 1280;

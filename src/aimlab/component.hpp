@@ -275,14 +275,9 @@ public:
         const bool keyEsc = im.IsKeyDown(GLFW_KEY_ESCAPE);
         const bool keyRightClick = im.IsMouseDown(GLFW_MOUSE_BUTTON_RIGHT);
 
-        if (keyC && !m_prevC)
-            gc.ToggleFullscreen();
 
         if (keyEsc && !m_prevEsc) {
-            if (gc.IsFullscreen())
-                gc.ExitFullscreen();
-            else
-                glfwSetWindowShouldClose(gc.GetWindow(), GLFW_TRUE);
+           glfwSetWindowShouldClose(gc.GetWindow(), GLFW_TRUE);
         }
         if (keyRightClick && !m_prevRClick) {
             if (m_zoomCount == 2) {
@@ -330,7 +325,7 @@ public:
     float reloadTimer = 0.f;
     float fireInterval = 0.1f; // 600 RPM
     float fireCooldown = 0.f;
-    float floatingAmount = 0.0001f;
+    float floatingAmount = 0.001f;
 
     std::vector<GameObject*>* targets = nullptr;
     std::vector<GameObject*>* decalsToSpawn = nullptr;
