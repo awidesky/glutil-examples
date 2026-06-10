@@ -34,20 +34,10 @@ int main() {
 
     auto& rm = ResourceManager::Get();
     rm.SetDefaultTexture(ASSET_ROOT / "basic" / "texture" / "default.bmp");
-    //Texture* defaultTexture = ResourceManager::Get().GetDefaultTexture();
-    //if (!defaultTexture || !defaultTexture->ok) { // TODO : better error checking and printing(inside add* function? and exit policy.
-    //    std::cout << defaultTexture->error;
-    //    return -1;
-    //}
 
     rm.AddMesh("plane", ASSET_ROOT / "basic" / "model" / "plane.obj");
-    rm.AddMesh("cube",  ASSET_ROOT / "basic" / "model" / "cube.obj");
     Mesh* planeMesh = rm.GetMesh("plane");
-    if (!planeMesh || !planeMesh->ok) {
-        std::cout << planeMesh->error;
-        return -1;
-    }
-
+    
     // 카메라
     Camera& camera = Camera::Get();
     camera.position = glm::vec3(0.f, 1.f, 0.f);
@@ -191,7 +181,6 @@ int main() {
     hudObj->AddComponent(hud);
     gEngine.system.push_back(hudObj);
 
-    auto& gsm = GameStateManager::Get();
     GameObject* gm = new GameObject();
     GameManagerComponent* gmc = new GameManagerComponent(roundTimer, weaponsystem, &gEngine.world3d);
     gm->AddComponent(gmc);

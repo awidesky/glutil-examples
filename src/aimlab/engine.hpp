@@ -254,7 +254,7 @@ struct Sound {
     }
     explicit Sound(ma_sound* sound) : sound(sound) {}
 
-    void play() {
+    void play() const {
         if (!sound) return;
 
         ma_sound_seek_to_pcm_frame(sound, 0);
