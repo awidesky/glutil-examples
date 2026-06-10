@@ -66,6 +66,10 @@ public:
         glfwSetWindowMonitor(m_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
         glViewport(0, 0, mode->width, mode->height);
 
+        if (glfwRawMouseMotionSupported()) {
+            glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+        }
+
 #ifdef AIMLAB_OPTION_GL_DEBUG
         glutil::debug::printRuntimeInfo();
         glutil::debug::debugCallbackSeverityThreshold = GL_DEBUG_SEVERITY_LOW;
@@ -134,7 +138,7 @@ public:
         glfwTerminate();
     }
 
-    float mouseSensitivity = 0.1f;
+    float mouseSensitivity = 0.3f;
     float fov = 75.0f;
     float ambientStrength = 0.5f;
 private:

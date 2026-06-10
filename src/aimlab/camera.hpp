@@ -25,6 +25,10 @@ public:
     float pitch = 0.0f;
     float speed = 5.0f;
 
+    // 마우스 움직임에 곱하는 상수. 그냥 CS2의 값을 동일하게 사용했다.
+    const float YAW_RATIO = 0.022f;
+    const float PITCH_RATIO = 0.022f;
+
     glm::vec3 GetForward() const {
         return glm::normalize(glm::vec3(cos(glm::radians(yaw)) * cos(glm::radians(pitch)),
                                         sin(glm::radians(pitch)),

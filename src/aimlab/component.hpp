@@ -151,8 +151,8 @@ public:
         auto& camera = Camera::Get();
         auto [dx, dy] = InputManager::Get().GetMouseDelta();
 
-        camera.yaw += dx * gc.mouseSensitivity;
-        camera.pitch += dy * gc.mouseSensitivity;
+        camera.yaw += dx * gc.mouseSensitivity * camera.YAW_RATIO;
+        camera.pitch += dy * gc.mouseSensitivity * camera.PITCH_RATIO;
         camera.pitch = std::clamp(camera.pitch, -89.0f, 89.0f);
 
         glm::vec3 forward = camera.GetForward();
