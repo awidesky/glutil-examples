@@ -10,45 +10,21 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(EXTERNAL_DIR "${CMAKE_SOURCE_DIR}/external")
 file(MAKE_DIRECTORY "${EXTERNAL_DIR}")
 
-# Download gdm if missing
+# Fetch gdm
 set(GDM_DIR "${EXTERNAL_DIR}/gdm")
+include(FetchContent)
 
-if(NOT EXISTS "${GDM_DIR}/CMakeLists.txt")
-    message(STATUS "[${PROJECT_NAME}] Fetching gdm...")
+FetchContent_Declare(
+    gdm
+    GIT_REPOSITORY https://github.com/awidesky/gdm.git
+    GIT_TAG debug
+    GIT_SHALLOW TRUE
+    GIT_SUBMODULES ""
+    GIT_REMOTE_UPDATE_STRATEGY CHECKOUT
+    SOURCE_DIR "${GDM_DIR}"
+)
 
-    set(GDM_URL "https://github.com/awidesky/gdm/archive/refs/heads/master.tar.gz")
-    set(GDM_ARCHIVE "${CMAKE_BINARY_DIR}/gdm.tar.gz")
-    set(GDM_EXTRACT_DIR "${CMAKE_BINARY_DIR}/gdm_extract")
-
-    file(DOWNLOAD
-        "${GDM_URL}"
-        "${GDM_ARCHIVE}"
-        STATUS _dl_status
-        LOG _dl_log
-    )
-
-    list(GET _dl_status 0 _dl_code)
-    if(NOT _dl_code EQUAL 0)
-        message(FATAL_ERROR
-            "Failed to download gdm"
-            "Download status: ${_dl_status}, Log : ${_dl_log}")
-    endif()
-
-    file(REMOVE_RECURSE "${GDM_EXTRACT_DIR}")
-
-    file(ARCHIVE_EXTRACT
-        INPUT "${GDM_ARCHIVE}"
-        DESTINATION "${GDM_EXTRACT_DIR}"
-    )
-
-    file(GLOB _gdm_dirs
-        LIST_DIRECTORIES true
-        "${GDM_EXTRACT_DIR}/*"
-    )
-
-    list(GET _gdm_dirs 0 _gdm_root)
-    file(RENAME "${_gdm_root}" "${GDM_DIR}")
-endif()
+FetchContent_MakeAvailable(gdm)
 
 # GDM options
 set(GDM_USE_GLUTIL ON CACHE BOOL "" FORCE)
@@ -67,8 +43,6 @@ set(GDM_GLAD_EXTENSION
     "GL_ARB_debug_output;GL_EXT_debug_label;GL_EXT_debug_marker;GL_EXT_texture_compression_s3tc;GL_KHR_debug;GL_EXT_texture_filter_anisotropic"
     CACHE STRING "" FORCE
 )
-
-add_subdirectory("${GDM_DIR}")
 
 set(ASSET_DIR "${CMAKE_SOURCE_DIR}/assets")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/generatedHeader")
