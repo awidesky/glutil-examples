@@ -8,12 +8,14 @@
 
 #include <glm/glm.hpp>
 #include <iostream>
+#include <filesystem>
 
 #define NOMINMAX
 #define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio.h>
 
 int main() {
+    checkPath();
     auto& gc = GraphicsContext::Get();
     bool ok = gc.Init(1920, 1080, "AIMLAB");
     if (!ok)
@@ -21,8 +23,8 @@ int main() {
 
     InputManager::Get().Init();
 
-    glutil::GLProgram program = glutil::ShaderLoader::loadProgramToGL(PROJECT_ROOT / "shader" / "aimlab.vert",
-                                                                      PROJECT_ROOT / "shader" / "aimlab.frag");
+    glutil::GLProgram program = glutil::ShaderLoader::loadProgramToGL(project_root / "shader" / "aimlab.vert",
+                                                                      project_root / "shader" / "aimlab.frag");
     if (!program.ok) {
         std::cout << program.error;
         return -1;
@@ -30,11 +32,11 @@ int main() {
     gc.SetProgram(program.id);
 
     auto& rm = ResourceManager::Get();
-    rm.SetDefaultTexture(ASSET_ROOT / "basic" / "texture" / "default.bmp");
+    rm.SetDefaultTexture(asset_root / "basic" / "texture" / "default.bmp");
 
-    rm.AddMesh("plane", ASSET_ROOT / "basic" / "model" / "plane.obj");
-    rm.AddCpuMesh("plane", ASSET_ROOT / "basic" / "model" / "plane.obj");
-    rm.AddMesh("cube",  ASSET_ROOT / "basic" / "model" / "cube.obj");
+    rm.AddMesh("plane", asset_root / "basic" / "model" / "plane.obj");
+    rm.AddCpuMesh("plane", asset_root / "basic" / "model" / "plane.obj");
+    rm.AddMesh("cube",  asset_root / "basic" / "model" / "cube.obj");
     Mesh* planeMesh = rm.GetMesh("plane");
     
     // 카메라
@@ -62,14 +64,14 @@ int main() {
     cameraObject->AddComponent(weaponsystem);
     gEngine.system.push_back(cameraObject);
 
-    rm.AddTexture("bulletHole", ASSET_ROOT / "AIMLAB" / "texture" / "bulletHole.png");
+    rm.AddTexture("bulletHole", asset_root / "AIMLAB" / "texture" / "bulletHole.png");
     // 바닥
     GameObject* plane = new GameObject();
     plane->type = EObjectType::Block;
     plane->transform.rotation.y = 180.f;
     plane->transform.scale = glm::vec3(20.f, 1.f, 20.f);
 
-    auto* planeRenderer = new MeshRenderer(planeMesh, new Material(rm.AddTexture("grid", ASSET_ROOT / "basic" / "texture" / "grid.bmp")));
+    auto* planeRenderer = new MeshRenderer(planeMesh, new Material(rm.AddTexture("grid", asset_root / "basic" / "texture" / "grid.bmp")));
     plane->AddComponent(planeRenderer);
     gEngine.world3d.push_back(plane);
 
@@ -82,19 +84,19 @@ int main() {
 
     plane2->transform.scale = glm::vec3(20.f, 1.f, 20.f);
 
-    auto* planeRenderer2 = new MeshRenderer(planeMesh, new Material(rm.AddTexture("backwall", ASSET_ROOT / "AIMLAB" / "texture" / "container.jpg")));
+    auto* planeRenderer2 = new MeshRenderer(planeMesh, new Material(rm.AddTexture("backwall", asset_root / "AIMLAB" / "texture" / "container.jpg")));
     plane2->AddComponent(planeRenderer2);
     gEngine.world3d.push_back(plane2);
 
 
 
     // Target Spawner + Particle
-    rm.AddMesh("target", ASSET_ROOT / "AIMLAB" / "model" / "target.obj");
-    rm.AddCpuMesh("target", ASSET_ROOT / "AIMLAB" / "model" / "target.obj");
-    rm.AddTexture("target", ASSET_ROOT / "AIMLAB" / "texture" / "target.png");
+    rm.AddMesh("target", asset_root / "AIMLAB" / "model" / "target.obj");
+    rm.AddCpuMesh("target", asset_root / "AIMLAB" / "model" / "target.obj");
+    rm.AddTexture("target", asset_root / "AIMLAB" / "texture" / "target.png");
   
-    rm.AddMesh("particle", ASSET_ROOT / "basic" / "model" / "sphere.obj");
-    rm.AddTexture("particle", ASSET_ROOT / "AIMLAB" / "texture" / "spark.png");
+    rm.AddMesh("particle", asset_root / "basic" / "model" / "sphere.obj");
+    rm.AddTexture("particle", asset_root / "AIMLAB" / "texture" / "spark.png");
     
     GameObject* TargetSpawner = new GameObject();
     TargetSpawner->transform.position = glm::vec3(0.f, 0.f, 0.f);
@@ -115,31 +117,31 @@ int main() {
     gun->transform.scale = glm::vec3(0.006f);
     gun->AddComponent(new GunController(weaponsystem, {0.35f, -0.4f, 0.8f}));
     gun->AddComponent(new ViewModelRenderer(
-      rm.AddMesh("gun", ASSET_ROOT / "ak47" / "ak47.obj"),
-      new Material(rm.AddTexture("gun", ASSET_ROOT / "ak47" / "123456_wire_115115115_color.png"))));
+      rm.AddMesh("gun", asset_root / "ak47" / "ak47.obj"),
+      new Material(rm.AddTexture("gun", asset_root / "ak47" / "123456_wire_115115115_color.png"))));
     gEngine.world2d.push_back(gun);
 
     // Crosshair
     GameObject* crosshair = new GameObject();
     CrossHairComponent* chc = new CrossHairComponent();
     crosshair->AddComponent(chc);
-    crosshair->AddComponent(new OrthogonalRenderer(rm.AddMesh("crosshair", ASSET_ROOT / "AIMLAB" / "model" / "crosshair.obj"), chc->material));
+    crosshair->AddComponent(new OrthogonalRenderer(rm.AddMesh("crosshair", asset_root / "AIMLAB" / "model" / "crosshair.obj"), chc->material));
     gEngine.world2d.push_back(crosshair);
 
 
 
     // 숫자, 특수문자 저장
-    for (int i = 0; i < 10; i++) rm.AddTexture("num" + std::to_string(i), ASSET_ROOT / "num" / (std::to_string(i) + ".png"));
-    rm.AddTexture("numColon", ASSET_ROOT / "num" / "colon.png");
-    rm.AddTexture("numPercent", ASSET_ROOT / "num" / "percent.png");
-    rm.AddTexture("numSlash", ASSET_ROOT / "num" / "slash.png");
+    for (int i = 0; i < 10; i++) rm.AddTexture("num" + std::to_string(i), asset_root / "num" / (std::to_string(i) + ".png"));
+    rm.AddTexture("numColon", asset_root / "num" / "colon.png");
+    rm.AddTexture("numPercent", asset_root / "num" / "percent.png");
+    rm.AddTexture("numSlash", asset_root / "num" / "slash.png");
 
     // 글자 저장
-    rm.AddTexture("labelScore", ASSET_ROOT / "num" / "score.png");
-    rm.AddTexture("labelAccuracy", ASSET_ROOT / "num" / "accuracy.png");
-    rm.AddTexture("labelAmmo", ASSET_ROOT / "num" / "ammo.png");
-    rm.AddTexture("start", ASSET_ROOT / "num" / "start.png");
-    rm.AddTexture("restart", ASSET_ROOT / "num" / "restart.png");
+    rm.AddTexture("labelScore", asset_root / "num" / "score.png");
+    rm.AddTexture("labelAccuracy", asset_root / "num" / "accuracy.png");
+    rm.AddTexture("labelAmmo", asset_root / "num" / "ammo.png");
+    rm.AddTexture("start", asset_root / "num" / "start.png");
+    rm.AddTexture("restart", asset_root / "num" / "restart.png");
 
     // HUD 생성
     auto* hudObj = new GameObject();

@@ -3,7 +3,21 @@
 
 #include <filesystem>
 
+#include <glutil/path.hpp>
+
 inline const std::filesystem::path PROJECT_ROOT = R"(@CMAKE_SOURCE_DIR@)";
 inline const std::filesystem::path ASSET_ROOT   = R"(@ASSET_DIR@)";
+
+inline std::filesystem::path project_root = PROJECT_ROOT;
+inline std::filesystem::path asset_root = ASSET_ROOT;
+
+inline void checkPath() {
+    if (!std::filesystem::is_directory(asset_root)) {
+        std::filesystem::path basepath = std::filesystem::current_path();
+        if (!std::filesystem::is_directory(basepath / "assets")) basepath = glutil::getExecutableDirectory();
+        project_root = basepath;
+        asset_root = basepath / "assets";
+    }
+}
 
 #endif // CONFIG_HPP_IN
