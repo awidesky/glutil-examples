@@ -13,6 +13,7 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+#include "config.hpp"
 #include "engine.hpp"
 #include "physics.hpp"
 #include "camera.hpp"
