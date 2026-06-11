@@ -420,11 +420,11 @@ public:
     }
 
     void Start() override {
-        fireSounds[0] = ResourceManager::Get().AddSound("ak_1", ASSET_ROOT / "ak47" / "ak47_01.wav");
-        fireSounds[1] = ResourceManager::Get().AddSound("ak_2", ASSET_ROOT / "ak47" / "ak47_02.wav");
-        fireSounds[2] = ResourceManager::Get().AddSound("ak_3", ASSET_ROOT / "ak47" / "ak47_03.wav");
-        fireSounds[3] = ResourceManager::Get().AddSound("ak_4", ASSET_ROOT / "ak47" / "ak47_04.wav");
-        reloadSound = ResourceManager::Get().AddSound("ak_reload", ASSET_ROOT / "ak47" / "ak_47_reload.wav");
+        fireSounds[0] = ResourceManager::Get().AddSound("ak_1", asset_root / "ak47" / "ak47_01.wav");
+        fireSounds[1] = ResourceManager::Get().AddSound("ak_2", asset_root / "ak47" / "ak47_02.wav");
+        fireSounds[2] = ResourceManager::Get().AddSound("ak_3", asset_root / "ak47" / "ak47_03.wav");
+        fireSounds[3] = ResourceManager::Get().AddSound("ak_4", asset_root / "ak47" / "ak47_04.wav");
+        reloadSound = ResourceManager::Get().AddSound("ak_reload", asset_root / "ak47" / "ak_47_reload.wav");
     }
     void Fire() override {
         recoilBack = std::min(recoilBack + 0.15f, 0.25f);

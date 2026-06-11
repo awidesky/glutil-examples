@@ -10,11 +10,11 @@
 
 CrossHairComponent::CrossHairComponent() {
     material = new Material(
-      {ResourceManager::Get().AddTexture("crosshair1", ASSET_ROOT / "crosshair" / "crosshair_cross.png"),
-       ResourceManager::Get().AddTexture("crosshair2", ASSET_ROOT / "crosshair" / "crosshair_dot.png"),
-       ResourceManager::Get().AddTexture("crosshair3", ASSET_ROOT / "crosshair" / "crosshair_dot_small.png"),
-       ResourceManager::Get().AddTexture("crosshair4", ASSET_ROOT / "crosshair" / "crosshair_circle_dot.png"),
-       ResourceManager::Get().AddTexture("crosshair5", ASSET_ROOT / "crosshair" / "crosshair_circle_dot_small.png")});
+      {ResourceManager::Get().AddTexture("crosshair1", asset_root / "crosshair" / "crosshair_cross.png"),
+       ResourceManager::Get().AddTexture("crosshair2", asset_root / "crosshair" / "crosshair_dot.png"),
+       ResourceManager::Get().AddTexture("crosshair3", asset_root / "crosshair" / "crosshair_dot_small.png"),
+       ResourceManager::Get().AddTexture("crosshair4", asset_root / "crosshair" / "crosshair_circle_dot.png"),
+       ResourceManager::Get().AddTexture("crosshair5", asset_root / "crosshair" / "crosshair_circle_dot_small.png")});
 }
 
 void CrossHairComponent::Start() { pOwner->transform.scale = glm::vec3(32.0f, 32.0f, 1.0f); }
