@@ -1,4 +1,5 @@
 ﻿#define STEP -1
+#define USEGLUTIL 1
 
 // Include standard headers
 #include <stdio.h>
@@ -6,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-#if STEP == -1
+#if USEGLUTIL
 #include <glutil/glutil.hpp>
 #else
 // Include GLEW
@@ -679,7 +680,7 @@ static int glinit() {
         glfwTerminate();
         return -1;
     }
-#ifdef GLAD_OPTION_GL_DEBUG
+#if defined(GLAD_OPTION_GL_DEBUG) && !USEGLUTIL
     gladSetGLPostCallback(noopPostCallback);
 #endif
     //printf("OpenGL Version: %s\n", glGetString(GL_VERSION));
