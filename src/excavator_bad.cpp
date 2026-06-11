@@ -207,13 +207,14 @@ void start() {
     GLuint programID = LoadShaders("shader/excvator.vert", "shader/excvator.frag");
 
     // 각 오브젝트에 맞는 텍스쳐를 가져온다.   
-    defaultTexture = loadBMP_custom("basic/texture/default.bmp");
-    GLuint groundTexture = loadBMP_custom("basic/texture/grid.bmp");
-    GLuint trackTexture = loadBMP_custom("excavator/texture/track.bmp");
-    GLuint scoopTexture = loadBMP_custom("excavator/texture/scoop.bmp");
-    //GLuint diceTexture = loadDDS("basic/texture/dice.DDS"); // 테스트용
-    GLuint cabinTexture = loadBMP_custom("excavator/texture/cabin.bmp");
-    GLuint bodyTexture = loadBMP_custom("excavator/texture/body.bmp");
+    
+    defaultTexture = loadBMP_custom("assets/basic/texture/default.bmp");  
+    GLuint groundTexture = loadBMP_custom("assets/basic/texture/grid.bmp");
+    GLuint trackTexture = loadBMP_custom("assets/excavator/texture/track.bmp");
+    GLuint scoopTexture = loadBMP_custom("assets/excavator/texture/scoop.bmp");
+    GLuint cabinTexture = loadBMP_custom("assets/excavator/texture/cabin.bmp");
+    GLuint bodyTexture = loadBMP_custom("assets/excavator/texture/body.bmp");
+
 
     // 모든 유니폼 변수 ID를 가져온다
     TextureUniformID = glGetUniformLocation(programID, "myTextureSampler");

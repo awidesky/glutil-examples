@@ -138,7 +138,9 @@ bool loadOBJ(
 		}else if ( strcmp( lineHeader, "vt" ) == 0 ){
             glm::vec2 uv{};
 			fscanf(file, "%f %f\n", &uv.x, &uv.y );
+#if STEP < 3
 			uv.y = -uv.y; // Invert V coordinate since we will only use DDS texture, which are inverted. Remove if you want to use TGA or BMP loaders.
+#endif
 			temp_uvs.push_back(uv);
 		}else if ( strcmp( lineHeader, "vn" ) == 0 ){
             glm::vec3 normal{};
@@ -193,12 +195,13 @@ bool loadOBJ(
 	return true;
 }
 
-GLuint loadBMP_custom(const char * imagePath){
-
-	std::string path = std::filesystem::absolute(ASSET_ROOT / imagePath).string();
-    const char* imagepath = path.c_str();
 #if STEP <= 2
-	//printf("Reading image %s\n", imagepath);
+GLuint loadBMP_custom(const char * imagepath){
+
+	std::string path = std::filesystem::absolute(PROJECT_ROOT / imagepath).string();
+    const char* imagePath = path.c_str();
+	
+	//printf("Reading image %s\n", imagePath);
 
 	// Data read from the header of the BMP file
 	unsigned char header[54];
@@ -209,9 +212,9 @@ GLuint loadBMP_custom(const char * imagePath){
 	unsigned char * data;
 
 	// Open the file
-	FILE * file = fopen(imagepath,"rb");
+    FILE* file = fopen(imagePath, "rb");
 	if (!file){
-		printf("%s could not be opened. Are you in the right directory ? Don't forget to read the FAQ !\n", imagepath);
+        printf("%s could not be opened. Are you in the right directory ? Don't forget to read the FAQ !\n", imagePath);
 		getchar();
 		return 0;
 	}
@@ -229,7 +232,7 @@ GLuint loadBMP_custom(const char * imagePath){
 		printf("Not a correct BMP file\n");
 		fclose(file);
 		return 0;
-	}
+	}	
 	// Make sure this is a 24bpp file
 	if ( *(int*)&(header[0x1E])!=0  )         {printf("Not a correct BMP file\n");    fclose(file); return 0;}
 	if ( *(int*)&(header[0x1C])!=24 )         {printf("Not a correct BMP file\n");    fclose(file); return 0;}
@@ -296,7 +299,9 @@ GLuint loadBMP_custom(const char * imagePath){
 
     // Return the ID of the texture we just created
     return textureID;
+}
 #else
+GLuint loadBMP_custom(const char* path) {
     const glutil::TextureImage& image = glutil::ImageLoader::loadImage(path, true);
     if (!image.ok) return 0;
 
@@ -314,8 +319,8 @@ GLuint loadBMP_custom(const char * imagePath){
     glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
     return tex;
-#endif
 }
+#endif
 
 // Since GLFW 3, glfwLoadTexture2D() has been removed. You have to use another texture loading library, 
 // or do it yourself (just like loadBMP_custom and loadDDS)

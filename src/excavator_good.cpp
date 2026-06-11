@@ -788,6 +788,7 @@ static int glinit()
 
 static GLuint loadBMP(const char* path) {
     const glutil::TextureImage& image = glutil::ImageLoader::loadImage(path, true);
+    LOG_INFO() << "Asdfasfasdf : " << path;
     if (!image.ok)
         return 0;
 
