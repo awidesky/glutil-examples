@@ -15,15 +15,17 @@
 #if defined(_MSC_VER)
 #pragma warning(disable : 4996) // unsafe scanf
 #pragma warning(disable : 6031) // scanf return ignore
+#pragma warning(disable : 6385) // wrong data read
+#pragma warning(disable : 6386) // buffer overrun
 #pragma warning(disable : 6387) // malloc'ed buffer may be NULL
 #pragma warning(disable : 6054) // parameter of strncmp may not be NULL terminated
 #endif
 
 GLuint LoadShaders(const char * vertex_file_path1,const char * fragment_file_path1){
 
-	std::string path1 = std::filesystem::absolute(PROJECT_ROOT / "shader" / vertex_file_path1).string();
+	std::string path1 = std::filesystem::absolute(PROJECT_ROOT / vertex_file_path1).string();
     const char* vertex_file_path = path1.c_str();
-    std::string path2 = std::filesystem::absolute(PROJECT_ROOT / "shader" / fragment_file_path1).string();
+    std::string path2 = std::filesystem::absolute(PROJECT_ROOT / fragment_file_path1).string();
     const char* fragment_file_path = path2.c_str();
 
 	// Create the shaders
@@ -54,59 +56,25 @@ GLuint LoadShaders(const char * vertex_file_path1,const char * fragment_file_pat
 		FragmentShaderStream.close();
 	}
 
-	GLint Result = GL_FALSE;
-	int InfoLogLength;
-
 
 	// Compile Vertex Shader
-	printf("Compiling shader : %s\n", vertex_file_path);
+	//printf("Compiling shader : %s\n", vertex_file_path);
 	char const * VertexSourcePointer = VertexShaderCode.c_str();
 	glShaderSource(VertexShaderID, 1, &VertexSourcePointer , NULL);
 	glCompileShader(VertexShaderID);
 
-	// Check Vertex Shader
-	glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if ( InfoLogLength > 0 ){
-		std::vector<char> VertexShaderErrorMessage(InfoLogLength+1);
-		glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-		printf("%s\n", &VertexShaderErrorMessage[0]);
-	}
-
-
-
-	// Compile Fragment Shader
-	printf("Compiling shader : %s\n", fragment_file_path);
+		// Compile Fragment Shader
+	//printf("Compiling shader : %s\n", fragment_file_path);
 	char const * FragmentSourcePointer = FragmentShaderCode.c_str();
 	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer , NULL);
 	glCompileShader(FragmentShaderID);
 
-	// Check Fragment Shader
-	glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if ( InfoLogLength > 0 ){
-		std::vector<char> FragmentShaderErrorMessage(InfoLogLength+1);
-		glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-		printf("%s\n", &FragmentShaderErrorMessage[0]);
-	}
-
-
-
 	// Link the program
-	printf("Linking program\n");
+	//printf("Linking program\n");
 	GLuint ProgramID = glCreateProgram();
 	glAttachShader(ProgramID, VertexShaderID);
 	glAttachShader(ProgramID, FragmentShaderID);
 	glLinkProgram(ProgramID);
-
-	// Check the program
-	glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
-	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if ( InfoLogLength > 0 ){
-		std::vector<char> ProgramErrorMessage(InfoLogLength+1);
-		glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-		printf("%s\n", &ProgramErrorMessage[0]);
-	}
 
 	
 	glDetachShader(ProgramID, VertexShaderID);
@@ -138,7 +106,7 @@ bool loadOBJ(
 ){
     std::string spath = std::filesystem::absolute(ASSET_ROOT / objpath).string();
     const char* path = spath.c_str();
-	printf("Loading OBJ file %s...\n", path);
+	//printf("Loading OBJ file %s...\n", path);
 
 	std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
 	std::vector<glm::vec3> temp_vertices; 
@@ -230,7 +198,7 @@ GLuint loadBMP_custom(const char * imagePath){
 	std::string path = std::filesystem::absolute(ASSET_ROOT / imagePath).string();
     const char* imagepath = path.c_str();
 
-	printf("Reading image %s\n", imagepath);
+	//printf("Reading image %s\n", imagepath);
 
 	// Data read from the header of the BMP file
 	unsigned char header[54];

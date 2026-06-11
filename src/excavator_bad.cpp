@@ -1,4 +1,4 @@
-﻿#define STEP 3
+﻿#define STEP 0
 
 // Include standard headers
 #include <stdio.h>
@@ -201,11 +201,11 @@ void start() {
     // 각 오브젝트에 맞는 텍스쳐를 가져온다.
     defaultTexture = loadBMP_custom("basic/texture/default.bmp");
     GLuint groundTexture = loadBMP_custom("basic/texture/grid.bmp");
-    GLuint trackTexture = loadBMP_custom("basic/texture/track.bmp");
-    GLuint scoopTexture = loadBMP_custom("basic/texture/scoop.bmp");
+    GLuint trackTexture = loadBMP_custom("excavator/texture/track.bmp");
+    GLuint scoopTexture = loadBMP_custom("excavator/texture/scoop.bmp");
     //GLuint diceTexture = loadDDS("basic/texture/dice.DDS"); // 테스트용
-    GLuint cabinTexture = loadBMP_custom("basic/texture/cabin.bmp");
-    GLuint bodyTexture = loadBMP_custom("basic/texture/body.bmp");
+    GLuint cabinTexture = loadBMP_custom("excavator/texture/cabin.bmp");
+    GLuint bodyTexture = loadBMP_custom("excavator/texture/body.bmp");
 
     // 모든 유니폼 변수 ID를 가져온다
     TextureUniformID = glGetUniformLocation(programID, "myTextureSampler");
@@ -677,7 +677,7 @@ static int glinit() {
 #ifdef GLAD_OPTION_GL_DEBUG
     gladSetGLPostCallback(noopPostCallback);
 #endif
-    printf("OpenGL Version: %s\n", glGetString(GL_VERSION));
+    //printf("OpenGL Version: %s\n", glGetString(GL_VERSION));
 
     glGetError(); // 처음에 1280 에러 발생하긴 하지만, 별로 중요한 오류 같진 않음
     checkGLerror("GL init");
