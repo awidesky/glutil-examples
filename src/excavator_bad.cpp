@@ -1,4 +1,4 @@
-﻿#define STEP 0
+﻿#define STEP -1
 
 // Include standard headers
 #include <stdio.h>
@@ -6,11 +6,16 @@
 #include <utility>
 #include <vector>
 
+#if STEP == -1
+#include <glutil/glutil.hpp>
+#else
 // Include GLEW
 #include <glad/gl.h>
 
 // Include GLFW
 #include <GLFW/glfw3.h>
+#endif
+
 GLFWwindow* window;
 
 // Include GLM
@@ -192,7 +197,7 @@ void start() {
     glBindVertexArray(VertexArrayID);
 
     // Create and compile our GLSL program from the shaders
-#if STEP == 0
+#if STEP <= 0
     GLuint programID = LoadShaders("shader/excvator.vert", "shader/excvator.frag");
 #else
     GLuint programID = LoadShaders("shader/excvator_noBOM.vert", "shader/excvator.frag");
