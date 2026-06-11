@@ -20,70 +20,70 @@
 #pragma warning(disable : 6387) // malloc'ed buffer may be NULL
 #pragma warning(disable : 6054) // parameter of strncmp may not be NULL terminated
 #endif
+GLuint LoadShaders(const char* vertex_file_path1, const char* fragment_file_path1) {
 
-GLuint LoadShaders(const char * vertex_file_path1,const char * fragment_file_path1){
-
-	std::string path1 = std::filesystem::absolute(PROJECT_ROOT / vertex_file_path1).string();
+    std::string path1 = std::filesystem::absolute(PROJECT_ROOT / vertex_file_path1).string();
     const char* vertex_file_path = path1.c_str();
     std::string path2 = std::filesystem::absolute(PROJECT_ROOT / fragment_file_path1).string();
     const char* fragment_file_path = path2.c_str();
 
-	// Create the shaders
-	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint VertexShaderID, FragmentShaderID;
+    VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+    FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
-	// Read the Vertex Shader code from the file
-	std::string VertexShaderCode;
-	std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
-	if(VertexShaderStream.is_open()){
-		std::stringstream sstr;
-		sstr << VertexShaderStream.rdbuf();
-		VertexShaderCode = sstr.str();
-		VertexShaderStream.close();
-	}else{
-		printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
-		getchar();
-		return 0;
-	}
+#if STEP <= 0
+    std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
+    std::string VertexShaderCode;
+    if (VertexShaderStream.is_open()) {
+        std::stringstream sstr;
+        sstr << VertexShaderStream.rdbuf();
+        VertexShaderCode = sstr.str();
+        VertexShaderStream.close();
+    } else {
+        printf("Impossible to open %s\n", vertex_file_path);
+        return 0;
+    }
 
-	// Read the Fragment Shader code from the file
-	std::string FragmentShaderCode;
-	std::ifstream FragmentShaderStream(fragment_file_path, std::ios::in);
-	if(FragmentShaderStream.is_open()){
-		std::stringstream sstr;
-		sstr << FragmentShaderStream.rdbuf();
-		FragmentShaderCode = sstr.str();
-		FragmentShaderStream.close();
-	}
+    // Fragment Shader 읽기
+    std::ifstream FragmentShaderStream(fragment_file_path, std::ios::in);
+    std::string FragmentShaderCode;
+    if (FragmentShaderStream.is_open()) {
+        std::stringstream sstr;
+        sstr << FragmentShaderStream.rdbuf();
+        FragmentShaderCode = sstr.str();
+        FragmentShaderStream.close();
+    }
 
+    const char* VertexSourcePointer = VertexShaderCode.c_str();
+    glShaderSource(VertexShaderID, 1, &VertexSourcePointer, NULL);
 
-	// Compile Vertex Shader
-	//printf("Compiling shader : %s\n", vertex_file_path);
-	char const * VertexSourcePointer = VertexShaderCode.c_str();
-	glShaderSource(VertexShaderID, 1, &VertexSourcePointer , NULL);
-	glCompileShader(VertexShaderID);
+    const char* FragmentSourcePointer = FragmentShaderCode.c_str();
+    glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
+#else 
+    glutil::ShaderLoadResult vsSrc = glutil::ShaderLoader::loadFile(vertex_file_path);
+    if (!vsSrc.ok) return 0;
+    glutil::ShaderLoadResult fsSrc = glutil::ShaderLoader::loadFile(fragment_file_path);
+    if (!fsSrc.ok) return 0;
 
-		// Compile Fragment Shader
-	//printf("Compiling shader : %s\n", fragment_file_path);
-	char const * FragmentSourcePointer = FragmentShaderCode.c_str();
-	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer , NULL);
-	glCompileShader(FragmentShaderID);
+    glShaderSource(VertexShaderID, 1, vsSrc.string(), vsSrc.lengthPtr());
+    glShaderSource(FragmentShaderID, 1, fsSrc.string(), fsSrc.lengthPtr());
+#endif
 
-	// Link the program
-	//printf("Linking program\n");
-	GLuint ProgramID = glCreateProgram();
-	glAttachShader(ProgramID, VertexShaderID);
-	glAttachShader(ProgramID, FragmentShaderID);
-	glLinkProgram(ProgramID);
+    glCompileShader(VertexShaderID);
+    glCompileShader(FragmentShaderID);
 
-	
-	glDetachShader(ProgramID, VertexShaderID);
-	glDetachShader(ProgramID, FragmentShaderID);
-	
-	glDeleteShader(VertexShaderID);
-	glDeleteShader(FragmentShaderID);
+    GLuint ProgramID = glCreateProgram();
+    glAttachShader(ProgramID, VertexShaderID);
+    glAttachShader(ProgramID, FragmentShaderID);
+    glLinkProgram(ProgramID);
 
-	return ProgramID;
+    glDetachShader(ProgramID, VertexShaderID);
+    glDetachShader(ProgramID, FragmentShaderID);
+
+    glDeleteShader(VertexShaderID);
+    glDeleteShader(FragmentShaderID);
+
+    return ProgramID;
 }
 
 
@@ -197,7 +197,7 @@ GLuint loadBMP_custom(const char * imagePath){
 
 	std::string path = std::filesystem::absolute(ASSET_ROOT / imagePath).string();
     const char* imagepath = path.c_str();
-
+#if STEP <= 2
 	//printf("Reading image %s\n", imagepath);
 
 	// Data read from the header of the BMP file
@@ -249,13 +249,8 @@ GLuint loadBMP_custom(const char * imagePath){
 
 	// Read the actual data from the file into the buffer
 	fread(data,1,imageSize,file);
-#if STEP > 1
-#if STEP > 2
-    int rowSize = ((width * 3 + 3) / 4) * 4; // GL_RGB 기준 (BMP 24bit)
-#else
+#if STEP == 2
     int rowSize = width * 3; // GL_RGB 기준 (BMP 24bit)
-#endif
-
     unsigned char* tempRow = new unsigned char[rowSize];
 
     for (unsigned int y = 0; y < height / 2; y++) {
@@ -279,10 +274,10 @@ GLuint loadBMP_custom(const char * imagePath){
 	glGenTextures(1, &textureID);
 	
 	// "Bind" the newly created texture : all future texture functions will modify this texture
-	glBindTexture(GL_TEXTURE_2D, textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
 
 	// Give the image to OpenGL
-	glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
 
 	// OpenGL has now copied the data. Free our own version
 	delete [] data;
@@ -297,7 +292,17 @@ GLuint loadBMP_custom(const char * imagePath){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	// ... which requires mipmaps. Generate them automatically.
-	glGenerateMipmap(GL_TEXTURE_2D);
+    glGenerateMipmap(GL_TEXTURE_2D);
+#else
+    std::cout << "glGenTextures  hpp : " << glGenTextures << std::endl;
+    auto result = glutil::ImageLoader::loadImageToGL(imagepath);
+	if (!result.ok || result.id == 0) {
+        std::cout << "Texture load failed: " << result.error << std::endl;
+        return 0;
+    }
+    GLuint textureID = result.id;
+    //glutil::debug::Snapshot(false).boundInfo(true).capture();
+#endif
 
 	// Return the ID of the texture we just created
 	return textureID;

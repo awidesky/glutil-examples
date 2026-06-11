@@ -1,5 +1,11 @@
-﻿#define STEP -1
-#define USEGLUTIL 1
+﻿// STEP == 0 : 셰이더 인코딩 실패, 아무것도 안 나옴
+// STEP == 1 : 셰이더 로딩을 glutil으로, 인코딩 성공. 그러나 텍스쳐 vflip
+// STEP == 2 : manual vfilp으로 텍스쳐 제대로, 근데 skewing문제
+// STEP == 3 : 텍스쳐 로딩을 glutil으로, 다 멀쩡히.
+// STEP == 4 : 오류!! 스냅샷!!
+// STEP == 5 : 
+#define STEP 1
+#define USEGLUTIL STEP > 0
 
 // Include standard headers
 #include <stdio.h>
@@ -198,13 +204,9 @@ void start() {
     glBindVertexArray(VertexArrayID);
 
     // Create and compile our GLSL program from the shaders
-#if STEP <= 0
     GLuint programID = LoadShaders("shader/excvator.vert", "shader/excvator.frag");
-#else
-    GLuint programID = LoadShaders("shader/excvator_noBOM.vert", "shader/excvator.frag");
-#endif
 
-    // 각 오브젝트에 맞는 텍스쳐를 가져온다.
+    // 각 오브젝트에 맞는 텍스쳐를 가져온다.   
     defaultTexture = loadBMP_custom("basic/texture/default.bmp");
     GLuint groundTexture = loadBMP_custom("basic/texture/grid.bmp");
     GLuint trackTexture = loadBMP_custom("excavator/texture/track.bmp");
