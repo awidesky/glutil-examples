@@ -151,8 +151,8 @@ public:
         auto& camera = Camera::Get();
         auto [dx, dy] = InputManager::Get().GetMouseDelta();
 
-        camera.yaw += dx * gc.mouseSensitivity * camera.YAW_RATIO;
-        camera.pitch += dy * gc.mouseSensitivity * camera.PITCH_RATIO;
+        camera.yaw += dx * gc.GetMouseSensitivity() * camera.YAW_RATIO;
+        camera.pitch += dy * gc.GetMouseSensitivity() * camera.PITCH_RATIO;
         camera.pitch = std::clamp(camera.pitch, -89.0f, 89.0f);
 
         glm::vec3 forward = camera.GetForward();
@@ -235,60 +235,71 @@ public:
 
         // TODOTODO : 주어진 코드의 getter, setter로 변경
         if (im.IsKeyDown(GLFW_KEY_LEFT_BRACKET)) {
-            float oldValue = gc.GetMouseSensitivity(); // TODOTODO : add setter for all. gc에 auxDisplayValue; auxDisplayTimer으로 둬서, 그걸 가져와 확인.
-            gc.mouseSensitivity = std::max(0.001f, gc.GetMouseSensitivity - sensitivityRate * dt);
-            if (gc.GetMouseSensitivity != oldValue)
-                LOG_INFO() << "mouseSensitivity: " << gc.mouseSensitivity << '\n';
+            float oldValue = gc.GetMouseSensitivity();
+            float newValue = gc.GetMouseSensitivity() - sensitivityRate * dt;
+            if (newValue != oldValue) {
+                gc.SetMouseSensitivity(newValue);
+                LOG_INFO() << "mouseSensitivity: " << gc.GetMouseSensitivity() << '\n';
+            }
         }
         if (im.IsKeyDown(GLFW_KEY_RIGHT_BRACKET)) {
-            float oldValue = gc.mouseSensitivity;
-            gc.mouseSensitivity = std::min(2.0f, gc.mouseSensitivity + sensitivityRate * dt);
-            if (gc.mouseSensitivity != oldValue)
-                LOG_INFO() << "mouseSensitivity: " << gc.mouseSensitivity << '\n';
+            float oldValue = gc.GetMouseSensitivity();
+            float newValue = gc.GetMouseSensitivity() + sensitivityRate * dt;
+            if (newValue != oldValue) {
+                gc.SetMouseSensitivity(newValue);
+                LOG_INFO() << "mouseSensitivity: " << gc.GetMouseSensitivity() << '\n';
+            }
         }
 
         if (im.IsKeyDown(GLFW_KEY_O)) {
-            float oldValue = gc.fov;
-            gc.fov = std::max(20.0f, gc.fov - fovRate * dt);
-            if (gc.fov != oldValue)
-                LOG_INFO() << "fov: " << gc.fov << '\n';
+            float oldValue = gc.GetFOV();
+            float newValue = gc.GetFOV() - fovRate * dt;
+            if (newValue != oldValue) {
+                gc.SetFOV(newValue);
+                LOG_INFO() << "fov: " << gc.GetFOV() << '\n';
+            }
         }
         if (im.IsKeyDown(GLFW_KEY_P)) {
-            float oldValue = gc.fov;
-            gc.fov = std::min(120.0f, gc.fov + fovRate * dt);
-            if (gc.fov != oldValue)
-                LOG_INFO() << "fov: " << gc.fov << '\n';
+            float oldValue = gc.GetFOV();
+            float newValue = gc.GetFOV() + fovRate * dt;
+            if (newValue != oldValue) {
+                gc.SetFOV(newValue);
+                LOG_INFO() << "fov: " << gc.GetFOV() << '\n';
+            }
         }
 
         if (im.IsKeyDown(GLFW_KEY_SEMICOLON)) {
-            float oldValue = gc.ambientStrength;
-            gc.ambientStrength = std::max(0.0f, gc.ambientStrength - ambientRate * dt);
-            if (gc.ambientStrength != oldValue)
-                LOG_INFO() << "ambientStrength: " << gc.ambientStrength << '\n';
+            float oldValue = gc.GetAmbientStrength();
+            float newValue = gc.GetAmbientStrength() - ambientRate * dt;
+            if (newValue != oldValue) {
+                gc.SetAmbientStrength(newValue);
+                LOG_INFO() << "ambientStrength: " << gc.GetAmbientStrength() << '\n';
+            }
         }
         if (im.IsKeyDown(GLFW_KEY_APOSTROPHE)) {
-            float oldValue = gc.ambientStrength;
-            gc.ambientStrength = std::min(3.0f, gc.ambientStrength + ambientRate * dt);
-            if (gc.ambientStrength != oldValue)
-                LOG_INFO() << "ambientStrength: " << gc.ambientStrength << '\n';
+            float oldValue = gc.GetAmbientStrength();
+            float newValue = std::min(3.0f, gc.GetAmbientStrength() + ambientRate * dt);
+            if (newValue != oldValue) {
+                gc.SetAmbientStrength(newValue);
+                LOG_INFO() << "ambientStrength: " << gc.GetAmbientStrength() << '\n';
+            }
         }
 
         const bool keyC = im.IsKeyDown(GLFW_KEY_C);
         const bool keyEsc = im.IsKeyDown(GLFW_KEY_ESCAPE);
-        const bool keyRightClick = im.IsMouseDown(GLFW_MOUSE_BUTTON_RIGHT);
-
+        const bool keyRightClick = im.IsMouseDown(GLFW_MOUSE_BUTTON_RIGHT); //TODOTODO : remove?
 
         if (keyEsc && !m_prevEsc) {
-           glfwSetWindowShouldClose(gc.GetWindow(), GLFW_TRUE);
+            glfwSetWindowShouldClose(gc.GetWindow(), GLFW_TRUE);
         }
         if (keyRightClick && !m_prevRClick) {
             if (m_zoomCount == 2) {
-                gc.fov += 15.f * (m_zoomCount + 1);
+                gc.SetFOV(gc.GetFOV() + 15.f * (m_zoomCount + 1));
                 m_zoomCount = 0;
             } else {
                 ++m_zoomCount;
-                gc.fov -= 15.f * m_zoomCount;
-            }      
+                gc.SetFOV(gc.GetFOV() - 15.f * m_zoomCount);
+            }
         }
 
         m_prevC = keyC;
@@ -300,7 +311,7 @@ public:
         const auto& gc = GraphicsContext::Get();
         const Camera& camera = Camera::Get();
         static const glm::vec3 lightPos(0.0f, 5.0f, -20.5f);
-        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix(gc.fov)));
+        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix(gc.GetFOV())));
         glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
         glUniform1f(ambientStrengthLocation, gc.GetAmbientStrength());
 

@@ -18,9 +18,6 @@ int main() {
     bool ok = gc.Init(1920, 1080, "AIMLAB");
     if (!ok)
         return -1;
-    gc.mouseSensitivity = 0.1f;
-    gc.fov = 75.0f;
-    gc.ambientStrength = 0.5f;
 
     InputManager::Get().Init();
 

@@ -231,7 +231,6 @@ NumberController* HUDComponent::AddSymbol(const std::string& texName, float ancX
 }
 
 void HUDComponent::Update(float dt) {
-    (void)dt;
     // 카운트 다운
     if (countdownDigit) {
         countdownDigit->visible = (GameStateManager::Get().state == EGameState::CountDown);
@@ -254,6 +253,9 @@ void HUDComponent::Update(float dt) {
     auto& gc = GraphicsContext::Get();
     // 감도, fov 등 굳이 계속 HUD에 띄울 필요는 없지만, 임시적으로 잠시 보여주고 싶은 값(0~100 사이)
     if (gc.GetAuxDisplayTimer() > 0.0f) {
+        auxDisplayDigits[0]->pOwner->state = auxDisplayDigits[1]->pOwner->state = auxDisplayDigits[2]->pOwner->state =
+          EObjectState::Spawned;
+
         const int val = gc.GetAuxDisplayValue();
         int d0 = (val / 100) % 10;
         int d1 = (val / 10) % 10;
@@ -262,6 +264,10 @@ void HUDComponent::Update(float dt) {
         auxDisplayDigits[0]->SetDigit(d0);
         auxDisplayDigits[1]->SetDigit(d1);
         auxDisplayDigits[2]->SetDigit(d2);
+        gc.ReduceAuxDisplayTimer(dt);
+    } else {
+        auxDisplayDigits[0]->pOwner->state = auxDisplayDigits[1]->pOwner->state = auxDisplayDigits[2]->pOwner->state =
+          EObjectState::Died;
     }
 
     // 시간

@@ -73,7 +73,7 @@ public:
             decalsToSpawn.clear();
 
             // 객체 삭제 Swap And Pop 방식
-            for (size_t i = world3d.size() - 1; i > -1; --i) // TODOTODO : int로 바꿔야 됨
+            for (long long int i = (long long int)world3d.size() - 1; i > -1; --i)
             {
                 if (world3d[i]->state == Died)
                 {

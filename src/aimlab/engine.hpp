@@ -138,27 +138,27 @@ public:
     
     float GetMouseSensitivity() const { return mouseSensitivity; }
     void SetMouseSensitivity(float value) {
-        mouseSensitivity = value;
-        auxDisplayTimer += auxDisplayTime;
-
+        mouseSensitivity = std::clamp(value, 0.01f, 10.0f);
+        auxDisplayTimer = auxDisplayTime;
         auxDisplayValue = std::clamp((int)std::round(mouseSensitivity * 100.0f), 0, 999);
     }
 
     float GetFOV() const { return fov; }
     void SetFOV(float value) {
-        fov = value;
-        auxDisplayTimer += auxDisplayTime;
+        fov = std::clamp(value, 20.0f, 120.0f);
+        auxDisplayTimer = auxDisplayTime;
         auxDisplayValue = std::clamp((int)std::round(fov), 0, 999);
     }
 
     float GetAmbientStrength() const { return ambientStrength; }
     void SetAmbientStrength(float value) {
-        ambientStrength = value;
-        auxDisplayTimer += auxDisplayTime;
+        ambientStrength = std::clamp(value, 0.01f, 5.0f);
+        auxDisplayTimer = auxDisplayTime;
         auxDisplayValue = std::clamp((int)std::round(ambientStrength * 100.0f), 0, 999);
     }
 
     float GetAuxDisplayTimer() const { return auxDisplayTimer; }
+    void ReduceAuxDisplayTimer(float dt) { auxDisplayTimer -= dt; }
     int GetAuxDisplayValue() const { return auxDisplayValue; }
 
     ~GraphicsContext() {
@@ -177,7 +177,7 @@ private:
     int m_windowedH = 720;
     std::string m_title;
 
-    float mouseSensitivity = 1.f;
+    float mouseSensitivity = 2.f;
     float fov = 75.0f;
     float ambientStrength = 0.5f;
     
