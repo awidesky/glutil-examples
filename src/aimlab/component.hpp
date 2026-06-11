@@ -293,12 +293,14 @@ public:
             glfwSetWindowShouldClose(gc.GetWindow(), GLFW_TRUE);
         }
         if (keyRightClick && !m_prevRClick) {
+            static float originFOV = gc.GetFOV();
             if (m_zoomCount == 2) {
-                gc.SetFOV(gc.GetFOV() + 15.f * (m_zoomCount + 1));
+                gc.SetFOV(originFOV);
                 m_zoomCount = 0;
             } else {
+                if (m_zoomCount == 0) originFOV = gc.GetFOV();
                 ++m_zoomCount;
-                gc.SetFOV(gc.GetFOV() - 15.f * m_zoomCount);
+                gc.SetFOV(originFOV - 15.f * m_zoomCount);
             }
         }
 

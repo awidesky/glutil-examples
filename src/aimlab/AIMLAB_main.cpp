@@ -173,7 +173,7 @@ int main() {
     hud->AddSymbol("labelAccuracy", 1.f, 1.f, -s * 4.f - 205.f, -s * 2.f, 152.f, s);
     hud->AddSymbol("labelAmmo", 1.f, 1.f, -s * 5.f - 200.f, -s * 3.f, 108.f, s);
 
-    // 감도 TODOTODO : auxDisplay
+    // 감도 
     hud->auxDisplayDigits.push_back(hud->AddDigit(1.f, 1.f, -s * 3.f, -s * 4.f));
     hud->auxDisplayDigits.push_back(hud->AddDigit(1.f, 1.f, -s * 2.f, -s * 4.f));
     hud->auxDisplayDigits.push_back(hud->AddDigit(1.f, 1.f, -s ,      -s * 4.f));
