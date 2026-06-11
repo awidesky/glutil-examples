@@ -42,7 +42,7 @@ int main() {
     
     // 카메라
     Camera& camera = Camera::Get();
-    camera.position = glm::vec3(0.f, 1.f, 0.f);
+    camera.position = glm::vec3(0.f, 1.f, 15.f);
     camera.up = glm::vec3(0.f, 1.f, 0.f);
     camera.yaw = -90.f;
     camera.pitch = 0.f;
@@ -70,7 +70,7 @@ int main() {
     GameObject* plane = new GameObject();
     plane->type = EObjectType::Block;
     plane->transform.rotation.y = 180.f;
-    plane->transform.scale = glm::vec3(10.f, 1.f, 10.f);
+    plane->transform.scale = glm::vec3(20.f, 1.f, 20.f);
 
     auto* planeRenderer = new MeshRenderer(planeMesh, new Material(rm.AddTexture("grid", ASSET_ROOT / "basic" / "texture" / "grid.bmp")));
     plane->AddComponent(planeRenderer);
@@ -80,10 +80,10 @@ int main() {
     GameObject* plane2 = new GameObject();
     plane2->type = EObjectType::Block;
     plane2->transform.rotation.x = 90.f;
-    plane2->transform.position.z = -10.f;
-    plane2->transform.position.y = 10.f;
+    plane2->transform.position.z = -20.f;
+    plane2->transform.position.y = 20.f;
 
-    plane2->transform.scale = glm::vec3(10.f, 1.f, 10.f);
+    plane2->transform.scale = glm::vec3(20.f, 1.f, 20.f);
 
     auto* planeRenderer2 = new MeshRenderer(planeMesh, new Material(rm.AddTexture("backwall", ASSET_ROOT / "AIMLAB" / "texture" / "container.jpg")));
     plane2->AddComponent(planeRenderer2);

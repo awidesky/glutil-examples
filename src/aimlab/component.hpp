@@ -169,8 +169,8 @@ public:
         if (InputManager::Get().IsKeyDown(GLFW_KEY_D))
             camera.position += right * camera.speed * dt;
 
-        camera.position.x = std::clamp(camera.position.x, -10.f, 10.f);
-        camera.position.z = std::clamp(camera.position.z, 5.f, 10.f);
+        camera.position.x = std::clamp(camera.position.x, -20.f, 20.f);
+        camera.position.z = std::clamp(camera.position.z, 10.f, 20.f);
 
         if (canJump) { // 웅크리기 처리
             float targetHeight = Camera::playerHeight;
@@ -368,7 +368,7 @@ public:
         }
     }
 
-    void StartRound() { 
+    void StartRound() {
         currentAmmo = maxAmmo;
         isReloading = false;
     }
@@ -461,7 +461,7 @@ public:
     float radius = 1.0f;
     bool canMove = false;
     glm::vec3 cachedOwnerLocation = {};
-    float maxRange = 9.5f;
+    float maxRange = 19.5f;
     float moveSpeed = 5.f;
     float leftDistance = 0.f;
     int dir = 1;
