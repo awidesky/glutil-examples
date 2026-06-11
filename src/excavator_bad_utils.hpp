@@ -293,19 +293,28 @@ GLuint loadBMP_custom(const char * imagePath){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	// ... which requires mipmaps. Generate them automatically.
     glGenerateMipmap(GL_TEXTURE_2D);
-#else
-    std::cout << "glGenTextures  hpp : " << glGenTextures << std::endl;
-    auto result = glutil::ImageLoader::loadImageToGL(imagepath);
-	if (!result.ok || result.id == 0) {
-        std::cout << "Texture load failed: " << result.error << std::endl;
-        return 0;
-    }
-    GLuint textureID = result.id;
-    //glutil::debug::Snapshot(false).boundInfo(true).capture();
-#endif
 
-	// Return the ID of the texture we just created
-	return textureID;
+    // Return the ID of the texture we just created
+    return textureID;
+#else
+    const glutil::TextureImage& image = glutil::ImageLoader::loadImage(path, true);
+    if (!image.ok) return 0;
+
+    GLuint tex = 0;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, image.internalFormat(), image.width(), image.height(), 0, image.format(),
+                 GL_UNSIGNED_BYTE, image.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return tex;
+#endif
 }
 
 // Since GLFW 3, glfwLoadTexture2D() has been removed. You have to use another texture loading library, 

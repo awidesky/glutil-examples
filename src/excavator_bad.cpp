@@ -4,7 +4,7 @@
 // STEP == 3 : 텍스쳐 로딩을 glutil으로, 다 멀쩡히.
 // STEP == 4 : 오류!! 스냅샷!!
 // STEP == 5 : 
-#define STEP 1
+#define STEP 3
 #define USEGLUTIL STEP > 0
 
 // Include standard headers
