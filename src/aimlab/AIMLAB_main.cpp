@@ -1,4 +1,9 @@
-﻿#include <glutil/glutil.hpp>
+﻿#define NOMINMAX
+#define MINIAUDIO_IMPLEMENTATION
+#include <miniaudio.h>
+
+#define GLFW_INCLUDE_NONE
+#include <glutil/glutil.hpp>
 
 #include "config.hpp"
 #include "gameloop.hpp"
@@ -10,9 +15,6 @@
 #include <iostream>
 #include <filesystem>
 
-#define NOMINMAX
-#define MINIAUDIO_IMPLEMENTATION
-#include <miniaudio.h>
 
 int main() {
     checkPath();
