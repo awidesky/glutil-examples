@@ -333,6 +333,7 @@ static void start() {
     bucket.texture = bucketBackPlane.texture = scoopTexture;
 
     //glBindTexture(9999, 9999);
+    auto ss = glutil::debug::Snapshot(true).allVBOInfo(true).bufferVAOInfo(true, true, true, true);
 
     // ---------------렌더링 루프---------------//
     do {
@@ -508,6 +509,7 @@ static void start() {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
+        ss.capture("excavator_snapshot", true, true);
     } // Check if the ESC key was pressed or the window was closed
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
         glfwWindowShouldClose(window) == 0);
