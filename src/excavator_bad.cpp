@@ -4,7 +4,7 @@
 // STEP == 3 : 텍스쳐 로딩을 glutil으로, 다 멀쩡히.
 // STEP == 4 : 오류!! 스냅샷!!
 // STEP == 5 : 
-#define STEP 3
+#define STEP 4
 #define USEGLUTIL STEP > 0
 
 // Include standard headers
@@ -12,6 +12,10 @@
 #include <stdlib.h>
 #include <utility>
 #include <vector>
+
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 #if USEGLUTIL
 #include <glutil/glutil.hpp>
@@ -79,7 +83,7 @@ struct modelData {
         std::vector<glm::vec3> normals;
         loadOBJ(path, vertices, uvs, normals);
         glGenBuffers(1, &vertexbuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        //glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
 
         glGenBuffers(1, &uvbuffer);
@@ -152,7 +156,7 @@ struct object {
 
         // normal
         glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, model.normalbuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, model.normalbuffer + 10);
         glVertexAttribPointer(1, // layout(location = 1)
                               3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
@@ -201,7 +205,7 @@ void start() {
     // VAO
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
-    glBindVertexArray(VertexArrayID);
+    //glBindVertexArray(VertexArrayID);
 
     // Create and compile our GLSL program from the shaders
     GLuint programID = LoadShaders("shader/excvator.vert", "shader/excvator.frag");
@@ -415,7 +419,7 @@ void start() {
         // 카메라 위치 (View 행렬에서 추출)
         glm::vec3 viewPos = glm::vec3(glm::inverse(View)[3]);
         // lighting을 위한 값을 셰이더에 전송한다
-        glUniform3fv(LightPosUniformID, 1, &lightPos[0]);
+        glUniform2fv(LightPosUniformID, 1, &lightPos[0]);
         glUniform3fv(ViewPosUniformID, 1, &viewPos[0]);
         glUniform3fv(LightColorUniformID, 1, &lightColor[0]);
 
@@ -447,6 +451,13 @@ void start() {
 }
 
 int main(void) {
+
+#ifdef WIN32
+    // 콘솔 출력 및 입력 코드 페이지를 UTF-8(65001)로 설정
+    SetConsoleOutputCP(65001);
+    SetConsoleCP(65001);
+#endif
+
     // 초기화 코드가 길어, 따로 분리했다.
     int ret = glinit();
     if (ret)
