@@ -2,9 +2,10 @@
 // STEP == 1 : 셰이더 로딩을 glutil으로, 인코딩 성공. 그러나 텍스쳐 vflip
 // STEP == 2 : manual vfilp으로 텍스쳐 제대로, 근데 skewing문제
 // STEP == 3 : 텍스쳐 로딩을 glutil으로, 다 멀쩡히.
-// STEP == 4 : 오류!! 스냅샷!!
-// STEP == 5 : 
-#define STEP 4
+// STEP == 4 : 오류!! 아무것도 안 보임
+// STEP == 5 : 오류!! manual debug flag check
+// STEP == 6 : 오류!! glutil 디버그 기능 활성화!
+#define STEP 6
 #define USEGLUTIL STEP > 0
 
 // Include standard headers
@@ -47,7 +48,14 @@ static void processKeyboardMouseInput(glm::mat4& mat, glm::vec3& tractorPosition
 static int glinit();
 
 // 에러 체크
-void checkGLerror(const char*);
+void checkGLerror(const char* msg) {
+#if STEP == 5
+     GLenum err;
+     while ((err = glGetError()) != GL_NO_ERROR) {
+         fprintf(stderr, "GL ERROR %d : %s\n", err, msg);
+     }
+#endif
+}
 
 // 디폴트 텍스쳐는 오브젝트가 단색이 아닌 텍스쳐를 쓰기로 되어 있으나(colorcheck < 0),
 // 텍스쳐가 주어져 있지 않은 경우 쓴다.
@@ -82,9 +90,13 @@ struct modelData {
         std::vector<glm::vec2> uvs;
         std::vector<glm::vec3> normals;
         loadOBJ(path, vertices, uvs, normals);
-        glGenBuffers(1, &vertexbuffer);
-        //glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+        glGenBuffers(1, &vertexbuffer);     // 버텍스 버퍼 생성
+#if STEP < 4
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);  // 버텍스 버퍼 바인딩
+#endif
+
+        // 버텍스 버퍼에 삼각형 정점 데이터를 삽입(데이터를 넣을 버퍼가 Bind되어 있어야 한다!)
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW); 
 
         glGenBuffers(1, &uvbuffer);
         glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
@@ -143,7 +155,7 @@ struct object {
         glBindTexture(GL_TEXTURE_2D, texture);
         glUniform1i(TextureUniformID, 0);
 
-        // 1rst attribute buffer : vertices
+        // 1st attribute buffer : vertices
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, model.vertexbuffer);
         glVertexAttribPointer(0, // attribute. No particular reason for 0, but must match the layout in the shader.
@@ -156,7 +168,17 @@ struct object {
 
         // normal
         glEnableVertexAttribArray(1);
+        
+#if STEP > 4
+
+
         glBindBuffer(GL_ARRAY_BUFFER, model.normalbuffer + 10);
+
+
+#else
+        glBindBuffer(GL_ARRAY_BUFFER, model.normalbuffer);
+#endif
+
         glVertexAttribPointer(1, // layout(location = 1)
                               3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
@@ -205,7 +227,12 @@ void start() {
     // VAO
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
-    //glBindVertexArray(VertexArrayID);
+
+#if STEP > 4 // VAO는 bind전에 존재하지 않아 라벨이 안 씌워질 수 있고, vertex array attrib을 포함해서 너무 많은 에러가 나옴
+    glBindVertexArray(VertexArrayID);
+#else
+    glBindVertexArray(VertexArrayID);
+#endif
 
     // Create and compile our GLSL program from the shaders
     GLuint programID = LoadShaders("shader/excvator.vert", "shader/excvator.frag");
@@ -419,7 +446,7 @@ void start() {
         // 카메라 위치 (View 행렬에서 추출)
         glm::vec3 viewPos = glm::vec3(glm::inverse(View)[3]);
         // lighting을 위한 값을 셰이더에 전송한다
-        glUniform2fv(LightPosUniformID, 1, &lightPos[0]);
+        glUniform3fv(LightPosUniformID, 1, &lightPos[0]);
         glUniform3fv(ViewPosUniformID, 1, &viewPos[0]);
         glUniform3fv(LightColorUniformID, 1, &lightColor[0]);
 
@@ -441,6 +468,7 @@ void start() {
 
     } // Check if the ESC key was pressed or the window was closed
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
+
 
     // Cleanup VBO and shader
     glDeleteProgram(programID);
@@ -633,12 +661,6 @@ static void computeKeyboardTranslates(glm::mat4& view, glm::vec3& tractorPositio
     lastTime = currentTime;
 }
 
-void checkGLerror(const char* msg) {
-    GLenum err;
-    while ((err = glGetError()) != GL_NO_ERROR) {
-        fprintf(stderr, "GL ERROR %d : %s\n", err, msg);
-    }
-}
 
 static void processKeyboardMouseInput(glm::mat4& view, glm::vec3& tractorPosition) {
     // Compute the Model matrix from keyboard and mouse input
@@ -697,9 +719,12 @@ static int glinit() {
 #if defined(GLAD_OPTION_GL_DEBUG) && !USEGLUTIL
     gladSetGLPostCallback(noopPostCallback);
 #endif
+#if STEP != 6
+    glutil::debug::disableDebugCallbacks();
+#endif
     //printf("OpenGL Version: %s\n", glGetString(GL_VERSION));
 
-    glGetError(); // 처음에 1280 에러 발생하긴 하지만, 별로 중요한 오류 같진 않음
+    glGetError();
     checkGLerror("GL init");
 
     // Ensure we can capture the escape key being pressed below
