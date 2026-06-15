@@ -5,7 +5,7 @@
 // STEP == 4 : 오류!! 아무것도 안 보임
 // STEP == 5 : 오류!! manual debug flag check
 // STEP == 6 : 오류!! glutil 디버그 기능 활성화!
-#define STEP 6
+#define STEP 1
 #define USEGLUTIL STEP > 0
 
 // Include standard headers
@@ -719,7 +719,7 @@ static int glinit() {
 #if defined(GLAD_OPTION_GL_DEBUG) && !USEGLUTIL
     gladSetGLPostCallback(noopPostCallback);
 #endif
-#if STEP != 6
+#if USEGLUTIL && STEP != 6
     glutil::debug::disableDebugCallbacks();
 #endif
     //printf("OpenGL Version: %s\n", glGetString(GL_VERSION));
