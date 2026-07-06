@@ -7,8 +7,27 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 # external/
-set(EXTERNAL_DIR "${CMAKE_SOURCE_DIR}/external")
+set(EXTERNAL_DIR "${CMAKE_SOURCE_DIR}/external" CACHE PATH "Directory for external dependencies")
+set(GDM_EXTERNAL_DIR "${EXTERNAL_DIR}" CACHE PATH "Directory where GDM external dependencies are stored" FORCE)
 file(MAKE_DIRECTORY "${EXTERNAL_DIR}")
+
+# GDM options
+set(GDM_USE_GLUTIL ON CACHE BOOL "" FORCE)
+set(GDM_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GDM_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
+set(GDM_WINDOW_BACKEND "glfw" CACHE STRING "" FORCE)
+set(GDM_GL_LOADER "glad" CACHE STRING "" FORCE)
+set(GDM_USE_GLM ON CACHE BOOL "" FORCE)
+
+set(GLFW_VERSION "3.2.0" CACHE STRING "" FORCE)
+set(GLM_VERSION "1.0.1" CACHE STRING "" FORCE)
+set(GLAD_VERSION "2.0.8" CACHE STRING "" FORCE)
+
+set(GDM_GLAD_EXTENSION
+    "GL_ARB_debug_output;GL_EXT_debug_label;GL_EXT_debug_marker;GL_EXT_texture_compression_s3tc;GL_KHR_debug;GL_EXT_texture_filter_anisotropic"
+    CACHE STRING "" FORCE
+)
 
 # Fetch gdm
 set(GDM_DIR "${EXTERNAL_DIR}/gdm")
@@ -25,24 +44,6 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(gdm)
-
-# GDM options
-set(GDM_USE_GLUTIL ON CACHE BOOL "" FORCE)
-set(GDM_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GDM_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-
-set(GDM_WINDOW_BACKEND "glfw" CACHE STRING "" FORCE)
-set(GDM_GL_LOADER "glad" CACHE STRING "" FORCE)
-set(GDM_USE_GLM ON CACHE BOOL "" FORCE)
-
-set(GLFW_VERSION "3.4.0" CACHE STRING "" FORCE)
-set(GLM_VERSION "1.0.1" CACHE STRING "" FORCE)
-set(GLAD_VERSION "2.0.8" CACHE STRING "" FORCE)
-
-set(GDM_GLAD_EXTENSION
-    "GL_ARB_debug_output;GL_EXT_debug_label;GL_EXT_debug_marker;GL_EXT_texture_compression_s3tc;GL_KHR_debug;GL_EXT_texture_filter_anisotropic"
-    CACHE STRING "" FORCE
-)
 
 set(ASSET_DIR "${CMAKE_SOURCE_DIR}/assets")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/generatedHeader")
@@ -165,6 +166,6 @@ download_repo_file(
     REPOSITORY https://github.com/mackron/miniaudio
     TAG 0.11.25
     FILE miniaudio.h
-    DESTINATION_DIR ${PROJECT_SOURCE_DIR}/external/header_only
+    DESTINATION_DIR "${EXTERNAL_DIR}/header_only"
 )
  

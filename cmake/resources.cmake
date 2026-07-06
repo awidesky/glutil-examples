@@ -66,7 +66,14 @@ function(fetch_example_asset ASSET_NAME)
 
     foreach(item IN LISTS _children)
         get_filename_component(name "${item}" NAME)
-        file(RENAME "${item}" "${_asset_dir}/${name}")
+
+        if(IS_DIRECTORY "${item}")
+            file(COPY "${item}" DESTINATION "${_asset_dir}")
+            file(REMOVE_RECURSE "${item}")
+        else()
+            file(COPY_FILE "${item}" "${_asset_dir}/${name}")
+            file(REMOVE "${item}")
+        endif()
     endforeach()
 
     # Cleanup extraction directory
