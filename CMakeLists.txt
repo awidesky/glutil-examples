@@ -146,7 +146,7 @@ add_gdm_example(04_AIMLAB
 
     INCLUDE_DIRS
         src/aimlab
-        external/header_only
+        ${EXTERNAL_DIR}/header_only
 )
 
 source_group("Shaders"
