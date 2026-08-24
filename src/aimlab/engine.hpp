@@ -11,7 +11,9 @@
 #include <string>
 #include <unordered_map>
 
-#define NOMINMAX
+#ifndef NOMINMAX
+    #define NOMINMAX
+#endif
 #include <miniaudio.h>
 
 class GraphicsContext {
