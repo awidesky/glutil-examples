@@ -191,7 +191,7 @@ void TargetSpawnerComponent::SpawnTarget() {
 }
 
 HUDComponent::HUDComponent(std::vector<GameObject*>* world2d, WeaponSystem* ws, RoundTimerComponent* rt)
-    : world2d(world2d), weaponSystem(ws), roundTimer(rt) {}
+    : weaponSystem(ws), roundTimer(rt), world2d(world2d) {}
 
 NumberController* HUDComponent::AddDigit(float ancX, float ancY, float offX, float offY) {
     auto& rm = ResourceManager::Get();
