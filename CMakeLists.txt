@@ -36,7 +36,7 @@ include(FetchContent)
 FetchContent_Declare(
     gdm
     GIT_REPOSITORY https://github.com/awidesky/gdm.git
-    GIT_TAG debug
+    GIT_TAG dev
     GIT_SHALLOW TRUE
     GIT_SUBMODULES ""
     GIT_REMOTE_UPDATE_STRATEGY CHECKOUT
