@@ -479,7 +479,7 @@ public:
     float moveSpeed = 5.f;
     float leftDistance = 0.f;
     int dir = 1;
-    void Start()
+    void Start() override
     { 
         cachedOwnerLocation = pOwner->transform.position;
         angle = pOwner->transform.rotation.x;
